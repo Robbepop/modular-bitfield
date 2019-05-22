@@ -14,13 +14,15 @@ use modular_bitfield::prelude::*;
 // Works with aliases - just for the showcase.
 type Vitamin = B12;
 
+/// Bitfield struct with 32 bits in total.
 #[bitfield]
 pub struct Example {
     a: bool,         // Uses 1 bit
-    b: B7,           // Uses 9 bits
-    c: Vitamin,      // Uses 11 bits, works with aliases.
+    b: B9,           // Uses 9 bits
+    c: Vitamin,      // Uses 12 bits, works with aliases.
     #[bits = 3]      // Optional, asserts at compiletime that `DeliveryMode` uses 3 bits.
     d: DeliveryMode, // Uses 3 bits
+    e: B7,           // Uses 7 bits
 }
 
 /// Enums that derive from `BitfieldSpecifier`
@@ -46,18 +48,21 @@ fn it_works() {
     assert_eq!(example.get_b(), 0);
     assert_eq!(example.get_c(), 0);
     assert_eq!(example.get_d(), DeliveryMode::Init);
+    assert_eq!(example.get_e(), 0);
 
     // Modify the bitfields.
     example.set_a(true);
     example.set_b(0b111_1111_u8); // Uses `u8`
     example.set_c(42_u16);        // Uses `u16`
     example.set_d(DeliveryMode::Startup);
+    example.set_e(1);             // Uses `u8`
 
     // Assert the previous modifications.
     assert_eq!(example.get_a(), true);
     assert_eq!(example.get_b(), 0b111_1111_u8);
     assert_eq!(example.get_c(), 42_u16);
     assert_eq!(example.get_d(), DeliveryMode::Startup);
+    assert_eq!(example.get_c(), 1_u8);
 }
 ```
 
