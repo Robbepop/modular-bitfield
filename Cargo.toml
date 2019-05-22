@@ -2,7 +2,7 @@
 name = "modular-bitfield"
 version = "0.1.0"
 edition = "2018"
-author = "Robin Freyler <robinfreyler@web.de>"
+authors = ["Robin Freyler <robinfreyler@web.de>"]
 license = "MIT/Apache-2.0"
 readme = "README.md"
 
