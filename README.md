@@ -16,11 +16,11 @@ type Vitamin = B12;
 
 #[bitfield]
 pub struct Example {
-    a: bool,        // Uses 1 bit
-    b: B7,          // Uses 9 bits
-    c: Vitamin,     // Uses 11 bits, works with aliases.
-    #[bits = 3]     // Optional, asserts at compiletime that `TriggerMode` uses 3 bits.
-    d: TriggerMode, // Uses 3 bits
+    a: bool,         // Uses 1 bit
+    b: B7,           // Uses 9 bits
+    c: Vitamin,      // Uses 11 bits, works with aliases.
+    #[bits = 3]      // Optional, asserts at compiletime that `DeliveryMode` uses 3 bits.
+    d: DeliveryMode, // Uses 3 bits
 }
 
 /// Enums that derive from `BitfieldSpecifier`
@@ -45,19 +45,19 @@ fn it_works() {
     assert_eq!(example.get_a(), false);
     assert_eq!(example.get_b(), 0);
     assert_eq!(example.get_c(), 0);
-    assert_eq!(example.get_d(), TriggerMode::Init);
+    assert_eq!(example.get_d(), DeliveryMode::Init);
 
     // Modify the bitfields.
     example.set_a(true);
     example.set_b(0b111_1111_u8); // Uses `u8`
     example.set_c(42_u16);        // Uses `u16`
-    example.set_d(TriggerMode::Startup);
+    example.set_d(DeliveryMode::Startup);
 
     // Assert the previous modifications.
     assert_eq!(example.get_a(), true);
     assert_eq!(example.get_b(), 0b111_1111_u8);
     assert_eq!(example.get_c(), 42_u16);
-    assert_eq!(example.get_d(), TriggerMode::Startup);
+    assert_eq!(example.get_d(), DeliveryMode::Startup);
 }
 ```
 
