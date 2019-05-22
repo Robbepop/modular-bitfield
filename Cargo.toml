@@ -1,0 +1,29 @@
+[package]
+name = "modular-bitfield"
+version = "0.1.0"
+edition = "2018"
+author = "Robin Freyler <robinfreyler@web.de>"
+license = "MIT/Apache-2.0"
+readme = "README.md"
+
+repository = "https://github.com/robbepop/modular-bitfield"
+documentation = "https://docs.rs/modular-bitfield"
+description = "Bitfields for structs that allow for modular use of enums."
+categories = ["data-structures"]
+keywords   = ["bitfield", "bit", "bitfields"]
+
+autotests = false
+
+[[test]]
+name = "tests"
+path = "tests/progress.rs"
+
+[dev-dependencies]
+trybuild = "1.0"
+
+[dependencies]
+modular-bitfield-impl = { path = "impl" }
+
+[badges]
+travis-ci = { repository = "robbepop/modular-bitfield" }
+appveyor = { repository = "robbepop/modular-bitfield", branch = "master", service = "github" }

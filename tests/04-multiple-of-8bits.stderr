@@ -1,0 +1,7 @@
+error[E0277]: the trait bound `modular_bitfield::checks::SevenMod8: modular_bitfield::checks::TotalSizeIsMultipleOfEightBits` is not satisfied
+  --> $DIR/04-multiple-of-8bits.rs:53:1
+   |
+53 | #[bitfield]
+   | ^^^^^^^^^^^ the trait `modular_bitfield::checks::TotalSizeIsMultipleOfEightBits` is not implemented for `modular_bitfield::checks::SevenMod8`
+
+For more information about this error, try `rustc --explain E0277`.
