@@ -117,6 +117,8 @@
 //!                least significant bit of d         most significant
 //! ```
 
+#![no_std]
+
 pub use modular_bitfield_impl::{
     bitfield,
     BitfieldSpecifier,

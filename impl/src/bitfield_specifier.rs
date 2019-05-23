@@ -105,7 +105,7 @@ pub fn generate3(input: syn::ItemEnum) -> syn::Result<TokenStream2> {
                     // This API is only used internally and is only invoked on valid input.
                     // Thus it is find to omit error handling for cases where the incoming
                     // value is out of bounds to improve performance.
-                    _ => unsafe { std::hint::unreachable_unchecked() },
+                    _ => unsafe { ::core::hint::unreachable_unchecked() },
                 }
             }
         }

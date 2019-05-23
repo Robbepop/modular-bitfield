@@ -19,7 +19,7 @@ pub trait RenameSizeType
 }
 
 /// Helper type to sum up bit size of a bitfield at compile time.
-pub struct TotalSize<T>(std::marker::PhantomData<T>);
+pub struct TotalSize<T>(::core::marker::PhantomData<T>);
 
 macro_rules! impl_total_size_for {
     ( $(($n:expr, $name:ident)),* ) => {

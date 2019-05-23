@@ -9,7 +9,7 @@ readme = "README.md"
 repository = "https://github.com/robbepop/modular-bitfield"
 documentation = "https://docs.rs/modular-bitfield"
 description = "Bitfields for structs that allow for modular use of enums."
-categories = ["data-structures"]
+categories = ["data-structures", "no-std"]
 keywords   = ["bitfield", "bit", "bitfields"]
 
 autotests = false

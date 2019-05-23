@@ -229,7 +229,7 @@ impl BitfieldStruct {
                 }
 
                 pub fn #setter_name(&mut self, new_val: <#field_type as modular_bitfield::Specifier>::Face) {
-                    use std::mem::size_of;
+                    use ::core::mem::size_of;
                     let base_bits = 8 * size_of::<<#field_type as modular_bitfield::Specifier>::Base>();
                     let max_value: <#field_type as modular_bitfield::Specifier>::Base = {
                         !0 >> (base_bits - <#field_type as modular_bitfield::Specifier>::BITS)
