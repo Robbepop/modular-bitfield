@@ -56,19 +56,20 @@ impl Parse for BitfieldStruct {
 
 impl BitfieldStruct {
     fn expand(&self) -> Result<TokenStream2> {
-        let mut size = Punctuated::<syn::ExprPath, Token![+]>::new();
-        match &self.ast.fields {
-            syn::Fields::Named(fields_named) => {
-                for field in fields_named.named.iter() {
-                    let ty = &field.ty;
-                    size.push(syn::parse_quote!( <#ty as Specifier>::BITS ))
-                }
-            }
-            unnamed => bail!(
-                unnamed,
-                "requires named struct fields",
+        if let unit@syn::Fields::Unit = &self.ast.fields {
+            bail!(
+                unit,
+                "unit structs are not supported",
             )
         }
+        let size = {
+            let mut size = Punctuated::<syn::ExprPath, Token![+]>::new();
+            for field in self.ast.fields.iter() {
+                let ty = &field.ty;
+                size.push(syn::parse_quote!( <#ty as Specifier>::BITS ));
+            }
+            size
+        };
         let mut expanded = quote! {};
         let attrs = &self.ast.attrs;
         let internal_methods = self.expand_internal_methods()?;
@@ -185,19 +186,15 @@ impl BitfieldStruct {
     }
 
     fn expand_getters_and_setters(&self) -> Result<TokenStream2> {
-        let fields_named = match &self.ast.fields {
-            syn::Fields::Named(fields_named) => fields_named,
-            unnamed => bail!(
-                unnamed,
-                "unnamed struct fields are not supported",
-            )
-        };
         let mut expanded = quote! {};
         let mut offset = Punctuated::<syn::Expr, Token![+]>::new();
         offset.push(syn::parse_quote!{ 0 });
-        for field in fields_named.named.iter() {
+        for (n, field) in self.ast.fields.iter().enumerate() {
             use crate::ident_ext::IdentExt as _;
-            let field_name = field.ident.clone().expect("named fields is already guaranteed; qed");
+            let field_name = field.ident
+                .as_ref()
+                .map(ToString::to_string)
+                .unwrap_or(format!("{}", n));
             let getter_name = syn::Ident::from_str(format!("get_{}", field_name));
             let setter_name = syn::Ident::from_str(format!("set_{}", field_name));
             let field_type = &field.ty;
@@ -272,11 +269,10 @@ impl BitfieldStruct {
                 "generics are not supported for bitfields",
             )
         }
-        match &self.ast.fields {
-            syn::Fields::Named(_) => (),
-            invalid => bail!(
-                invalid,
-                "unnamed fields are not supported for bitfields",
+        if let unit@syn::Fields::Unit = &self.ast.fields {
+            bail!(
+                unit,
+                "unit structs are not supported",
             )
         }
         Ok(())
