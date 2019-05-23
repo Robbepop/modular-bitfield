@@ -215,6 +215,10 @@ impl BitfieldStruct {
                 })
             }
 
+            let set_assert_msg = proc_macro2::Literal::string(
+                &format!("value out of bounds for field {}.{}", self.ast.ident, field_name)
+            );
+
             expanded.extend(quote!{
                 pub fn #getter_name(&self) -> <#field_type as modular_bitfield::Specifier>::Face {
                     #bits_check_tokens
@@ -224,8 +228,20 @@ impl BitfieldStruct {
                     )
                 }
 
-                pub fn #setter_name(&mut self, new_value: <#field_type as modular_bitfield::Specifier>::Face) {
-                    self.set::<#field_type>(#offset, new_value.into_bits().into_raw())
+                pub fn #setter_name(&mut self, new_val: <#field_type as modular_bitfield::Specifier>::Face) {
+                    use std::mem::size_of;
+                    let base_bits = 8 * size_of::<<#field_type as modular_bitfield::Specifier>::Base>();
+                    let max_value: <#field_type as modular_bitfield::Specifier>::Base = {
+                        !0 >> (base_bits - <#field_type as modular_bitfield::Specifier>::BITS)
+                    };
+                    let raw_val = new_val.into_bits().into_raw();
+                    assert!(
+                        base_bits == <#field_type as modular_bitfield::Specifier>::BITS
+                        || raw_val <= max_value,
+                        #set_assert_msg
+                    );
+
+                    self.set::<#field_type>(#offset, raw_val)
                 }
             });
             offset.push(syn::parse_quote!{ <#field_type as modular_bitfield::Specifier>::BITS });
