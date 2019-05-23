@@ -236,6 +236,8 @@ impl BitfieldStruct {
                     };
                     let raw_val = new_val.into_bits().into_raw();
                     assert!(
+                        // We have this condition to let the compiler drop this check
+                        // for types that cannot have out-of-bounds values.
                         base_bits == <#field_type as modular_bitfield::Specifier>::BITS
                         || raw_val <= max_value,
                         #set_assert_msg
