@@ -105,21 +105,6 @@ handwritten::set_d ... bench:         606 ns/iter (+/- 21)
 handwritten::set_e ... bench:         456 ns/iter (+/- 21)
 ```
 
-### Future Plans
-
-- Add `no_std` support behind crate feature.
-- Add `u128` support behind crate feature.
-    - No default because it might explode compilation times.
-- Implement non-powers-of-two enums. (Specs from workshop.)
-- Implement codegen for tuple structs
-    - Example `struct Example(B1, B7, B8)`
-      with getters
-        - `get_0` and `set_0` for `B1`
-        - `get_1` and `set_1` for `B7`
-        - `get_2` and `set_2` for `B8`
-- Implement safe `try_set_*` for bitfield structs as checked setters that won't panic upon out of bounds input.
-- Implement unsafe `set_*_unchecked` for bitfield struct to allow users to avoid bounds checking.
-
 ### License
 
 <sup>
