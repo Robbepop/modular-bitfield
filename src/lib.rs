@@ -199,7 +199,7 @@ macro_rules! impl_push_bits {
                 #[inline(always)]
                 fn push_bits(&mut self, amount: u32, bits: u8) {
                     debug_assert!(amount <= 8);
-                    *self <<= amount;
+                    *self = self.wrapping_shl(amount);
                     *self |= (bits & ((0x1_u16.wrapping_shl(amount) as u8).wrapping_sub(1))) as $type;
                 }
             }
