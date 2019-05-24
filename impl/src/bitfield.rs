@@ -167,9 +167,9 @@ impl BitfieldStruct {
                     }
                 } else {
                     // Least-significant byte
-                    let stays_same = self.data[ls_byte] & (((0x1_u16.wrapping_shl(lsb_offset as u32) as u8).wrapping_sub(1)) as u8);
-                    let new = input.pop_bits(8 - lsb_offset as u32);
-                    self.data[ls_byte] = stays_same | (new << lsb_offset as u32);
+                    let stays_same = self.data[ls_byte] & ((0x1 << lsb_offset as u32) - 1);
+                    let overwrite = input.pop_bits(8 - lsb_offset as u32);
+                    self.data[ls_byte] = stays_same | (overwrite << lsb_offset as u32);
 
                     if ms_byte - ls_byte >= 2 {
                         // Middle bytes
@@ -180,7 +180,15 @@ impl BitfieldStruct {
 
                     if ls_byte != ms_byte {
                         // Most-significant byte
-                        self.data[ms_byte] |= input.pop_bits(msb_offset as u32);
+                        if msb_offset == 8 {
+                            // We don't need to respect what was formerly stored in the byte.
+                            self.data[ms_byte] = input.pop_bits(msb_offset as u32);
+                        } else {
+                            // All bits that do not belong to this field should be preserved.
+                            let stays_same = self.data[ms_byte] & !((0x1 << msb_offset) - 1);
+                            let overwrite = input.pop_bits(msb_offset as u32);
+                            self.data[ms_byte] = stays_same | overwrite;
+                        }
                     }
                 }
             }
