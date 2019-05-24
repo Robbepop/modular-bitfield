@@ -131,7 +131,7 @@ impl BitfieldStruct {
 
                     if ms_byte - ls_byte >= 2 {
                         // Middle bytes
-                        for byte in &self.data[(ls_byte + 1)..ms_byte] {
+                        for byte in self.data[(ls_byte + 1)..ms_byte].iter().rev() {
                             buffer.push_bits(8, *byte);
                         }
                     }
