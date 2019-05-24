@@ -114,6 +114,7 @@ impl BitfieldStruct {
                 let ms_byte = (end - 1) / 8; // compile-time
                 let lsb_offset = start % 8; // compile-time
                 let msb_offset = end % 8; // compile-time
+                let msb_offset = if msb_offset == 0 { 8 } else { msb_offset };
 
                 let mut buffer = <T as modular_bitfield::Specifier>::Base::default();
 
@@ -155,6 +156,7 @@ impl BitfieldStruct {
                 let ms_byte = (end - 1) / 8; // compile-time
                 let lsb_offset = start % 8; // compile-time
                 let msb_offset = end % 8; // compile-time
+                let msb_offset = if msb_offset == 0 { 8 } else { msb_offset };
 
                 let mut input = new_val;
 
