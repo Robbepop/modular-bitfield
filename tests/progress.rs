@@ -16,4 +16,5 @@ fn tests() {
     t.compile_fail("tests/11-bits-attribute-wrong.rs");
     t.pass("tests/12-accessors-edge.rs");
     t.pass("tests/13-tuple-structs.rs");
+    t.pass("tests/14-checked-setters.rs");
 }
