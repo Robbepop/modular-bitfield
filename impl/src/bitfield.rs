@@ -217,7 +217,24 @@ impl BitfieldStruct {
                 &format!("value out of bounds for field {}.{}", self.ast.ident, field_name)
             );
 
+            let getter_docs = format!("Returns the value of {}.", field_name);
+            let setter_docs = format!(
+                "Sets the value of {} to the given value.\n\n\
+                 #Panics\n\n\
+                 If the given value is out of bounds for {}",
+                 field_name,
+                 field_name,
+            );
+            let checked_setter_docs = format!(
+                "Sets the value of {} to the given value.\n\n\
+                 #Errors\n\n\
+                 If the given value is out of bounds for {}",
+                 field_name,
+                 field_name,
+            );
+
             expanded.extend(quote!{
+                #[doc = #getter_docs]
                 pub fn #getter_name(&self) -> <#field_type as modular_bitfield::Specifier>::Face {
                     #bits_check_tokens
 
@@ -226,8 +243,10 @@ impl BitfieldStruct {
                     )
                 }
 
+                #[doc = #setter_docs]
                 pub fn #setter_name(&mut self, new_val: <#field_type as modular_bitfield::Specifier>::Face) {
                     self.#checked_setter_name(new_val).expect(#set_assert_msg)
+                #[doc = #checked_setter_docs]
                 pub fn #checked_setter_name(
                     &mut self,
                     new_val: <#field_type as modular_bitfield::Specifier>::Face
