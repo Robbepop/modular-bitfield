@@ -235,6 +235,7 @@ impl BitfieldStruct {
 
             expanded.extend(quote!{
                 #[doc = #getter_docs]
+                #[inline]
                 pub fn #getter_name(&self) -> <#field_type as modular_bitfield::Specifier>::Face {
                     #bits_check_tokens
 
@@ -244,9 +245,13 @@ impl BitfieldStruct {
                 }
 
                 #[doc = #setter_docs]
+                #[inline]
                 pub fn #setter_name(&mut self, new_val: <#field_type as modular_bitfield::Specifier>::Face) {
                     self.#checked_setter_name(new_val).expect(#set_assert_msg)
+                }
+
                 #[doc = #checked_setter_docs]
+                #[inline]
                 pub fn #checked_setter_name(
                     &mut self,
                     new_val: <#field_type as modular_bitfield::Specifier>::Face
