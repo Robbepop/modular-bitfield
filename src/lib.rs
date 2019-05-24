@@ -69,6 +69,9 @@
 //!     assert_eq!(example.get_c(), 42);
 //!     assert_eq!(example.get_d(), DeliveryMode::Startup);
 //!     assert_eq!(example.get_e(), 1_u8);
+//!
+//!     // Safe API allows for better testing
+//!     assert_eq!(example.set_e_checked(100), Err(Error::OutOfBounds));
 //! }
 //! ```
 //!
