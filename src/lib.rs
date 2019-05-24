@@ -147,6 +147,7 @@ pub mod prelude {
         SpecifierBase,
         IntoBits,
         FromBits,
+        Error,
     };
 }
 
