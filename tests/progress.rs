@@ -17,4 +17,5 @@ fn tests() {
     t.pass("tests/12-accessors-edge.rs");
     t.pass("tests/13-tuple-structs.rs");
     t.pass("tests/14-checked-setters.rs");
+    t.pass("tests/15-manual-reset.rs");
 }
