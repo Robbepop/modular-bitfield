@@ -211,9 +211,9 @@ impl_sealed_for!(bool, u8, u16, u32, u64, u128);
 impl PopBits for u8 {
     #[inline(always)]
     fn pop_bits(&mut self, amount: u32) -> u8 {
-        debug_assert!(amount <= 8);
+        debug_assert!(0 < amount && amount <= 8);
         let res = *self & ((0x1_u16.wrapping_shl(amount) as u8).wrapping_sub(1));
-        *self = self.wrapping_shr(amount);
+        *self /= 0x80 >> (8 - amount);
         res
     }
 }
@@ -224,9 +224,9 @@ macro_rules! impl_push_bits {
             impl PushBits for $type {
                 #[inline(always)]
                 fn push_bits(&mut self, amount: u32, bits: u8) {
-                    debug_assert!(amount <= 8);
+                    debug_assert!(0 < amount && amount <= 8);
                     *self = self.wrapping_shl(amount);
-                    *self |= (bits & ((0x1_u16.wrapping_shl(amount) as u8).wrapping_sub(1))) as $type;
+                    *self |= (bits & (0xFF >> (8 - amount))) as $type;
                 }
             }
         )+
@@ -241,9 +241,9 @@ macro_rules! impl_pop_bits {
             impl PopBits for $type {
                 #[inline(always)]
                 fn pop_bits(&mut self, amount: u32) -> u8 {
-                    debug_assert!(amount <= 8);
-                    let res = (*self & ((0x1 << amount) - 1)) as u8;
-                    *self >>= amount;
+                    debug_assert!(0 < amount && amount <= 8);
+                    let res = (*self & (0xFF >> (8 - amount))) as u8;
+                    *self /= 0x1 << amount;
                     res
                 }
             }
