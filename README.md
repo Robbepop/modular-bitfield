@@ -30,13 +30,13 @@ pub struct Example {
 /// as shown above.
 #[derive(BitfieldSpecifier, Debug, PartialEq)]
 pub enum DeliveryMode {
-    Fixed,
+    Fixed = 1,
     Lowest,
     SMI,
     RemoteRead,
     NMI,
     Init = 0,
-    Startup,
+    Startup = 6,
     External,
 }
 
@@ -52,17 +52,20 @@ fn it_works() {
 
     // Modify the bitfields.
     example.set_a(true);
-    example.set_b(0b111_1111_u8); // Uses `u8`
-    example.set_c(42_u16);        // Uses `u16`
+    example.set_b(0b0001_1111_1111_u16); // Uses `u16`
+    example.set_c(42_u16);               // Uses `u16`
     example.set_d(DeliveryMode::Startup);
-    example.set_e(1);             // Uses `u8`
+    example.set_e(1);                    // Uses `u8`
 
     // Assert the previous modifications.
     assert_eq!(example.get_a(), true);
-    assert_eq!(example.get_b(), 0b111_1111_u8);
-    assert_eq!(example.get_c(), 42_u16);
+    assert_eq!(example.get_b(), 0b0001_1111_1111_u16);
+    assert_eq!(example.get_c(), 42);
     assert_eq!(example.get_d(), DeliveryMode::Startup);
-    assert_eq!(example.get_c(), 1_u8);
+    assert_eq!(example.get_e(), 1_u8);
+
+    // Safe API allows for better testing
+    assert_eq!(example.set_e_checked(100), Err(Error::OutOfBounds));
 }
 ```
 
