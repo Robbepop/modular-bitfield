@@ -197,6 +197,7 @@ impl BitfieldStruct {
                 .unwrap_or(format!("{}", n));
             let getter_name = syn::Ident::from_str(format!("get_{}", field_name));
             let setter_name = syn::Ident::from_str(format!("set_{}", field_name));
+            let checked_setter_name = syn::Ident::from_str(format!("set_{}_checked", field_name));
             let field_type = &field.ty;
 
             let mut bits_check_tokens = quote! {};
@@ -226,21 +227,25 @@ impl BitfieldStruct {
                 }
 
                 pub fn #setter_name(&mut self, new_val: <#field_type as modular_bitfield::Specifier>::Face) {
+                    self.#checked_setter_name(new_val).expect(#set_assert_msg)
+                pub fn #checked_setter_name(
+                    &mut self,
+                    new_val: <#field_type as modular_bitfield::Specifier>::Face
+                ) -> Result<(), modular_bitfield::Error> {
                     use ::core::mem::size_of;
                     let base_bits = 8 * size_of::<<#field_type as modular_bitfield::Specifier>::Base>();
                     let max_value: <#field_type as modular_bitfield::Specifier>::Base = {
                         !0 >> (base_bits - <#field_type as modular_bitfield::Specifier>::BITS)
                     };
+                    let spec_bits = <#field_type as modular_bitfield::Specifier>::BITS;
                     let raw_val = new_val.into_bits().into_raw();
-                    assert!(
-                        // We have this condition to let the compiler drop this check
-                        // for types that cannot have out-of-bounds values.
-                        base_bits == <#field_type as modular_bitfield::Specifier>::BITS
-                        || raw_val <= max_value,
-                        #set_assert_msg
-                    );
-
-                    self.set::<#field_type>(#offset, raw_val)
+                    // We compare base bits with spec bits to drop this condition
+                    // if there cannot be invalid inputs.
+                    if !(base_bits == spec_bits || raw_val <= max_value) {
+                        return Err(modular_bitfield::Error::OutOfBounds)
+                    }
+                    self.set::<#field_type>(#offset, raw_val);
+                    Ok(())
                 }
             });
             offset.push(syn::parse_quote!{ <#field_type as modular_bitfield::Specifier>::BITS });
