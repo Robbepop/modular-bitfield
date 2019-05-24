@@ -6,7 +6,7 @@ use quote::{
 
 pub fn generate(_input: TokenStream2) -> TokenStream2 {
     let mut tokens = quote!{};
-    for n in 1usize..=64 {
+    for n in 1usize..=128 {
         let t_origin = match n {
             1..=8 => quote!{u8},
             9..=16 => quote!{u16},

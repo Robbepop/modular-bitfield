@@ -18,4 +18,5 @@ fn tests() {
     t.pass("tests/13-tuple-structs.rs");
     t.pass("tests/14-checked-setters.rs");
     t.pass("tests/15-manual-reset.rs");
+    t.pass("tests/16-u128-specifier.rs");
 }
