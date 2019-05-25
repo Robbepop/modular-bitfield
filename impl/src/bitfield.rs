@@ -72,12 +72,13 @@ impl BitfieldStruct {
         };
         let mut expanded = quote! {};
         let attrs = &self.ast.attrs;
-        let internal_methods = self.expand_internal_methods()?;
+        let internal_methods = self.expand_internal_methods();
+        let byte_conversion_impls = self.expand_byte_conversion_impls();
         let getters_and_setters = self.expand_getters_and_setters()?;
         let ident = &self.ast.ident;
         expanded.extend(quote!{
             #(#attrs)*
-            #[repr(C)]
+            #[repr(transparent)]
             pub struct #ident
             {
                 data: [u8; (#size) / 8],
@@ -98,12 +99,60 @@ impl BitfieldStruct {
                 #internal_methods
                 #getters_and_setters
             }
+
+            #byte_conversion_impls
         });
         Ok(expanded)
     }
 
-    fn expand_internal_methods(&self) -> Result<TokenStream2> {
-        Ok(quote! {
+    fn expand_byte_conversion_impls(&self) -> TokenStream2 {
+        let ident = &self.ast.ident;
+        quote! {
+            impl #ident {
+                /// Returns the underlying bits.
+                ///
+                /// # Layout
+                ///
+                /// The returned byte slice is layed out in the same way as described
+                /// [here](https://docs.rs/modular-bitfield/0.4.0/modular_bitfield/#generated-structure).
+                #[inline]
+                pub fn to_bytes(&self) -> &[u8] {
+                    &self.data
+                }
+            }
+
+            impl<'a> core::convert::TryFrom<&'a [u8]> for #ident {
+                type Error = modular_bitfield::Error;
+
+                /// Constructs the bitfield struct from the given bytes.
+                ///
+                /// # Layout
+                ///
+                /// Expects the given buffer to be layed out as described
+                /// [here](https://docs.rs/modular-bitfield/0.4.0/modular_bitfield/#generated-structure).
+                ///
+                /// # Errors
+                ///
+                /// If the length of the byte slice doesn't match the length of the
+                /// underlying byte buffer of the bitfield struct which is always exactly
+                /// as long as needed to store all bits.
+                #[inline]
+                fn try_from(bytes: &[u8]) -> Result<Self, Self::Error> {
+                    // We can do this because bitfield structs being `#[repr(transparent)]`.
+                    const REQ_BYTES: usize = core::mem::size_of::<#ident>();
+                    if bytes.len() != REQ_BYTES {
+                        return Err(Error::InvalidBufferLen)
+                    }
+                    let mut data = [0; REQ_BYTES];
+                    data.copy_from_slice(bytes);
+                    Ok(Self { data })
+                }
+            }
+        }
+    }
+
+    fn expand_internal_methods(&self) -> TokenStream2 {
+        quote! {
             #[inline(always)]
             fn get<T>(&self, start: usize) -> <T as modular_bitfield::Specifier>::Base
             where
@@ -192,7 +241,7 @@ impl BitfieldStruct {
                     }
                 }
             }
-        })
+        }
     }
 
     fn expand_getters_and_setters(&self) -> Result<TokenStream2> {
