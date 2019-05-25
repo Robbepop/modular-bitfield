@@ -22,6 +22,7 @@
 //!
 //! /// Bitfield struct with 32 bits in total.
 //! #[bitfield]
+//! #[derive(Debug, PartialEq, Eq)]
 //! pub struct Example {
 //!     a: bool,         // Uses 1 bit
 //!     b: B9,           // Uses 9 bits
@@ -72,6 +73,12 @@
 //!
 //!     // Safe API allows for better testing
 //!     assert_eq!(example.set_e_checked(200), Err(Error::OutOfBounds));
+//!
+//!     // Can convert from and to bytes.
+//!     assert_eq!(example.to_bytes(), &[255, 171, 128, 3]);
+//!     use std::convert::TryFrom as _;
+//!     let copy = Example::try_from(example.to_bytes()).unwrap();
+//!     assert_eq!(example, copy);
 //! }
 //! ```
 //!
