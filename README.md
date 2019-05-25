@@ -16,6 +16,7 @@ type Vitamin = B12;
 
 /// Bitfield struct with 32 bits in total.
 #[bitfield]
+#[derive(Debug, PartialEq, Eq)]
 pub struct Example {
     a: bool,         // Uses 1 bit
     b: B9,           // Uses 9 bits
@@ -40,7 +41,7 @@ pub enum DeliveryMode {
     External,
 }
 
-fn it_works() {
+fn main() {
     let mut example = Example::new();
 
     // Assert that everything is inizialized to 0.
@@ -52,10 +53,10 @@ fn it_works() {
 
     // Modify the bitfields.
     example.set_a(true);
-    example.set_b(0b0001_1111_1111_u16); // Uses `u16`
-    example.set_c(42_u16);               // Uses `u16`
+    example.set_b(0b0001_1111_1111_u16);  // Uses `u16`
+    example.set_c(42_u16);                // Uses `u16`
     example.set_d(DeliveryMode::Startup);
-    example.set_e(1);                    // Uses `u8`
+    example.set_e(1);                     // Uses `u8`
 
     // Assert the previous modifications.
     assert_eq!(example.get_a(), true);
@@ -65,7 +66,13 @@ fn it_works() {
     assert_eq!(example.get_e(), 1_u8);
 
     // Safe API allows for better testing
-    assert_eq!(example.set_e_checked(100), Err(Error::OutOfBounds));
+    assert_eq!(example.set_e_checked(200), Err(Error::OutOfBounds));
+
+    // Can convert from and to bytes.
+    assert_eq!(example.to_bytes(), &[255, 171, 128, 3]);
+    use std::convert::TryFrom as _;
+    let copy = Example::try_from(example.to_bytes()).unwrap();
+    assert_eq!(example, copy);
 }
 ```
 
