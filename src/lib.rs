@@ -46,7 +46,7 @@
 //!     External,
 //! }
 //!
-//! fn it_works() {
+//! fn main() {
 //!     let mut example = Example::new();
 //!
 //!     // Assert that everything is inizialized to 0.
