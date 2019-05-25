@@ -19,4 +19,5 @@ fn tests() {
     t.pass("tests/14-checked-setters.rs");
     t.pass("tests/15-manual-reset.rs");
     t.pass("tests/16-u128-specifier.rs");
+    t.pass("tests/17-byte-conversions.rs");
 }
