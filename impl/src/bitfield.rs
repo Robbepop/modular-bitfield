@@ -114,7 +114,7 @@ impl BitfieldStruct {
                 /// # Layout
                 ///
                 /// The returned byte slice is layed out in the same way as described
-                /// [here](https://docs.rs/modular-bitfield/0.4.0/modular_bitfield/#generated-structure).
+                /// [here](https://docs.rs/modular-bitfield/#generated-structure).
                 #[inline]
                 pub fn to_bytes(&self) -> &[u8] {
                     &self.data
@@ -129,7 +129,7 @@ impl BitfieldStruct {
                 /// # Layout
                 ///
                 /// Expects the given buffer to be layed out as described
-                /// [here](https://docs.rs/modular-bitfield/0.4.0/modular_bitfield/#generated-structure).
+                /// [here](https://docs.rs/modular-bitfield/#generated-structure).
                 ///
                 /// # Errors
                 ///
