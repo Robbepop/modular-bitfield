@@ -22,7 +22,7 @@ path = "tests/progress.rs"
 trybuild = "1.0"
 
 [dependencies]
-modular-bitfield-impl = { path = "impl" }
+modular-bitfield-impl = { path = "impl", version = "0.6" }
 
 [badges]
 travis-ci = { repository = "robbepop/modular-bitfield" }
