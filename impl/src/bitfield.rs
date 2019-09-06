@@ -261,7 +261,7 @@ impl BitfieldStruct {
 
             let mut bits_check_tokens = quote! {};
             for attr in field.attrs.iter().filter(|attr| attr.path.is_ident("bits")) {
-                let bits_arg = syn::parse::<BitsAttributeArgs>(attr.tts.clone().into()).unwrap();
+                let bits_arg = syn::parse::<BitsAttributeArgs>(attr.tokens.clone().into()).unwrap();
                 let expected_bits = bits_arg.size;
                 bits_check_tokens.extend(quote_spanned! { expected_bits.span() =>
                     let _ = modular_bitfield::checks::BitsCheck::<

@@ -16,9 +16,9 @@ keywords   = ["bitfield", "bit", "bitfields"]
 proc-macro = true
 
 [dependencies]
-quote = "0.6"
-syn = { version = "0.15", features = ["full"] }
-proc-macro2 = "0.4"
+quote = "1"
+syn = { version = "1", features = ["full"] }
+proc-macro2 = "1"
 heck = "0.3"
 
 [badges]

@@ -97,7 +97,7 @@ pub fn generate3(input: syn::ItemEnum) -> syn::Result<TokenStream2> {
             type Face = Self;
         }
 
-        impl FromBits<<#enum_ident as modular_bitfield::Specifier>::Base> for #enum_ident {
+        impl modular_bitfield::FromBits<<#enum_ident as modular_bitfield::Specifier>::Base> for #enum_ident {
             #[inline(always)]
             fn from_bits(bits: modular_bitfield::Bits<<#enum_ident as modular_bitfield::Specifier>::Base>) -> Self {
                 match bits.into_raw() {
@@ -110,7 +110,7 @@ pub fn generate3(input: syn::ItemEnum) -> syn::Result<TokenStream2> {
             }
         }
 
-        impl IntoBits<<#enum_ident as modular_bitfield::Specifier>::Base> for #enum_ident {
+        impl modular_bitfield::IntoBits<<#enum_ident as modular_bitfield::Specifier>::Base> for #enum_ident {
             #[inline(always)]
             fn into_bits(self) -> modular_bitfield::Bits<<#enum_ident as modular_bitfield::Specifier>::Base> {
                 modular_bitfield::Bits(
