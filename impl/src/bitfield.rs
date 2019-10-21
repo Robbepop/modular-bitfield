@@ -167,7 +167,7 @@ impl BitfieldStruct {
 
                 let mut buffer = <T as modular_bitfield::Specifier>::Base::default();
 
-                if lsb_offset == 0 && msb_offset == 0 {
+                if lsb_offset == 0 && msb_offset == 8 {
                     // Edge-case for whole bytes manipulation.
                     for byte in self.data[ls_byte..(ms_byte + 1)].iter().rev() {
                         buffer.push_bits(8, *byte)
