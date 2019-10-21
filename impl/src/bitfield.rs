@@ -167,7 +167,7 @@ impl BitfieldStruct {
 
                 let mut buffer = <T as modular_bitfield::Specifier>::Base::default();
 
-                if lsb_offset == 0 && msb_offset == 0 {
+                if lsb_offset == 0 && msb_offset == 8 {
                     // Edge-case for whole bytes manipulation.
                     for byte in self.data[ls_byte..(ms_byte + 1)].iter().rev() {
                         buffer.push_bits(8, *byte)
@@ -209,14 +209,21 @@ impl BitfieldStruct {
 
                 let mut input = new_val;
 
-                if lsb_offset == 0 && msb_offset == 0 {
+                if lsb_offset == 0 && msb_offset == 8 {
                     // Edge-case for whole bytes manipulation.
                     for byte in self.data[ls_byte..(ms_byte + 1)].iter_mut() {
                         *byte = input.pop_bits(8);
                     }
                 } else {
                     // Least-significant byte
-                    let stays_same = self.data[ls_byte] & ((0x1 << lsb_offset as u32) - 1);
+                    let stays_same = self.data[ls_byte] &
+                        (
+                            if ls_byte == ms_byte && msb_offset != 8 {
+                                !((0x1 << msb_offset) - 1)
+                            } else {
+                                0
+                            } | ((0x1 << lsb_offset as u32) - 1)
+                        );
                     let overwrite = input.pop_bits(8 - lsb_offset as u32);
                     self.data[ls_byte] = stays_same | (overwrite << lsb_offset as u32);
 
