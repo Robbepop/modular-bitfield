@@ -225,9 +225,14 @@ impl_sealed_for!(bool, u8, u16, u32, u64, u128);
 impl PopBits for u8 {
     #[inline(always)]
     fn pop_bits(&mut self, amount: u32) -> u8 {
+        let orig_bits = self.count_ones();
         debug_assert!(0 < amount && amount <= 8);
-        let res = *self & ((0x1_u16.wrapping_shl(amount) as u8).wrapping_sub(1));
-        *self /= 0x80 >> (8 - amount);
+        let res = *self & ((0x1_u16.wrapping_shl(amount)).wrapping_sub(1) as u8);
+        *self = match self.overflowing_shr(amount) {
+            (v, false) => v,
+            _ => 0,
+        };
+        assert_eq!(res.count_ones() + self.count_ones(), orig_bits);
         res
     }
 }
@@ -238,9 +243,11 @@ macro_rules! impl_push_bits {
             impl PushBits for $type {
                 #[inline(always)]
                 fn push_bits(&mut self, amount: u32, bits: u8) {
+                    let orig_bits = self.count_ones();
                     debug_assert!(0 < amount && amount <= 8);
                     *self = self.wrapping_shl(amount);
                     *self |= (bits & (0xFF >> (8 - amount))) as $type;
+                    assert_eq!((bits & (0xFF >> (8 - amount))).count_ones() + orig_bits, self.count_ones());
                 }
             }
         )+
@@ -255,9 +262,14 @@ macro_rules! impl_pop_bits {
             impl PopBits for $type {
                 #[inline(always)]
                 fn pop_bits(&mut self, amount: u32) -> u8 {
+                    let orig_bits = self.count_ones();
                     debug_assert!(0 < amount && amount <= 8);
                     let res = (*self & (0xFF >> (8 - amount))) as u8;
-                    *self /= 0x1 << amount;
+                    *self = match self.overflowing_shr(amount) {
+                        (v, false) => v,
+                        _ => 0,
+                    };
+                    assert_eq!(res.count_ones() + self.count_ones(), orig_bits);
                     res
                 }
             }

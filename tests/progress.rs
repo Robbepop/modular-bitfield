@@ -21,4 +21,5 @@ fn tests() {
     t.pass("tests/16-u128-specifier.rs");
     t.pass("tests/17-byte-conversions.rs");
     t.pass("tests/18-within-single-byte.rs");
+    t.pass("tests/19-get-spanning-data.rs");
 }
