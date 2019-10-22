@@ -51,11 +51,11 @@
 //!     let mut example = Example::new();
 //!
 //!     // Assert that everything is inizialized to 0.
-//!     assert_eq!(example.get_a(), false);
-//!     assert_eq!(example.get_b(), 0);
-//!     assert_eq!(example.get_c(), 0);
-//!     assert_eq!(example.get_d(), DeliveryMode::Init);
-//!     assert_eq!(example.get_e(), 0);
+//!     debug_assert_eq!(example.get_a(), false);
+//!     debug_assert_eq!(example.get_b(), 0);
+//!     debug_assert_eq!(example.get_c(), 0);
+//!     debug_assert_eq!(example.get_d(), DeliveryMode::Init);
+//!     debug_assert_eq!(example.get_e(), 0);
 //!
 //!     // Modify the bitfields.
 //!     example.set_a(true);
@@ -65,20 +65,20 @@
 //!     example.set_e(1);                // Uses `u8`
 //!
 //!     // Assert the previous modifications.
-//!     assert_eq!(example.get_a(), true);
-//!     assert_eq!(example.get_b(), 0b0001_1111_1111_u16);
-//!     assert_eq!(example.get_c(), 42);
-//!     assert_eq!(example.get_d(), DeliveryMode::Startup);
-//!     assert_eq!(example.get_e(), 1_u8);
+//!     debug_assert_eq!(example.get_a(), true);
+//!     debug_assert_eq!(example.get_b(), 0b0001_1111_1111_u16);
+//!     debug_assert_eq!(example.get_c(), 42);
+//!     debug_assert_eq!(example.get_d(), DeliveryMode::Startup);
+//!     debug_assert_eq!(example.get_e(), 1_u8);
 //!
 //!     // Safe API allows for better testing
-//!     assert_eq!(example.set_e_checked(200), Err(Error::OutOfBounds));
+//!     debug_assert_eq!(example.set_e_checked(200), Err(Error::OutOfBounds));
 //!
 //!     // Can convert from and to bytes.
-//!     assert_eq!(example.to_bytes(), &[255, 171, 128, 3]);
+//!     debug_assert_eq!(example.to_bytes(), &[255, 171, 128, 3]);
 //!     use std::convert::TryFrom as _;
 //!     let copy = Example::try_from(example.to_bytes()).unwrap();
-//!     assert_eq!(example, copy);
+//!     debug_assert_eq!(example, copy);
 //! }
 //! ```
 //!
@@ -232,7 +232,7 @@ impl PopBits for u8 {
             (v, false) => v,
             _ => 0,
         };
-        assert_eq!(res.count_ones() + self.count_ones(), orig_bits);
+        debug_assert_eq!(res.count_ones() + self.count_ones(), orig_bits);
         res
     }
 }
@@ -247,7 +247,7 @@ macro_rules! impl_push_bits {
                     debug_assert!(0 < amount && amount <= 8);
                     *self = self.wrapping_shl(amount);
                     *self |= (bits & (0xFF >> (8 - amount))) as $type;
-                    assert_eq!((bits & (0xFF >> (8 - amount))).count_ones() + orig_bits, self.count_ones());
+                    debug_assert_eq!((bits & (0xFF >> (8 - amount))).count_ones() + orig_bits, self.count_ones());
                 }
             }
         )+
@@ -269,7 +269,7 @@ macro_rules! impl_pop_bits {
                         (v, false) => v,
                         _ => 0,
                     };
-                    assert_eq!(res.count_ones() + self.count_ones(), orig_bits);
+                    debug_assert_eq!(res.count_ones() + self.count_ones(), orig_bits);
                     res
                 }
             }
