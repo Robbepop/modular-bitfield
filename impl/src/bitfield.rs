@@ -261,7 +261,7 @@ impl BitfieldStruct {
                 .as_ref()
                 .map(ToString::to_string)
                 .unwrap_or(format!("{}", n));
-            let getter_name = syn::Ident::from_str(format!("get_{}", field_name));
+            let getter_name = syn::Ident::from_str(field_name.clone());
             let setter_name = syn::Ident::from_str(format!("set_{}", field_name));
             let checked_setter_name = syn::Ident::from_str(format!("set_{}_checked", field_name));
             let field_type = &field.ty;

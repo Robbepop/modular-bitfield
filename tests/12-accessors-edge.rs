@@ -21,10 +21,10 @@ pub struct EdgeCaseBytes {
 
 fn main() {
     let mut bitfield = EdgeCaseBytes::new();
-    assert_eq!(0, bitfield.get_a());
-    assert_eq!(0, bitfield.get_b());
-    assert_eq!(0, bitfield.get_c());
-    assert_eq!(0, bitfield.get_d());
+    assert_eq!(0, bitfield.a());
+    assert_eq!(0, bitfield.b());
+    assert_eq!(0, bitfield.c());
+    assert_eq!(0, bitfield.d());
 
     let a = 0b1100_0011_1;
     let b = 0b101_010;
@@ -36,8 +36,8 @@ fn main() {
     bitfield.set_c(c);
     bitfield.set_d(d);
 
-    assert_eq!(a, bitfield.get_a());
-    assert_eq!(b, bitfield.get_b());
-    assert_eq!(c, bitfield.get_c());
-    assert_eq!(d, bitfield.get_d());
+    assert_eq!(a, bitfield.a());
+    assert_eq!(b, bitfield.b());
+    assert_eq!(c, bitfield.c());
+    assert_eq!(d, bitfield.d());
 }

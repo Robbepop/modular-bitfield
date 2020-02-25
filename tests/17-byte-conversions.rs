@@ -19,10 +19,10 @@ fn main() {
     bitfield_1.set_c(444);
     bitfield_1.set_d(1337);
 
-    assert_eq!(bitfield_1.get_a(), true);
-    assert_eq!(bitfield_1.get_b(), 3);
-    assert_eq!(bitfield_1.get_c(), 444);
-    assert_eq!(bitfield_1.get_d(), 1337);
+    assert_eq!(bitfield_1.a(), true);
+    assert_eq!(bitfield_1.b(), 3);
+    assert_eq!(bitfield_1.c(), 444);
+    assert_eq!(bitfield_1.d(), 1337);
 
     let bytes = bitfield_1.to_bytes();
     assert_eq!(bytes, &[231, 13, 57, 5]);
@@ -30,10 +30,10 @@ fn main() {
     use std::convert::TryFrom;
     let bitfield2 = MyFourBytes::try_from(bytes).unwrap();
 
-    assert_eq!(bitfield2.get_a(), true);
-    assert_eq!(bitfield2.get_b(), 3);
-    assert_eq!(bitfield2.get_c(), 444);
-    assert_eq!(bitfield2.get_d(), 1337);
+    assert_eq!(bitfield2.a(), true);
+    assert_eq!(bitfield2.b(), 3);
+    assert_eq!(bitfield2.c(), 444);
+    assert_eq!(bitfield2.d(), 1337);
 
     let too_few_bytes = &bytes[0..2];
     let too_many_bytes = {

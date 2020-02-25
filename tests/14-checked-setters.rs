@@ -13,9 +13,9 @@ fn main() {
     let mut bitfield = MyTwoBytes::new();
 
     // Everything is initialized to zero.
-    assert_eq!(bitfield.get_a(), 0);
-    assert_eq!(bitfield.get_b(), 0);
-    assert_eq!(bitfield.get_c(), 0);
+    assert_eq!(bitfield.a(), 0);
+    assert_eq!(bitfield.b(), 0);
+    assert_eq!(bitfield.c(), 0);
 
     // Do some invalid manipulations.
     assert_eq!(bitfield.set_a_checked(2), Err(Error::OutOfBounds));
@@ -23,9 +23,9 @@ fn main() {
     assert_eq!(bitfield.set_c_checked(12345), Err(Error::OutOfBounds));
 
     // Asserts that nothing has changed.
-    assert_eq!(bitfield.get_a(), 0);
-    assert_eq!(bitfield.get_b(), 0);
-    assert_eq!(bitfield.get_c(), 0);
+    assert_eq!(bitfield.a(), 0);
+    assert_eq!(bitfield.b(), 0);
+    assert_eq!(bitfield.c(), 0);
 
     // Do some valid manipulations.
     assert_eq!(bitfield.set_a_checked(1), Ok(()));
@@ -33,7 +33,7 @@ fn main() {
     assert_eq!(bitfield.set_c_checked(42), Ok(()));
 
     // Asserts that the valid manipulation has had effect.
-    assert_eq!(bitfield.get_a(), 1);
-    assert_eq!(bitfield.get_b(), 3);
-    assert_eq!(bitfield.get_c(), 42);
+    assert_eq!(bitfield.a(), 1);
+    assert_eq!(bitfield.b(), 3);
+    assert_eq!(bitfield.c(), 42);
 }

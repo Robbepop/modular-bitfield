@@ -24,7 +24,7 @@ fn main() {
 
     // I am testing the signatures in this roundabout way to avoid making it
     // possible to pass this test with a generic signature that is inconvenient
-    // for callers, such as `fn get_a<T: From<u64>>(&self) -> T`.
+    // for callers, such as `fn a<T: From<u64>>(&self) -> T`.
 
     let a = 1;
     x.set_a(a); // expect fn(&mut MyFourBytes, u8)
@@ -40,8 +40,8 @@ fn main() {
     assert_eq!(size_of_val(&c), 1);
     assert_eq!(size_of_val(&d), 4);
 
-    assert_eq!(size_of_val(&x.get_a()), 1); // expect fn(&MyFourBytes) -> u8
-    assert_eq!(size_of_val(&x.get_b()), 1);
-    assert_eq!(size_of_val(&x.get_c()), 1);
-    assert_eq!(size_of_val(&x.get_d()), 4); // expect fn(&MyFourBytes) -> u32
+    assert_eq!(size_of_val(&x.a()), 1); // expect fn(&MyFourBytes) -> u8
+    assert_eq!(size_of_val(&x.b()), 1);
+    assert_eq!(size_of_val(&x.c()), 1);
+    assert_eq!(size_of_val(&x.d()), 4); // expect fn(&MyFourBytes) -> u32
 }
