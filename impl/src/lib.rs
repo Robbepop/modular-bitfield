@@ -42,15 +42,15 @@ pub fn define_specifiers(input: TokenStream) -> TokenStream {
 ///
 /// fn main() {
 ///     let mut example = Example::new();
-///     assert_eq!(example.get_a(), 0);
-///     assert_eq!(example.get_b(), 0);
-///     assert_eq!(example.get_c(), 0);
+///     assert_eq!(example.a(), 0);
+///     assert_eq!(example.b(), 0);
+///     assert_eq!(example.c(), 0);
 ///     example.set_a(1);
 ///     example.set_b(0b0100_0000);
 ///     example.set_c(1337);
-///     assert_eq!(example.get_a(), 1);
-///     assert_eq!(example.get_b(), 0b0100_0000);
-///     assert_eq!(example.get_c(), 1337);
+///     assert_eq!(example.a(), 1);
+///     assert_eq!(example.b(), 0b0100_0000);
+///     assert_eq!(example.c(), 1337);
 /// }
 /// ```
 #[proc_macro_attribute]
@@ -86,12 +86,12 @@ pub fn bitfield(args: TokenStream, input: TokenStream) -> TokenStream {
 ///
 /// fn main() {
 ///     let mut example = Example::new();
-///     assert_eq!(example.get_a(), false); // `false as u8` is 0
-///     assert_eq!(example.get_b(), Mode::Sleep);
+///     assert_eq!(example.a(), false); // `false as u8` is 0
+///     assert_eq!(example.b(), Mode::Sleep);
 ///     example.set_a(true);
 ///     example.set_b(Mode::Awake);
-///     assert_eq!(example.get_a(), true); // `true as u8` is 1
-///     assert_eq!(example.get_b(), Mode::Awake);
+///     assert_eq!(example.a(), true); // `true as u8` is 1
+///     assert_eq!(example.b(), Mode::Awake);
 /// }
 /// ```
 #[proc_macro_derive(BitfieldSpecifier)]

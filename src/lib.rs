@@ -51,11 +51,11 @@
 //!     let mut example = Example::new();
 //!
 //!     // Assert that everything is inizialized to 0.
-//!     assert_eq!(example.get_a(), false);
-//!     assert_eq!(example.get_b(), 0);
-//!     assert_eq!(example.get_c(), 0);
-//!     assert_eq!(example.get_d(), DeliveryMode::Init);
-//!     assert_eq!(example.get_e(), 0);
+//!     assert_eq!(example.a(), false);
+//!     assert_eq!(example.b(), 0);
+//!     assert_eq!(example.c(), 0);
+//!     assert_eq!(example.d(), DeliveryMode::Init);
+//!     assert_eq!(example.e(), 0);
 //!
 //!     // Modify the bitfields.
 //!     example.set_a(true);
@@ -65,11 +65,11 @@
 //!     example.set_e(1);                // Uses `u8`
 //!
 //!     // Assert the previous modifications.
-//!     assert_eq!(example.get_a(), true);
-//!     assert_eq!(example.get_b(), 0b0001_1111_1111_u16);
-//!     assert_eq!(example.get_c(), 42);
-//!     assert_eq!(example.get_d(), DeliveryMode::Startup);
-//!     assert_eq!(example.get_e(), 1_u8);
+//!     assert_eq!(example.a(), true);
+//!     assert_eq!(example.b(), 0b0001_1111_1111_u16);
+//!     assert_eq!(example.c(), 42);
+//!     assert_eq!(example.d(), DeliveryMode::Startup);
+//!     assert_eq!(example.e(), 1_u8);
 //!
 //!     // Safe API allows for better testing
 //!     assert_eq!(example.set_e_checked(200), Err(Error::OutOfBounds));
