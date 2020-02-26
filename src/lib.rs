@@ -47,6 +47,10 @@
 //!     External,
 //! }
 //!
+//! /// Tuple structs can also be used as bitfields.
+//! #[bitfield]
+//! pub struct TupleStruct(bool, B4, DeliveryMode);
+//!
 //! fn main() {
 //!     let mut example = Example::new();
 //!
@@ -79,6 +83,15 @@
 //!     use std::convert::TryFrom as _;
 //!     let copy = Example::try_from(example.to_bytes()).unwrap();
 //!     assert_eq!(example, copy);
+//!
+//!     // Accessing fields of a tuple struct bitfield
+//!     // uses the `get_n()` and `set_n()` functions.
+//!     let mut tuple_example = TupleStruct::new();
+//!     assert_eq!(tuple_example.get_0(), false);
+//!     assert_eq!(tuple_example.get_1(), 0);
+//!     assert_eq!(tuple_example.get_2(), DeliveryMode::Init);
+//!     tuple_example.set_2(DeliveryMode::Fixed);
+//!     assert_eq!(tuple_example.get_2(), DeliveryMode::Fixed);
 //! }
 //! ```
 //!
