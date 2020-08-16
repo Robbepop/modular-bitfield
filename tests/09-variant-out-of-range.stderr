@@ -1,7 +1,10 @@
 error[E0277]: the trait bound `modular_bitfield::checks::False: modular_bitfield::checks::DiscriminantInRange` is not satisfied
-  --> $DIR/09-variant-out-of-range.rs:17:5
-   |
-17 |     External,
-   |     ^^^^^^^^ the trait `modular_bitfield::checks::DiscriminantInRange` is not implemented for `modular_bitfield::checks::False`
-
-For more information about this error, try `rustc --explain E0277`.
+   --> $DIR/09-variant-out-of-range.rs:17:5
+    |
+17  |     External,
+    |     ^^^^^^^^ the trait `modular_bitfield::checks::DiscriminantInRange` is not implemented for `modular_bitfield::checks::False`
+    |
+   ::: $WORKSPACE/src/checks.rs
+    |
+    |     <Self::CheckType as DispatchTrueFalse>::Out: DiscriminantInRange
+    |                                                  ------------------- required by this bound in `modular_bitfield::checks::CheckDiscriminantInRange`
