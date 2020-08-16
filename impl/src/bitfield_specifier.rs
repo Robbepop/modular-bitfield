@@ -84,7 +84,7 @@ pub fn generate3(input: syn::ItemEnum) -> syn::Result<TokenStream2> {
         from_bits_match_arms.extend(quote! {
             #snake_variant if #snake_variant == #enum_ident::#variant as <#enum_ident as modular_bitfield::Specifier>::Base => {
                 #enum_ident::#variant
-            }
+            },
         });
     }
 
