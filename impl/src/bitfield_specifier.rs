@@ -6,6 +6,7 @@ use syn::spanned::Spanned as _;
 use quote::{
     quote,
     quote_spanned,
+    format_ident,
 };
 
 pub fn generate(input: TokenStream2) -> TokenStream2 {
@@ -79,8 +80,12 @@ pub fn generate3(input: syn::ItemEnum) -> syn::Result<TokenStream2> {
             }
         });
         use heck::SnakeCase as _;
-        use crate::ident_ext::IdentExt as _;
-        let snake_variant = syn::Ident::from_str(&variant.to_string().to_snake_case());
+        let snake_variant = &variant.to_string().to_snake_case();
+        let snake_variant = match syn::parse_str::<syn::Ident>(snake_variant) {
+            Ok(parsed_ident) => parsed_ident,
+            // Use a raw identifier to allow strict keywords.
+            Err(_) => format_ident!("r#{}", snake_variant)
+        };
         from_bits_match_arms.extend(quote! {
             #snake_variant if #snake_variant == #enum_ident::#variant as <#enum_ident as modular_bitfield::Specifier>::Base => {
                 #enum_ident::#variant
