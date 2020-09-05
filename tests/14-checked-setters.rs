@@ -3,6 +3,7 @@
 use modular_bitfield::prelude::*;
 
 #[bitfield]
+#[derive(Debug, PartialEq)]
 pub struct MyTwoBytes {
     a: B1,
     b: B2,
@@ -35,5 +36,18 @@ fn main() {
     // Asserts that the valid manipulation has had effect.
     assert_eq!(bitfield.a(), 1);
     assert_eq!(bitfield.b(), 3);
+    assert_eq!(bitfield.c(), 42);
+
+    // Check the checked with statement throws error
+    assert_eq!(MyTwoBytes::new().with_a_checked(2), Err(Error::OutOfBounds));
+    assert_eq!(MyTwoBytes::new().with_a_checked(1).unwrap().with_b_checked(4), Err(Error::OutOfBounds));
+
+    // Check that with_checked populates values without touching other fields
+    let bitfield = bitfield
+        .with_a_checked(0).unwrap()
+        .with_b_checked(2).unwrap();
+
+    assert_eq!(bitfield.a(), 0);
+    assert_eq!(bitfield.b(), 2);
     assert_eq!(bitfield.c(), 42);
 }

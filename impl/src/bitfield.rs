@@ -266,6 +266,8 @@ impl BitfieldStruct {
                 .map(ToString::to_string)
                 .unwrap_or(format!("{}", n));
 
+            let with_name = format_ident!("with_{}", field_name);
+            let checked_with_name = format_ident!("with_{}_checked", field_name);
             let field_type = &field.ty;
             let field_vis = &field.vis;
 
@@ -304,6 +306,21 @@ impl BitfieldStruct {
                 field_name_in_doc, field_name_in_doc,
             );
 
+            let with_docs = format!(
+                "Returns a copy of the bitfield with the value of {} \
+                 set to the given value.\n\n\
+                 #Panics\n\n\
+                 If the given value is out of bounds for {}",
+                field_name_in_doc, field_name_in_doc,
+            );
+            let checked_with_docs = format!(
+                "Returns a copy of the bitfield with the value of {} \
+                 set to the given value.\n\n\
+                 #Errors\n\n\
+                 If the given value is out of bounds for {}",
+                field_name_in_doc, field_name_in_doc,
+            );
+
             expanded.extend(quote!{
                 #[doc = #getter_docs]
                 #[inline]
@@ -313,6 +330,20 @@ impl BitfieldStruct {
                     <#field_type as modular_bitfield::Specifier>::Face::from_bits(
                         modular_bitfield::Bits(self.get::<#field_type>(#offset))
                     )
+                }
+
+                #[doc = #with_docs]
+                #[inline]
+                pub fn #with_name(mut self, new_val: <#field_type as modular_bitfield::Specifier>::Face) -> Self {
+                    self.#setter_name(new_val);
+                    self
+                }
+
+                #[doc = #checked_with_docs]
+                #[inline]
+                pub fn #checked_with_name(mut self, new_val: <#field_type as modular_bitfield::Specifier>::Face) -> Result<Self, modular_bitfield::Error> {
+                    self.#checked_setter_name(new_val)?;
+                    Ok(self)
                 }
 
                 #[doc = #setter_docs]
