@@ -1,0 +1,11 @@
+error[E0624]: associated function `new` is private
+  --> $DIR/20-access-test.rs:13:25
+   |
+13 |     let c = ColorEntry::new();
+   |                         ^^^ private associated function
+
+error[E0624]: associated function `a` is private
+  --> $DIR/20-access-test.rs:14:15
+   |
+14 |     let _ = c.a();
+   |               ^ private associated function

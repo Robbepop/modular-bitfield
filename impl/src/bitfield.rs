@@ -1,5 +1,5 @@
 use proc_macro2::TokenStream as TokenStream2;
-use quote::{quote, quote_spanned};
+use quote::{format_ident, quote, quote_spanned};
 use syn::{
     self,
     parse::{Parse, ParseStream, Result},
@@ -66,10 +66,12 @@ impl BitfieldStruct {
         let byte_conversion_impls = self.expand_byte_conversion_impls();
         let getters_and_setters = self.expand_getters_and_setters()?;
         let ident = &self.ast.ident;
+        let structure_vis = &self.ast.vis;
+
         expanded.extend(quote! {
             #(#attrs)*
             #[repr(transparent)]
-            pub struct #ident
+            #structure_vis struct #ident
             {
                 data: [u8; (#size) / 8],
             }
@@ -80,7 +82,8 @@ impl BitfieldStruct {
 
             impl #ident
             {
-                pub fn new() -> Self {
+                /// Returns an instance with zero initialized data
+                fn new() -> Self {
                     Self {
                         data: [0; (#size) / 8],
                     }
@@ -97,6 +100,7 @@ impl BitfieldStruct {
 
     fn expand_byte_conversion_impls(&self) -> TokenStream2 {
         let ident = &self.ast.ident;
+
         quote! {
             impl #ident {
                 /// Returns the underlying bits.
@@ -106,7 +110,7 @@ impl BitfieldStruct {
                 /// The returned byte slice is layed out in the same way as described
                 /// [here](https://docs.rs/modular-bitfield/#generated-structure).
                 #[inline]
-                pub fn to_bytes(&self) -> &[u8] {
+                fn to_bytes(&self) -> &[u8] {
                     &self.data
                 }
             }
@@ -246,23 +250,30 @@ impl BitfieldStruct {
         let mut offset = Punctuated::<syn::Expr, Token![+]>::new();
         offset.push(syn::parse_quote! { 0 });
         for (n, field) in self.ast.fields.iter().enumerate() {
-            use crate::ident_ext::IdentExt as _;
-            let field_name = field
+            let field_name: &dyn quote::IdentFragment = match field.ident.as_ref() {
+                Some(field) => field,
+                None => &n,
+            };
+            let getter_name = match field.ident.as_ref() {
+                Some(field_name) => field_name.clone(),
+                None => format_ident!("get_{}", field_name),
+            };
+            let setter_name = format_ident!("set_{}", field_name);
+            let checked_setter_name = format_ident!("set_{}_checked", field_name);
+            let field_name_in_doc = field
                 .ident
                 .as_ref()
                 .map(ToString::to_string)
                 .unwrap_or(format!("{}", n));
-            let getter_name = syn::Ident::from_str(if field.ident.is_some() {
-                field_name.clone()
-            } else {
-                format!("get_{}", field_name)
-            });
-            let setter_name = syn::Ident::from_str(format!("set_{}", field_name));
-            let checked_setter_name = syn::Ident::from_str(format!("set_{}_checked", field_name));
+
             let field_type = &field.ty;
+            let field_vis = &field.vis;
 
             let mut bits_check_tokens = quote! {};
-            for attr in field.attrs.iter().filter(|attr| attr.path.is_ident("bits")) {
+            for attr in field.attrs.iter() {
+                if !attr.path.is_ident("bits") {
+                    bail!(attr, "unsupported field attribute");
+                }
                 let bits_arg = syn::parse::<BitsAttributeArgs>(attr.tokens.clone().into()).unwrap();
                 let expected_bits = bits_arg.size;
                 bits_check_tokens.extend(quote_spanned! { expected_bits.span() =>
@@ -276,27 +287,27 @@ impl BitfieldStruct {
 
             let set_assert_msg = proc_macro2::Literal::string(&format!(
                 "value out of bounds for field {}.{}",
-                self.ast.ident, field_name
+                self.ast.ident, field_name_in_doc
             ));
 
-            let getter_docs = format!("Returns the value of {}.", field_name);
+            let getter_docs = format!("Returns the value of {}.", field_name_in_doc);
             let setter_docs = format!(
                 "Sets the value of {} to the given value.\n\n\
                  #Panics\n\n\
                  If the given value is out of bounds for {}",
-                field_name, field_name,
+                field_name_in_doc, field_name_in_doc,
             );
             let checked_setter_docs = format!(
                 "Sets the value of {} to the given value.\n\n\
                  #Errors\n\n\
                  If the given value is out of bounds for {}",
-                field_name, field_name,
+                field_name_in_doc, field_name_in_doc,
             );
 
             expanded.extend(quote!{
                 #[doc = #getter_docs]
                 #[inline]
-                pub fn #getter_name(&self) -> <#field_type as modular_bitfield::Specifier>::Face {
+                #field_vis fn #getter_name(&self) -> <#field_type as modular_bitfield::Specifier>::Face {
                     #bits_check_tokens
 
                     <#field_type as modular_bitfield::Specifier>::Face::from_bits(
@@ -306,13 +317,13 @@ impl BitfieldStruct {
 
                 #[doc = #setter_docs]
                 #[inline]
-                pub fn #setter_name(&mut self, new_val: <#field_type as modular_bitfield::Specifier>::Face) {
+                #field_vis fn #setter_name(&mut self, new_val: <#field_type as modular_bitfield::Specifier>::Face) {
                     self.#checked_setter_name(new_val).expect(#set_assert_msg)
                 }
 
                 #[doc = #checked_setter_docs]
                 #[inline]
-                pub fn #checked_setter_name(
+                #field_vis fn #checked_setter_name(
                     &mut self,
                     new_val: <#field_type as modular_bitfield::Specifier>::Face
                 ) -> Result<(), modular_bitfield::Error> {
