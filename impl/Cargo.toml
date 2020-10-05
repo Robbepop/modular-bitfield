@@ -21,6 +21,9 @@ syn = { version = "1", features = ["full"] }
 proc-macro2 = "1"
 heck = "0.3"
 
+[dev-dependencies]
+modular-bitfield = { path = "..", version = "0.6" }
+
 [badges]
 travis-ci = { repository = "robbepop/modular-bitfield" }
 # appveyor = { repository = "robbepop/modular-bitfield", branch = "master", service = "github" }

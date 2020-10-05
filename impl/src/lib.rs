@@ -5,9 +5,9 @@ extern crate proc_macro;
 mod ident_ext;
 #[macro_use]
 mod errors;
-mod define_specifiers;
 mod bitfield;
 mod bitfield_specifier;
+mod define_specifiers;
 
 use proc_macro::TokenStream;
 
@@ -40,18 +40,16 @@ pub fn define_specifiers(input: TokenStream) -> TokenStream {
 ///     c: B24, // Uses 24 bits
 /// }
 ///
-/// fn main() {
-///     let mut example = Example::new();
-///     assert_eq!(example.get_a(), 0);
-///     assert_eq!(example.get_b(), 0);
-///     assert_eq!(example.get_c(), 0);
-///     example.set_a(1);
-///     example.set_b(0b0100_0000);
-///     example.set_c(1337);
-///     assert_eq!(example.get_a(), 1);
-///     assert_eq!(example.get_b(), 0b0100_0000);
-///     assert_eq!(example.get_c(), 1337);
-/// }
+/// let mut example = Example::new();
+/// assert_eq!(example.get_a(), 0);
+/// assert_eq!(example.get_b(), 0);
+/// assert_eq!(example.get_c(), 0);
+/// example.set_a(1);
+/// example.set_b(0b0100_0000);
+/// example.set_c(1337);
+/// assert_eq!(example.get_a(), 1);
+/// assert_eq!(example.get_b(), 0b0100_0000);
+/// assert_eq!(example.get_c(), 1337);
 /// ```
 #[proc_macro_attribute]
 pub fn bitfield(args: TokenStream, input: TokenStream) -> TokenStream {
@@ -76,8 +74,8 @@ pub fn bitfield(args: TokenStream, input: TokenStream) -> TokenStream {
 ///     d: B24,  // Uses 24 bits
 /// }
 ///
-/// #[derive(BitfieldSpecifier)]
-/// enum Mode {
+/// #[derive(BitfieldSpecifier, Debug, PartialEq, Eq)]
+/// pub enum Mode {
 ///     Sleep,
 ///     Awake,
 ///     Working,

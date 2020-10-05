@@ -129,10 +129,7 @@
 
 #![no_std]
 
-pub use modular_bitfield_impl::{
-    bitfield,
-    BitfieldSpecifier,
-};
+pub use modular_bitfield_impl::{bitfield, BitfieldSpecifier};
 
 /// Preset check types and traits used internally.
 ///
@@ -145,16 +142,8 @@ pub mod checks;
 /// The prelude: `use modular_bitfield::prelude::*;`
 pub mod prelude {
     pub use super::{
-        specifiers::*,
-        PopBits,
-        PushBits,
-        bitfield,
-        BitfieldSpecifier,
-        Specifier,
-        SpecifierBase,
-        IntoBits,
-        FromBits,
-        Error,
+        bitfield, specifiers::*, BitfieldSpecifier, Error, FromBits, IntoBits, PopBits, PushBits,
+        Specifier, SpecifierBase,
     };
 }
 
@@ -177,9 +166,7 @@ pub enum Error {
 impl core::fmt::Display for Error {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
         match self {
-            Error::OutOfBounds => {
-                write!(f, "Encountered an out of bounds value")
-            }
+            Error::OutOfBounds => write!(f, "Encountered an out of bounds value"),
             Error::InvalidBufferLen => {
                 write!(f, "Too many or too few bytes given to construct from bytes")
             }
@@ -304,18 +291,13 @@ pub trait Specifier {
     /// # Note
     ///
     /// This is the type that is used internally for computations.
-    type Base:
-        Default
-        + PushBits
-        + PopBits;
+    type Base: Default + PushBits + PopBits;
     /// The interface type of the specifier.
     ///
     /// # Note
     ///
     /// This is the type that is used for the getters and setters.
-    type Face:
-        FromBits<Self::Base>
-        + IntoBits<Self::Base>;
+    type Face: FromBits<Self::Base> + IntoBits<Self::Base>;
 }
 
 /// Helper struct to convert primitives and enum discriminants.
@@ -331,7 +313,7 @@ impl<T> Bits<T> {
 }
 
 /// Helper trait to convert to bits.
-/// 
+///
 /// # Note
 ///
 /// Implemented by primitive specifier types.
@@ -341,7 +323,7 @@ pub trait IntoBits<T> {
 }
 
 /// Helper trait to convert from bits.
-/// 
+///
 /// # Note
 ///
 /// Implemented by primitive specifier types.

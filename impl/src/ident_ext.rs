@@ -1,7 +1,4 @@
-use proc_macro2::{
-    Ident,
-    Span,
-};
+use proc_macro2::{Ident, Span};
 
 /// Utilities for operating on `Ident` instances.
 pub trait IdentExt {

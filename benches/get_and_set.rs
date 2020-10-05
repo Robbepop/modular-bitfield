@@ -62,10 +62,7 @@ impl HandStruct {
 
     /// Returns the value of `a`.
     pub fn get_a(&self) -> u16 {
-        u16::from_le_bytes([
-            self.data[0],
-            self.data[1] & 0x1,
-        ])
+        u16::from_le_bytes([self.data[0], self.data[1] & 0x1])
     }
 
     /// Sets the value of `a`.
@@ -220,9 +217,9 @@ macro_rules! impl_getter_setter_tests {
 }
 
 impl_getter_setter_tests!(
-    (get_set_a, get_a, set_a,     444),
-    (get_set_b, get_b, set_b,      50),
-    (get_set_c, get_c, set_c,    1234),
-    (get_set_d, get_d, set_d,      12),
+    (get_set_a, get_a, set_a, 444),
+    (get_set_b, get_b, set_b, 50),
+    (get_set_c, get_c, set_c, 1234),
+    (get_set_d, get_d, set_d, 12),
     (get_set_e, get_e, set_e, 7654321),
 );
