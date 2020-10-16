@@ -3,5 +3,8 @@ error[E0277]: the trait bound `modular_bitfield::checks::False: modular_bitfield
    |
 17 |     External,
    |     ^^^^^^^^ the trait `modular_bitfield::checks::DiscriminantInRange` is not implemented for `modular_bitfield::checks::False`
-
-For more information about this error, try `rustc --explain E0277`.
+   |
+  ::: $WORKSPACE/src/checks.rs
+   |
+   |     <Self::CheckType as DispatchTrueFalse>::Out: DiscriminantInRange,
+   |                                                  ------------------- required by this bound in `modular_bitfield::checks::CheckDiscriminantInRange`

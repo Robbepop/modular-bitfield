@@ -1,13 +1,6 @@
-use proc_macro2::{
-    Span as Span2,
-    TokenStream as TokenStream2,
-};
+use proc_macro2::{Span as Span2, TokenStream as TokenStream2};
+use quote::{format_ident, quote, quote_spanned};
 use syn::spanned::Spanned as _;
-use quote::{
-    quote,
-    quote_spanned,
-    format_ident,
-};
 
 pub fn generate(input: TokenStream2) -> TokenStream2 {
     match generate2(input) {
@@ -19,31 +12,23 @@ pub fn generate(input: TokenStream2) -> TokenStream2 {
 pub fn generate2(input: TokenStream2) -> syn::Result<TokenStream2> {
     let input = syn::parse::<syn::DeriveInput>(input.into())?;
     match input.data {
-        syn::Data::Enum(data_enum) => {
-            generate3(
-                syn::ItemEnum {
-                    attrs: input.attrs,
-                    vis: input.vis,
-                    enum_token: data_enum.enum_token,
-                    ident: input.ident,
-                    generics: input.generics,
-                    brace_token: data_enum.brace_token,
-                    variants: data_enum.variants,
-                }
-            )
-        }
-        syn::Data::Struct(_) => {
-            bail!(
-                input.ident,
-                "structs are not supported as bitfield specifiers",
-            )
-        }
-        syn::Data::Union(_) => {
-            bail!(
-                input.ident,
-                "unions are not supported as bitfield specifiers",
-            )
-        }
+        syn::Data::Enum(data_enum) => generate3(syn::ItemEnum {
+            attrs: input.attrs,
+            vis: input.vis,
+            enum_token: data_enum.enum_token,
+            ident: input.ident,
+            generics: input.generics,
+            brace_token: data_enum.brace_token,
+            variants: data_enum.variants,
+        }),
+        syn::Data::Struct(_) => bail!(
+            input.ident,
+            "structs are not supported as bitfield specifiers",
+        ),
+        syn::Data::Union(_) => bail!(
+            input.ident,
+            "unions are not supported as bitfield specifiers",
+        ),
     }
 }
 
@@ -59,15 +44,12 @@ pub fn generate3(input: syn::ItemEnum) -> syn::Result<TokenStream2> {
     // We can take `trailing_zeros` returns type as the required amount of bits.
     let bits = count_variants.trailing_zeros() as usize;
 
-    let variants = input.variants
+    let variants = input
+        .variants
         .iter()
-        .filter_map(|variant| {
-            match &variant.fields {
-                syn::Fields::Unit => {
-                    Some(&variant.ident)
-                }
-                _ => None,
-            }
+        .filter_map(|variant| match &variant.fields {
+            syn::Fields::Unit => Some(&variant.ident),
+            _ => None,
         })
         .collect::<Vec<_>>();
 
@@ -84,7 +66,7 @@ pub fn generate3(input: syn::ItemEnum) -> syn::Result<TokenStream2> {
         let snake_variant = match syn::parse_str::<syn::Ident>(snake_variant) {
             Ok(parsed_ident) => parsed_ident,
             // Use a raw identifier to allow strict keywords.
-            Err(_) => format_ident!("r#{}", snake_variant)
+            Err(_) => format_ident!("r#{}", snake_variant),
         };
         from_bits_match_arms.extend(quote! {
             #snake_variant if #snake_variant == #enum_ident::#variant as <#enum_ident as modular_bitfield::Specifier>::Base => {
@@ -93,7 +75,7 @@ pub fn generate3(input: syn::ItemEnum) -> syn::Result<TokenStream2> {
         });
     }
 
-    Ok(quote!{
+    Ok(quote! {
         #check_discriminants_tokens
 
         impl modular_bitfield::Specifier for #enum_ident {

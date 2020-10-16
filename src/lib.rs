@@ -51,48 +51,46 @@
 //! #[bitfield]
 //! pub struct TupleStruct(bool, B4, DeliveryMode);
 //!
-//! fn main() {
-//!     let mut example = Example::new();
+//! let mut example = Example::new();
 //!
-//!     // Assert that everything is inizialized to 0.
-//!     assert_eq!(example.a(), false);
-//!     assert_eq!(example.b(), 0);
-//!     assert_eq!(example.c(), 0);
-//!     assert_eq!(example.d(), DeliveryMode::Init);
-//!     assert_eq!(example.e(), 0);
+//! // Assert that everything is inizialized to 0.
+//! assert_eq!(example.a(), false);
+//! assert_eq!(example.b(), 0);
+//! assert_eq!(example.c(), 0);
+//! assert_eq!(example.d(), DeliveryMode::Init);
+//! assert_eq!(example.e(), 0);
 //!
-//!     // Modify the bitfields.
-//!     example.set_a(true);
-//!     example.set_b(0b0001_1111_1111_u16); // Uses `u16`
-//!     example.set_c(42_u16);           // Uses `u16`
-//!     example.set_d(DeliveryMode::Startup);
-//!     example.set_e(1);                // Uses `u8`
+//! // Modify the bitfields.
+//! example.set_a(true);
+//! example.set_b(0b0001_1111_1111_u16);  // Uses `u16`
+//! example.set_c(42_u16);                // Uses `u16`
+//! example.set_d(DeliveryMode::Startup);
+//! example.set_e(1);                     // Uses `u8`
 //!
-//!     // Assert the previous modifications.
-//!     assert_eq!(example.a(), true);
-//!     assert_eq!(example.b(), 0b0001_1111_1111_u16);
-//!     assert_eq!(example.c(), 42);
-//!     assert_eq!(example.d(), DeliveryMode::Startup);
-//!     assert_eq!(example.e(), 1_u8);
+//! // Assert the previous modifications.
+//! assert_eq!(example.a(), true);
+//! assert_eq!(example.b(), 0b0001_1111_1111_u16);
+//! assert_eq!(example.c(), 42);
+//! assert_eq!(example.d(), DeliveryMode::Startup);
+//! assert_eq!(example.e(), 1_u8);
 //!
-//!     // Safe API allows for better testing
-//!     assert_eq!(example.set_e_checked(200), Err(Error::OutOfBounds));
+//! // Safe API allows for better testing
+//! assert_eq!(example.set_e_checked(200), Err(Error::OutOfBounds));
 //!
-//!     // Can convert from and to bytes.
-//!     assert_eq!(example.to_bytes(), &[255, 171, 128, 3]);
-//!     use std::convert::TryFrom as _;
-//!     let copy = Example::try_from(example.to_bytes()).unwrap();
-//!     assert_eq!(example, copy);
+//! // Can convert from and to bytes.
+//! assert_eq!(example.to_bytes(), &[255, 171, 128, 3]);
+//! use std::convert::TryFrom as _;
+//! let copy = Example::try_from(example.to_bytes()).unwrap();
+//! assert_eq!(example, copy);
 //!
-//!     // Accessing fields of a tuple struct bitfield
-//!     // uses the `get_n()` and `set_n()` functions.
-//!     let mut tuple_example = TupleStruct::new();
-//!     assert_eq!(tuple_example.get_0(), false);
-//!     assert_eq!(tuple_example.get_1(), 0);
-//!     assert_eq!(tuple_example.get_2(), DeliveryMode::Init);
-//!     tuple_example.set_2(DeliveryMode::Fixed);
-//!     assert_eq!(tuple_example.get_2(), DeliveryMode::Fixed);
-//! }
+//! // Accessing fields of a tuple struct bitfield
+//! // uses the `get_n()` and `set_n()` functions.
+//! let mut tuple_example = TupleStruct::new();
+//! assert_eq!(tuple_example.get_0(), false);
+//! assert_eq!(tuple_example.get_1(), 0);
+//! assert_eq!(tuple_example.get_2(), DeliveryMode::Init);
+//! tuple_example.set_2(DeliveryMode::Fixed);
+//! assert_eq!(tuple_example.get_2(), DeliveryMode::Fixed);
 //! ```
 //!
 //! ## Generated Structure
@@ -142,10 +140,7 @@
 
 #![no_std]
 
-pub use modular_bitfield_impl::{
-    bitfield,
-    BitfieldSpecifier,
-};
+pub use modular_bitfield_impl::{bitfield, BitfieldSpecifier};
 
 /// Preset check types and traits used internally.
 ///
@@ -158,16 +153,8 @@ pub mod checks;
 /// The prelude: `use modular_bitfield::prelude::*;`
 pub mod prelude {
     pub use super::{
-        specifiers::*,
-        PopBits,
-        PushBits,
-        bitfield,
-        BitfieldSpecifier,
-        Specifier,
-        SpecifierBase,
-        IntoBits,
-        FromBits,
-        Error,
+        bitfield, specifiers::*, BitfieldSpecifier, Error, FromBits, IntoBits, PopBits, PushBits,
+        Specifier, SpecifierBase,
     };
 }
 
@@ -190,9 +177,7 @@ pub enum Error {
 impl core::fmt::Display for Error {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
         match self {
-            Error::OutOfBounds => {
-                write!(f, "Encountered an out of bounds value")
-            }
+            Error::OutOfBounds => write!(f, "Encountered an out of bounds value"),
             Error::InvalidBufferLen => {
                 write!(f, "Too many or too few bytes given to construct from bytes")
             }
@@ -317,18 +302,13 @@ pub trait Specifier {
     /// # Note
     ///
     /// This is the type that is used internally for computations.
-    type Base:
-        Default
-        + PushBits
-        + PopBits;
+    type Base: Default + PushBits + PopBits;
     /// The interface type of the specifier.
     ///
     /// # Note
     ///
     /// This is the type that is used for the getters and setters.
-    type Face:
-        FromBits<Self::Base>
-        + IntoBits<Self::Base>;
+    type Face: FromBits<Self::Base> + IntoBits<Self::Base>;
 }
 
 /// Helper struct to convert primitives and enum discriminants.
@@ -344,7 +324,7 @@ impl<T> Bits<T> {
 }
 
 /// Helper trait to convert to bits.
-/// 
+///
 /// # Note
 ///
 /// Implemented by primitive specifier types.
@@ -354,7 +334,7 @@ pub trait IntoBits<T> {
 }
 
 /// Helper trait to convert from bits.
-/// 
+///
 /// # Note
 ///
 /// Implemented by primitive specifier types.

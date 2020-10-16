@@ -1,5 +1,3 @@
-
-
 pub(crate) mod private {
     /// Prevents internal traits from being implemented from dependencies.
     pub trait Sealed {}
@@ -7,14 +5,10 @@ pub(crate) mod private {
 
 /// Helper trait to check whether the size of bitfield structs
 /// is a multiple of 8 to form complete bytes.
-pub trait TotalSizeIsMultipleOfEightBits
-    : private::Sealed
-{}
+pub trait TotalSizeIsMultipleOfEightBits: private::Sealed {}
 
 /// Helper trait to improve compile error messages.
-pub trait RenameSizeType
-    : private::Sealed
-{
+pub trait RenameSizeType: private::Sealed {
     type CheckType;
 }
 
@@ -97,7 +91,7 @@ impl DispatchTrueFalse for [(); 1] {
 /// valid bounds.
 pub trait CheckDiscriminantInRange<A>
 where
-    <Self::CheckType as DispatchTrueFalse>::Out: DiscriminantInRange
+    <Self::CheckType as DispatchTrueFalse>::Out: DiscriminantInRange,
 {
     type CheckType: DispatchTrueFalse;
 }
