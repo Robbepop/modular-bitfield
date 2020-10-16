@@ -37,7 +37,7 @@ use modular_bitfield::prelude::*;
 #[bitfield]
 pub struct MacroStruct {
     a: B9,
-    b: B6,
+    x: B6,
     c: B13,
     d: B4,
     e: B32,
@@ -61,7 +61,7 @@ impl HandStruct {
     }
 
     /// Returns the value of `a`.
-    pub fn get_a(&self) -> u16 {
+    pub fn a(&self) -> u16 {
         u16::from_le_bytes([self.data[0], self.data[1] & 0x1])
     }
 
@@ -73,19 +73,19 @@ impl HandStruct {
         self.data[1] = (self.data[1] & (!0x1)) | (ms & 0x1);
     }
 
-    /// Returns the value of `b`.
-    pub fn get_b(&self) -> u8 {
+    /// Returns the value of `x`.
+    pub fn x(&self) -> u8 {
         (self.data[1] >> 1) & 0b0011_1111
     }
 
-    /// Sets the value of `b`.
-    pub fn set_b(&mut self, new_val: u8) {
+    /// Sets the value of `x`.
+    pub fn set_x(&mut self, new_val: u8) {
         assert!(new_val < (0x1 << 6));
         self.data[1] = (self.data[1] & 0x81) | (new_val << 1);
     }
 
     /// Returns the value of `c`.
-    pub fn get_c(&self) -> u16 {
+    pub fn c(&self) -> u16 {
         let mut res = 0;
         res |= (self.data[1] >> 7) as u16;
         res |= (self.data[2] as u16) << 1;
@@ -102,7 +102,7 @@ impl HandStruct {
     }
 
     /// Returns the value of `d`.
-    pub fn get_d(&self) -> u8 {
+    pub fn d(&self) -> u8 {
         self.data[3] >> 4
     }
 
@@ -113,7 +113,7 @@ impl HandStruct {
     }
 
     /// Returns the value of `e`.
-    pub fn get_e(&self) -> u32 {
+    pub fn e(&self) -> u32 {
         u32::from_le_bytes([self.data[4], self.data[5], self.data[6], self.data[7]])
     }
 
@@ -186,11 +186,11 @@ macro_rules! gen_access_bench_for {
 }
 
 gen_access_bench_for!(
-    (get_a, set_a),
-    (get_b, set_b),
-    (get_c, set_c),
-    (get_d, set_d),
-    (get_e, set_e)
+    (a, set_a),
+    (x, set_x),
+    (c, set_c),
+    (d, set_d),
+    (e, set_e)
 );
 
 // Invoke these tests with: `cargo test --benches`
@@ -217,9 +217,9 @@ macro_rules! impl_getter_setter_tests {
 }
 
 impl_getter_setter_tests!(
-    (get_set_a, get_a, set_a, 444),
-    (get_set_b, get_b, set_b, 50),
-    (get_set_c, get_c, set_c, 1234),
-    (get_set_d, get_d, set_d, 12),
-    (get_set_e, get_e, set_e, 7654321),
+    (get_set_a, a, set_a, 444),
+    (get_set_b, x, set_x, 50),
+    (get_set_c, c, set_c, 1234),
+    (get_set_d, d, set_d, 12),
+    (get_set_e, e, set_e, 7654321),
 );
