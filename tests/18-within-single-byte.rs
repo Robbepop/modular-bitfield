@@ -22,46 +22,46 @@ pub struct StatFlag {
 fn main() {
     let mut flag = StatFlag::new();
 
-    assert_eq!(flag.get_x(), false);
-    assert_eq!(flag.get_y(), false);
-    assert_eq!(flag.get_z(), 0);
-    assert_eq!(flag.get_w(), 0);
-    assert_eq!(flag.get_mode(), Mode::A);
+    assert_eq!(flag.x(), false);
+    assert_eq!(flag.y(), false);
+    assert_eq!(flag.z(), 0);
+    assert_eq!(flag.w(), 0);
+    assert_eq!(flag.mode(), Mode::A);
 
     let new_mode = Mode::B;
 
     flag.set_mode(new_mode);
-    assert_eq!(flag.get_x(), false);
-    assert_eq!(flag.get_y(), false);
-    assert_eq!(flag.get_z(), 0);
-    assert_eq!(flag.get_w(), 0);
-    assert_eq!(flag.get_mode(), new_mode);
+    assert_eq!(flag.x(), false);
+    assert_eq!(flag.y(), false);
+    assert_eq!(flag.z(), 0);
+    assert_eq!(flag.w(), 0);
+    assert_eq!(flag.mode(), new_mode);
     
     flag.set_x(true);
-    assert_eq!(flag.get_x(), true);
-    assert_eq!(flag.get_y(), false);
-    assert_eq!(flag.get_z(), 0);
-    assert_eq!(flag.get_w(), 0);
-    assert_eq!(flag.get_mode(), new_mode);
+    assert_eq!(flag.x(), true);
+    assert_eq!(flag.y(), false);
+    assert_eq!(flag.z(), 0);
+    assert_eq!(flag.w(), 0);
+    assert_eq!(flag.mode(), new_mode);
 
     flag.set_y(true);
-    assert_eq!(flag.get_x(), true);
-    assert_eq!(flag.get_y(), true);
-    assert_eq!(flag.get_z(), 0);
-    assert_eq!(flag.get_w(), 0);
-    assert_eq!(flag.get_mode(), new_mode);
+    assert_eq!(flag.x(), true);
+    assert_eq!(flag.y(), true);
+    assert_eq!(flag.z(), 0);
+    assert_eq!(flag.w(), 0);
+    assert_eq!(flag.mode(), new_mode);
 
     flag.set_z(0b11);
-    assert_eq!(flag.get_x(), true);
-    assert_eq!(flag.get_y(), true);
-    assert_eq!(flag.get_z(), 0b11);
-    assert_eq!(flag.get_w(), 0);
-    assert_eq!(flag.get_mode(), new_mode);
+    assert_eq!(flag.x(), true);
+    assert_eq!(flag.y(), true);
+    assert_eq!(flag.z(), 0b11);
+    assert_eq!(flag.w(), 0);
+    assert_eq!(flag.mode(), new_mode);
 
     flag.set_w(0b01);
-    assert_eq!(flag.get_x(), true);
-    assert_eq!(flag.get_y(), true);
-    assert_eq!(flag.get_z(), 0b11);
-    assert_eq!(flag.get_w(), 0b01);
-    assert_eq!(flag.get_mode(), new_mode);
+    assert_eq!(flag.x(), true);
+    assert_eq!(flag.y(), true);
+    assert_eq!(flag.z(), 0b11);
+    assert_eq!(flag.w(), 0b01);
+    assert_eq!(flag.mode(), new_mode);
 }

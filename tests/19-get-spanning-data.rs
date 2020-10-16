@@ -14,17 +14,17 @@ fn main() {
     for i in 0..=std::u16::MAX {
         let entry = ColorEntry::try_from(&i.to_le_bytes()[..]).unwrap();
         let mut new = ColorEntry::new();
-        new.set_r(entry.get_r());
-        assert_eq!(new.get_r(), entry.get_r());
-        new.set_g(entry.get_g());    
-        assert_eq!(new.get_g(), entry.get_g());
-        new.set_b(entry.get_b());
-        assert_eq!(new.get_b(), entry.get_b());
-        new.set_unused(entry.get_unused());
+        new.set_r(entry.r());
+        assert_eq!(new.r(), entry.r());
+        new.set_g(entry.g());    
+        assert_eq!(new.g(), entry.g());
+        new.set_b(entry.b());
+        assert_eq!(new.b(), entry.b());
+        new.set_unused(entry.unused());
         
-        assert_eq!(new.get_r(), entry.get_r());
-        assert_eq!(new.get_g(), entry.get_g());
-        assert_eq!(new.get_b(), entry.get_b());
-        assert_eq!(new.get_unused(), entry.get_unused());
+        assert_eq!(new.r(), entry.r());
+        assert_eq!(new.g(), entry.g());
+        assert_eq!(new.b(), entry.b());
+        assert_eq!(new.unused(), entry.unused());
     }
 }

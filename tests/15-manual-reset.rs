@@ -13,9 +13,9 @@ fn main() {
     let mut bitfield = MyTwoBytes::new();
 
     // Everything is initialized to zero.
-    assert_eq!(bitfield.get_a(), 0);
-    assert_eq!(bitfield.get_b(), 0);
-    assert_eq!(bitfield.get_c(), 0);
+    assert_eq!(bitfield.a(), 0);
+    assert_eq!(bitfield.b(), 0);
+    assert_eq!(bitfield.c(), 0);
 
     // Manipulate bitfield.
     bitfield.set_a(1);
@@ -23,9 +23,9 @@ fn main() {
     bitfield.set_c(42);
 
     // Check that manipulation was successful.
-    assert_eq!(bitfield.get_a(), 1);
-    assert_eq!(bitfield.get_b(), 3);
-    assert_eq!(bitfield.get_c(), 42);
+    assert_eq!(bitfield.a(), 1);
+    assert_eq!(bitfield.b(), 3);
+    assert_eq!(bitfield.c(), 42);
 
     // Manually reset the bitfield.
     bitfield.set_a(0);
@@ -33,7 +33,7 @@ fn main() {
     bitfield.set_c(0);
 
     // Check if reset was successful.
-    assert_eq!(bitfield.get_a(), 0);
-    assert_eq!(bitfield.get_b(), 0);
-    assert_eq!(bitfield.get_c(), 0);
+    assert_eq!(bitfield.a(), 0);
+    assert_eq!(bitfield.b(), 0);
+    assert_eq!(bitfield.c(), 0);
 }

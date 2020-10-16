@@ -42,8 +42,8 @@ fn main() {
 
     // Initialized to all 0 bits.
     let mut entry = RedirectionTableEntry::new();
-    assert_eq!(entry.get_delivery_mode(), DeliveryMode::Init);
+    assert_eq!(entry.delivery_mode(), DeliveryMode::Init);
 
     entry.set_delivery_mode(DeliveryMode::Lowest);
-    assert_eq!(entry.get_delivery_mode(), DeliveryMode::Lowest);
+    assert_eq!(entry.delivery_mode(), DeliveryMode::Lowest);
 }

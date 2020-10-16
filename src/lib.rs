@@ -47,15 +47,19 @@
 //!     External,
 //! }
 //!
+//! /// Tuple structs can also be used as bitfields.
+//! #[bitfield]
+//! pub struct TupleStruct(bool, B4, DeliveryMode);
+//!
 //! fn main() {
 //!     let mut example = Example::new();
 //!
 //!     // Assert that everything is inizialized to 0.
-//!     assert_eq!(example.get_a(), false);
-//!     assert_eq!(example.get_b(), 0);
-//!     assert_eq!(example.get_c(), 0);
-//!     assert_eq!(example.get_d(), DeliveryMode::Init);
-//!     assert_eq!(example.get_e(), 0);
+//!     assert_eq!(example.a(), false);
+//!     assert_eq!(example.b(), 0);
+//!     assert_eq!(example.c(), 0);
+//!     assert_eq!(example.d(), DeliveryMode::Init);
+//!     assert_eq!(example.e(), 0);
 //!
 //!     // Modify the bitfields.
 //!     example.set_a(true);
@@ -65,11 +69,11 @@
 //!     example.set_e(1);                // Uses `u8`
 //!
 //!     // Assert the previous modifications.
-//!     assert_eq!(example.get_a(), true);
-//!     assert_eq!(example.get_b(), 0b0001_1111_1111_u16);
-//!     assert_eq!(example.get_c(), 42);
-//!     assert_eq!(example.get_d(), DeliveryMode::Startup);
-//!     assert_eq!(example.get_e(), 1_u8);
+//!     assert_eq!(example.a(), true);
+//!     assert_eq!(example.b(), 0b0001_1111_1111_u16);
+//!     assert_eq!(example.c(), 42);
+//!     assert_eq!(example.d(), DeliveryMode::Startup);
+//!     assert_eq!(example.e(), 1_u8);
 //!
 //!     // Safe API allows for better testing
 //!     assert_eq!(example.set_e_checked(200), Err(Error::OutOfBounds));
@@ -79,6 +83,15 @@
 //!     use std::convert::TryFrom as _;
 //!     let copy = Example::try_from(example.to_bytes()).unwrap();
 //!     assert_eq!(example, copy);
+//!
+//!     // Accessing fields of a tuple struct bitfield
+//!     // uses the `get_n()` and `set_n()` functions.
+//!     let mut tuple_example = TupleStruct::new();
+//!     assert_eq!(tuple_example.get_0(), false);
+//!     assert_eq!(tuple_example.get_1(), 0);
+//!     assert_eq!(tuple_example.get_2(), DeliveryMode::Init);
+//!     tuple_example.set_2(DeliveryMode::Fixed);
+//!     assert_eq!(tuple_example.get_2(), DeliveryMode::Fixed);
 //! }
 //! ```
 //!
