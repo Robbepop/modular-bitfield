@@ -12,7 +12,7 @@ use inner::*;
 fn main() {
     let c = ColorEntry::new();
     let _ = c.a();
-    // Notice no error for calling get_b
+    // Notice no error for calling b
     let _ = c.b();
     // Also no error for using default
     let c = ColorEntry::default();
