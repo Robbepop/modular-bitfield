@@ -185,13 +185,7 @@ macro_rules! gen_access_bench_for {
     }
 }
 
-gen_access_bench_for!(
-    (a, set_a),
-    (x, set_x),
-    (c, set_c),
-    (d, set_d),
-    (e, set_e)
-);
+gen_access_bench_for!((a, set_a), (x, set_x), (c, set_c), (d, set_d), (e, set_e));
 
 // Invoke these tests with: `cargo test --benches`
 
