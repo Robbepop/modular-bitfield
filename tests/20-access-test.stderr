@@ -1,0 +1,5 @@
+error[E0624]: associated function `a` is private
+  --> $DIR/20-access-test.rs:14:15
+   |
+14 |     let _ = c.a();
+   |               ^ private associated function

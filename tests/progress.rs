@@ -22,4 +22,6 @@ fn tests() {
     t.pass("tests/17-byte-conversions.rs");
     t.pass("tests/18-within-single-byte.rs");
     t.pass("tests/19-get-spanning-data.rs");
+    t.compile_fail("tests/20-access-test.rs");
+    t.pass("tests/21-raw-identifiers.rs");
 }
