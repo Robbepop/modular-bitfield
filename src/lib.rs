@@ -62,10 +62,10 @@
 //!
 //! // Modify the bitfields.
 //! example.set_a(true);
-//! example.set_b(0b0001_1111_1111_u16); // Uses `u16`
-//! example.set_c(42_u16);           // Uses `u16`
+//! example.set_b(0b0001_1111_1111_u16);  // Uses `u16`
+//! example.set_c(42_u16);                // Uses `u16`
 //! example.set_d(DeliveryMode::Startup);
-//! example.set_e(1);                // Uses `u8`
+//! example.set_e(1);                     // Uses `u8`
 //!
 //! // Assert the previous modifications.
 //! assert_eq!(example.a(), true);
