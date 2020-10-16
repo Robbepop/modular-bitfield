@@ -24,4 +24,5 @@ fn tests() {
     t.pass("tests/19-get-spanning-data.rs");
     t.compile_fail("tests/20-access-test.rs");
     t.pass("tests/21-raw-identifiers.rs");
+    t.pass("tests/22-with-setter.rs");
 }
