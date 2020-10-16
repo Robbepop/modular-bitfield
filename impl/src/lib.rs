@@ -82,15 +82,13 @@ pub fn bitfield(args: TokenStream, input: TokenStream) -> TokenStream {
 ///     Lazy,
 /// }
 ///
-/// fn main() {
-///     let mut example = Example::new();
-///     assert_eq!(example.get_a(), false); // `false as u8` is 0
-///     assert_eq!(example.get_b(), Mode::Sleep);
-///     example.set_a(true);
-///     example.set_b(Mode::Awake);
-///     assert_eq!(example.get_a(), true); // `true as u8` is 1
-///     assert_eq!(example.get_b(), Mode::Awake);
-/// }
+/// let mut example = Example::new();
+/// assert_eq!(example.get_a(), false); // `false as u8` is 0
+/// assert_eq!(example.get_b(), Mode::Sleep);
+/// example.set_a(true);
+/// example.set_b(Mode::Awake);
+/// assert_eq!(example.get_a(), true); // `true as u8` is 1
+/// assert_eq!(example.get_b(), Mode::Awake);
 /// ```
 #[proc_macro_derive(BitfieldSpecifier)]
 pub fn bitfield_specifier(input: TokenStream) -> TokenStream {
