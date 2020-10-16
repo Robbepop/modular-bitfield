@@ -63,7 +63,7 @@ pub fn define_specifiers(input: TokenStream) -> TokenStream {
 /// assert_eq!(tuple.get_0(), 0);
 /// assert_eq!(tuple.get_1(), 0);
 /// tuple.set_0(1);
-/// tuple.set_2(0b0100_0000);
+/// tuple.set_1(0b0100_0000);
 /// assert_eq!(tuple.get_0(), 1);
 /// assert_eq!(tuple.get_1(), 0b0100_0000);
 /// ```
