@@ -334,14 +334,14 @@ impl BitfieldStruct {
 
                 #[doc = #with_docs]
                 #[inline]
-                pub fn #with_name(mut self, new_val: <#field_type as modular_bitfield::Specifier>::Face) -> Self {
+                #field_vis fn #with_name(mut self, new_val: <#field_type as modular_bitfield::Specifier>::Face) -> Self {
                     self.#setter_name(new_val);
                     self
                 }
 
                 #[doc = #checked_with_docs]
                 #[inline]
-                pub fn #checked_with_name(mut self, new_val: <#field_type as modular_bitfield::Specifier>::Face) -> Result<Self, modular_bitfield::Error> {
+                #field_vis fn #checked_with_name(mut self, new_val: <#field_type as modular_bitfield::Specifier>::Face) -> Result<Self, modular_bitfield::Error> {
                     self.#checked_setter_name(new_val)?;
                     Ok(self)
                 }
