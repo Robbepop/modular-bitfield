@@ -3,16 +3,16 @@ use quote::{format_ident, quote, quote_spanned};
 use syn::spanned::Spanned as _;
 
 pub fn generate(input: TokenStream2) -> TokenStream2 {
-    match generate2(input) {
+    match generate_or_error(input) {
         Ok(output) => output,
         Err(err) => err.to_compile_error(),
     }
 }
 
-pub fn generate2(input: TokenStream2) -> syn::Result<TokenStream2> {
+fn generate_or_error(input: TokenStream2) -> syn::Result<TokenStream2> {
     let input = syn::parse::<syn::DeriveInput>(input.into())?;
     match input.data {
-        syn::Data::Enum(data_enum) => generate3(syn::ItemEnum {
+        syn::Data::Enum(data_enum) => generate_enum(syn::ItemEnum {
             attrs: input.attrs,
             vis: input.vis,
             enum_token: data_enum.enum_token,
@@ -32,7 +32,7 @@ pub fn generate2(input: TokenStream2) -> syn::Result<TokenStream2> {
     }
 }
 
-pub fn generate3(input: syn::ItemEnum) -> syn::Result<TokenStream2> {
+fn generate_enum(input: syn::ItemEnum) -> syn::Result<TokenStream2> {
     let enum_ident = &input.ident;
     let count_variants = input.variants.iter().count();
     if !count_variants.is_power_of_two() {
