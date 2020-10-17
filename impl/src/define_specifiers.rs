@@ -1,5 +1,5 @@
 use proc_macro2::TokenStream as TokenStream2;
-use quote::quote;
+use quote::{format_ident, quote};
 
 pub fn generate(_input: TokenStream2) -> TokenStream2 {
     let mut tokens = quote! {};
@@ -12,7 +12,7 @@ pub fn generate(_input: TokenStream2) -> TokenStream2 {
             65..=128 => quote! {u128},
             _ => unreachable!(),
         };
-        let ident = syn::Ident::new(&format!("B{}", n), proc_macro2::Span::call_site());
+        let ident = format_ident!("B{}", n);
         let doc_comment = format!("Specifier for {} bits.", n);
         tokens.extend(quote! {
             #[doc = #doc_comment]
