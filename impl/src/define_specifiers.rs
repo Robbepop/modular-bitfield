@@ -24,11 +24,11 @@ pub fn generate(_input: TokenStream2) -> TokenStream2 {
                 type Face = #t_origin;
             }
 
-            impl crate::SpecifierBase for [(); #n] {
+            impl crate::private::SpecifierBase for [(); #n] {
                 type Base = #t_origin;
             }
 
-            impl crate::checks::private::Sealed for [(); #n] {}
+            impl crate::private::checks::private::Sealed for [(); #n] {}
         })
     }
     tokens

@@ -1,5 +1,4 @@
 use modular_bitfield::prelude::*;
-use std::convert::TryFrom;
 
 #[bitfield]
 #[derive(Copy, Clone, Eq, PartialEq)]
@@ -12,7 +11,7 @@ pub struct ColorEntry {
 
 fn main() {
     for i in 0..=std::u16::MAX {
-        let entry = ColorEntry::try_from(&i.to_le_bytes()[..]).unwrap();
+        let entry = unsafe { ColorEntry::from_bytes_unchecked(i.to_le_bytes()) };
         let mut new = ColorEntry::new();
         new.set_r(entry.r());
         assert_eq!(new.r(), entry.r());

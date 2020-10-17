@@ -78,9 +78,8 @@
 //! assert_eq!(example.set_e_checked(200), Err(Error::OutOfBounds));
 //!
 //! // Can convert from and to bytes.
-//! assert_eq!(example.to_bytes(), &[255, 171, 128, 3]);
-//! use std::convert::TryFrom as _;
-//! let copy = Example::try_from(example.to_bytes()).unwrap();
+//! assert_eq!(example.as_bytes(), &[255, 171, 128, 3]);
+//! let copy = unsafe { Example::from_bytes_unchecked(example.as_bytes().clone()) };
 //! assert_eq!(example, copy);
 //!
 //! // Accessing fields of a tuple struct bitfield
@@ -142,146 +141,15 @@
 
 pub use modular_bitfield_impl::{bitfield, BitfieldSpecifier};
 
-/// Preset check types and traits used internally.
-///
-/// # Note
-///
-/// Do not use entities defined in here directly!
 #[doc(hidden)]
-pub mod checks;
+pub mod private;
+
+mod error;
+pub use self::error::Error;
 
 /// The prelude: `use modular_bitfield::prelude::*;`
 pub mod prelude {
-    pub use super::{
-        bitfield, specifiers::*, BitfieldSpecifier, Error, FromBits, IntoBits, PopBits, PushBits,
-        Specifier, SpecifierBase,
-    };
-}
-
-/// Error that can be encountered operating on bitfields.
-#[derive(Debug, PartialEq, Eq)]
-pub enum Error {
-    /// A setter received an input that is invalid for the associated bitfield specifier.
-    ///
-    /// # Example
-    ///
-    /// Consider a field `a: B2` of a bitfield struct that uses 2 bits.
-    /// It having 2 bits the valid bounds of `a` are `0..4`.
-    /// The error is returned if a user tries to set its value to a value
-    /// that is not within the range `0..4`, e.g. 5.
-    OutOfBounds,
-    /// Encountered upon using `from_bytes` if too many or too few bytes have been given.
-    InvalidBufferLen,
-}
-
-impl core::fmt::Display for Error {
-    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-        match self {
-            Error::OutOfBounds => write!(f, "Encountered an out of bounds value"),
-            Error::InvalidBufferLen => {
-                write!(f, "Too many or too few bytes given to construct from bytes")
-            }
-        }
-    }
-}
-
-/// The default set of predefined specifiers.
-pub mod specifiers {
-    modular_bitfield_impl::define_specifiers!();
-}
-
-/// Helper trait for underlying primitives handling of bitfields.
-///
-/// # Note
-///
-/// Must not and cannot be implemented by dependencies.
-#[doc(hidden)]
-pub trait PushBits: checks::private::Sealed {
-    fn push_bits(&mut self, amount: u32, bits: u8);
-}
-
-/// Helper trait for underlying primitives handling of bitfields.
-///
-/// # Note
-///
-/// Must not and cannot be implemented by dependencies.
-#[doc(hidden)]
-pub trait PopBits: checks::private::Sealed {
-    fn pop_bits(&mut self, amount: u32) -> u8;
-}
-
-macro_rules! impl_sealed_for {
-    ( $($primitive:ty),* ) => {
-        $(
-            impl checks::private::Sealed for $primitive {}
-        )*
-    }
-}
-
-impl_sealed_for!(bool, u8, u16, u32, u64, u128);
-
-impl PopBits for u8 {
-    #[inline(always)]
-    fn pop_bits(&mut self, amount: u32) -> u8 {
-        let orig_bits = self.count_ones();
-        debug_assert!(0 < amount && amount <= 8);
-        let res = *self & ((0x1_u16.wrapping_shl(amount)).wrapping_sub(1) as u8);
-        *self = match self.overflowing_shr(amount) {
-            (v, false) => v,
-            _ => 0,
-        };
-        debug_assert_eq!(res.count_ones() + self.count_ones(), orig_bits);
-        res
-    }
-}
-
-macro_rules! impl_push_bits {
-    ( $($type:ty),+ ) => {
-        $(
-            impl PushBits for $type {
-                #[inline(always)]
-                fn push_bits(&mut self, amount: u32, bits: u8) {
-                    let orig_bits = self.count_ones();
-                    debug_assert!(0 < amount && amount <= 8);
-                    *self = self.wrapping_shl(amount);
-                    *self |= (bits & (0xFF >> (8 - amount))) as $type;
-                    debug_assert_eq!((bits & (0xFF >> (8 - amount))).count_ones() + orig_bits, self.count_ones());
-                }
-            }
-        )+
-    }
-}
-
-impl_push_bits!(u8, u16, u32, u64, u128);
-
-macro_rules! impl_pop_bits {
-    ( $($type:ty),+ ) => {
-        $(
-            impl PopBits for $type {
-                #[inline(always)]
-                fn pop_bits(&mut self, amount: u32) -> u8 {
-                    let orig_bits = self.count_ones();
-                    debug_assert!(0 < amount && amount <= 8);
-                    let res = (*self & (0xFF >> (8 - amount))) as u8;
-                    *self = match self.overflowing_shr(amount) {
-                        (v, false) => v,
-                        _ => 0,
-                    };
-                    debug_assert_eq!(res.count_ones() + self.count_ones(), orig_bits);
-                    res
-                }
-            }
-        )+
-    };
-}
-
-impl_pop_bits!(u16, u32, u64, u128);
-
-/// Trait implemented by primitives that drive bitfield manipulations generically.
-#[doc(hidden)]
-pub trait SpecifierBase: checks::private::Sealed {
-    /// The base type that the specifier is operating on.
-    type Base;
+    pub use super::{bitfield, error::Error, specifiers::*, BitfieldSpecifier, Specifier};
 }
 
 /// Trait implemented by all bitfield specifiers.
@@ -302,85 +170,16 @@ pub trait Specifier {
     /// # Note
     ///
     /// This is the type that is used internally for computations.
-    type Base: Default + PushBits + PopBits;
+    type Base: Default + private::PushBits + private::PopBits;
     /// The interface type of the specifier.
     ///
     /// # Note
     ///
     /// This is the type that is used for the getters and setters.
-    type Face: FromBits<Self::Base> + IntoBits<Self::Base>;
+    type Face: private::FromBits<Self::Base> + private::IntoBits<Self::Base>;
 }
 
-/// Helper struct to convert primitives and enum discriminants.
-#[doc(hidden)]
-pub struct Bits<T>(pub T);
-
-impl<T> Bits<T> {
-    /// Returns the raw underlying representation.
-    #[inline(always)]
-    pub fn into_raw(self) -> T {
-        self.0
-    }
+/// The default set of predefined specifiers.
+pub mod specifiers {
+    ::modular_bitfield_impl::define_specifiers!();
 }
-
-/// Helper trait to convert to bits.
-///
-/// # Note
-///
-/// Implemented by primitive specifier types.
-#[doc(hidden)]
-pub trait IntoBits<T> {
-    fn into_bits(self) -> Bits<T>;
-}
-
-/// Helper trait to convert from bits.
-///
-/// # Note
-///
-/// Implemented by primitive specifier types.
-#[doc(hidden)]
-pub trait FromBits<T> {
-    fn from_bits(bits: Bits<T>) -> Self;
-}
-
-impl Specifier for bool {
-    const BITS: usize = 1;
-    type Base = u8;
-    type Face = bool;
-}
-
-impl FromBits<u8> for bool {
-    #[inline(always)]
-    fn from_bits(bits: Bits<u8>) -> Self {
-        bits.into_raw() != 0
-    }
-}
-
-impl IntoBits<u8> for bool {
-    #[inline(always)]
-    fn into_bits(self) -> Bits<u8> {
-        Bits(self as u8)
-    }
-}
-
-macro_rules! impl_wrapper_from_naive {
-    ( $($type:ty),* ) => {
-        $(
-            impl IntoBits<$type> for $type {
-                #[inline(always)]
-                fn into_bits(self) -> Bits<$type> {
-                    Bits(self)
-                }
-            }
-
-            impl FromBits<$type> for $type {
-                #[inline(always)]
-                fn from_bits(bits: Bits<$type>) -> Self {
-                    bits.into_raw()
-                }
-            }
-        )*
-    }
-}
-
-impl_wrapper_from_naive!(bool, u8, u16, u32, u64, u128);

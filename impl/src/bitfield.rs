@@ -1,105 +1,227 @@
+use core::convert::TryFrom;
 use proc_macro2::TokenStream as TokenStream2;
 use quote::{format_ident, quote, quote_spanned};
-use syn::{
-    self,
-    parse::{Parse, ParseStream, Result},
-    punctuated::Punctuated,
-    Token,
-};
+use syn::spanned::Spanned as _;
+use syn::{self, parse::Result, punctuated::Punctuated, Token};
 
-pub fn generate(args: TokenStream2, input: TokenStream2) -> TokenStream2 {
-    match bitfield_impl(args, input) {
+/// Analyzes the given token stream for `#[bitfield]` properties and expands code if valid.
+pub fn analyse_and_expand(args: TokenStream2, input: TokenStream2) -> TokenStream2 {
+    match analyse_and_expand_or_error(args, input) {
         Ok(output) => output,
         Err(err) => err.to_compile_error(),
     }
 }
 
-fn bitfield_impl(args: TokenStream2, input: TokenStream2) -> Result<TokenStream2> {
-    let _ = args;
-    let input = syn::parse::<BitfieldStruct>(input.into())?;
-    input.validate()?;
-    input.expand()
+/// Analyzes the given token stream for `#[bitfield]` properties and expands code if valid.
+///
+/// # Errors
+///
+/// If the given token stream does not yield a valid `#[bitfield]` specifier.
+fn analyse_and_expand_or_error(_args: TokenStream2, input: TokenStream2) -> Result<TokenStream2> {
+    let input = syn::parse::<syn::ItemStruct>(input.into())?;
+    let bitfield = BitfieldStruct::try_from(input)?;
+    Ok(bitfield.expand())
 }
 
+/// Type used to guide analysis and expansion of `#[bitfield]` structs.
 struct BitfieldStruct {
-    ast: syn::ItemStruct,
+    /// The input `struct` item.
+    item_struct: syn::ItemStruct,
 }
 
 /// Represents the `bitfield` specific attribute `#[bits = N]`.
 struct BitsAttributeArgs {
-    size: syn::LitInt,
+    bits: syn::LitInt,
 }
 
 impl syn::parse::Parse for BitsAttributeArgs {
     fn parse(input: &syn::parse::ParseBuffer) -> syn::Result<Self> {
         input.parse::<Token![=]>()?;
         Ok(BitsAttributeArgs {
-            size: input.parse()?,
+            bits: input.parse()?,
         })
     }
 }
 
-impl Parse for BitfieldStruct {
-    fn parse(input: ParseStream) -> Result<Self> {
-        Ok(Self {
-            ast: input.parse()?,
-        })
+impl TryFrom<syn::ItemStruct> for BitfieldStruct {
+    type Error = syn::Error;
+
+    fn try_from(item_struct: syn::ItemStruct) -> Result<Self> {
+        Self::ensure_has_fields(&item_struct)?;
+        Self::ensure_no_generics(&item_struct)?;
+        Self::ensure_no_bits_markers(&item_struct)?;
+        Ok(Self { item_struct })
     }
 }
 
 impl BitfieldStruct {
-    fn expand(&self) -> Result<TokenStream2> {
-        if let unit @ syn::Fields::Unit = &self.ast.fields {
-            bail!(unit, "unit structs are not supported",)
+    /// Returns an error if the input struct does not have any fields.
+    fn ensure_has_fields(item_struct: &syn::ItemStruct) -> Result<()> {
+        if let unit @ syn::Fields::Unit = &item_struct.fields {
+            return Err(format_err_spanned!(
+                unit,
+                "encountered invalid bitfield struct without fields"
+            ));
         }
-        let size = {
-            let mut size = Punctuated::<syn::ExprPath, Token![+]>::new();
-            for field in self.ast.fields.iter() {
-                let ty = &field.ty;
-                size.push(syn::parse_quote!( <#ty as Specifier>::BITS ));
+        Ok(())
+    }
+
+    /// Returns an error if the input struct is generic.
+    fn ensure_no_generics(item_struct: &syn::ItemStruct) -> Result<()> {
+        if !item_struct.generics.params.is_empty() {
+            return Err(format_err_spanned!(
+                item_struct,
+                "encountered invalid generic bitfield struct"
+            ));
+        }
+        Ok(())
+    }
+
+    /// Ensures that no field in the given input struct has a `#[bits]` marker attribute.
+    fn ensure_no_bits_markers(item_struct: &syn::ItemStruct) -> Result<()> {
+        for (n, field) in item_struct.fields.iter().enumerate() {
+            for attr in field.attrs.iter() {
+                if !attr.path.is_ident("bits") {
+                    return Err(format_err_spanned!(
+                        attr,
+                        "encountered unsupported attribute `#[bits]` of field at {}",
+                        n
+                    ));
+                }
             }
-            size
-        };
-        let mut expanded = quote! {};
-        let attrs = &self.ast.attrs;
-        let internal_methods = self.expand_internal_methods();
+        }
+        Ok(())
+    }
+
+    /// Expands the given `#[bitfield]` struct into an actual bitfield definition.
+    pub fn expand(&self) -> TokenStream2 {
+        let span = self.item_struct.span();
+        let check_multiple_of_8 = self.generate_check_multiple_of_8();
+        let struct_definition = self.generate_struct();
+        let constructor_definition = self.generate_constructor();
+
         let byte_conversion_impls = self.expand_byte_conversion_impls();
-        let getters_and_setters = self.expand_getters_and_setters()?;
-        let ident = &self.ast.ident;
-        let structure_vis = &self.ast.vis;
+        let getters_and_setters = self.expand_getters_and_setters();
 
-        expanded.extend(quote! {
-            #(#attrs)*
+        quote_spanned!(span=>
+            #struct_definition
+            #check_multiple_of_8
+            #constructor_definition
+            #byte_conversion_impls
+            #getters_and_setters
+        )
+    }
+
+    /// Generates the expression denoting the sum of all field bit specifier sizes.
+    ///
+    /// # Example
+    ///
+    /// For the following struct:
+    ///
+    /// ```
+    /// #[bitfield]
+    /// pub struct Color {
+    ///     r: u8,
+    ///     g: u8,
+    ///     b: u8,
+    ///     a: bool,
+    ///     rest: B7,
+    /// }
+    /// ```
+    ///
+    /// We generate the following tokens:
+    ///
+    /// ```
+    /// {
+    ///     0usize +
+    ///     <u8 as ::modular_bitfield::Specifier>::BITS +
+    ///     <u8 as ::modular_bitfield::Specifier>::BITS +
+    ///     <u8 as ::modular_bitfield::Specifier>::BITS +
+    ///     <bool as ::modular_bitfield::Specifier>::BITS +
+    ///     <B7 as ::modular_bitfield::Specifier>::BITS
+    /// }
+    /// ```
+    ///
+    /// Which is a compile time evaluatable expression.
+    fn generate_bitfield_size(&self) -> TokenStream2 {
+        let span = self.item_struct.span();
+        let sum = self
+            .item_struct
+            .fields
+            .iter()
+            .map(|field| {
+                let span = field.span();
+                let ty = &field.ty;
+                quote_spanned!(span=>
+                    <#ty as ::modular_bitfield::Specifier>::BITS
+                )
+            })
+            .fold(quote_spanned!(span=> 0usize), |lhs, rhs| {
+                quote_spanned!(span =>
+                    #lhs + #rhs
+                )
+            });
+        quote_spanned!(span=>
+            { #sum }
+        )
+    }
+
+    /// Generates the `CheckTotalSizeMultipleOf8` trait implementation to check for correct bitfield sizes.
+    fn generate_check_multiple_of_8(&self) -> TokenStream2 {
+        let span = self.item_struct.span();
+        let ident = &self.item_struct.ident;
+        let size = self.generate_bitfield_size();
+        quote_spanned!(span=>
+            const _: () = {
+                impl ::modular_bitfield::private::checks::CheckTotalSizeMultipleOf8 for #ident {
+                    type Size = ::modular_bitfield::private::checks::TotalSize<[(); (#size) % 8usize]>;
+                }
+            };
+        )
+    }
+
+    /// Generates the actual item struct definition for the `#[bitfield]`.
+    ///
+    /// Internally it only contains a byte array equal to the minimum required
+    /// amount of bytes to compactly store the information of all its bit fields.
+    fn generate_struct(&self) -> TokenStream2 {
+        let span = self.item_struct.span();
+        let attrs = &self.item_struct.attrs;
+        let vis = &self.item_struct.vis;
+        let ident = &self.item_struct.ident;
+        let size = self.generate_bitfield_size();
+        quote_spanned!(span=>
+            #( #attrs )*
             #[repr(transparent)]
-            #structure_vis struct #ident
+            #vis struct #ident
             {
-                data: [u8; (#size) / 8],
+                bytes: [::core::primitive::u8; #size / 8usize],
             }
+        )
+    }
 
-            impl modular_bitfield::checks::CheckTotalSizeMultipleOf8 for #ident {
-                type Size = modular_bitfield::checks::TotalSize<[(); (#size) % 8]>;
-            }
-
+    /// Generates the constructor for the bitfield that initializes all bytes to zero.
+    fn generate_constructor(&self) -> TokenStream2 {
+        let span = self.item_struct.span();
+        let ident = &self.item_struct.ident;
+        let size = self.generate_bitfield_size();
+        quote_spanned!(span=>
             impl #ident
             {
                 /// Returns an instance with zero initialized data
-                pub fn new() -> Self {
+                pub const fn new() -> Self {
                     Self {
-                        data: [0; (#size) / 8],
+                        bytes: [0u8; #size / 8usize],
                     }
                 }
-
-                #internal_methods
-                #getters_and_setters
             }
-
-            #byte_conversion_impls
-        });
-        Ok(expanded)
+        )
     }
 
+    /// Generates routines to allow conversion from and to bytes for the `#[bitfield]` struct.
     fn expand_byte_conversion_impls(&self) -> TokenStream2 {
-        let ident = &self.ast.ident;
+        let ident = &self.item_struct.ident;
+        let size = self.generate_bitfield_size();
 
         quote! {
             impl #ident {
@@ -107,302 +229,201 @@ impl BitfieldStruct {
                 ///
                 /// # Layout
                 ///
-                /// The returned byte slice is layed out in the same way as described
+                /// The returned byte array is layed out in the same way as described
                 /// [here](https://docs.rs/modular-bitfield/#generated-structure).
                 #[inline]
-                pub fn to_bytes(&self) -> &[u8] {
-                    &self.data
+                pub const fn as_bytes(&self) -> &[::core::primitive::u8; #size / 8usize] {
+                    &self.bytes
                 }
-            }
 
-            impl<'a> core::convert::TryFrom<&'a [u8]> for #ident {
-                type Error = modular_bitfield::Error;
-
-                /// Constructs the bitfield struct from the given bytes.
+                /// Converts the given bytes directly into the bitfield struct.
                 ///
-                /// # Layout
+                /// # Safety
                 ///
-                /// Expects the given buffer to be layed out as described
-                /// [here](https://docs.rs/modular-bitfield/#generated-structure).
-                ///
-                /// # Errors
-                ///
-                /// If the length of the byte slice doesn't match the length of the
-                /// underlying byte buffer of the bitfield struct which is always exactly
-                /// as long as needed to store all bits.
+                /// This is an `unsafe` operation since it omits checks on every field to ensure
+                /// that the provided byte pattern represents a valid state.
                 #[inline]
-                fn try_from(bytes: &[u8]) -> Result<Self, Self::Error> {
-                    // We can do this because bitfield structs being `#[repr(transparent)]`.
-                    const REQ_BYTES: usize = core::mem::size_of::<#ident>();
-                    if bytes.len() != REQ_BYTES {
-                        return Err(Error::InvalidBufferLen)
-                    }
-                    let mut data = [0; REQ_BYTES];
-                    data.copy_from_slice(bytes);
-                    Ok(Self { data })
+                pub const unsafe fn from_bytes_unchecked(bytes: [::core::primitive::u8; #size / 8usize]) -> Self {
+                    Self { bytes }
                 }
             }
         }
     }
 
-    fn expand_internal_methods(&self) -> TokenStream2 {
-        quote! {
-            #[inline(always)]
-            fn get<T>(&self, start: usize) -> <T as modular_bitfield::Specifier>::Base
-            where
-                T: modular_bitfield::Specifier,
-            {
-                let end = start + <T as modular_bitfield::Specifier>::BITS;
-                let ls_byte = start / 8; // compile-time
-                let ms_byte = (end - 1) / 8; // compile-time
-                let lsb_offset = start % 8; // compile-time
-                let msb_offset = end % 8; // compile-time
-                let msb_offset = if msb_offset == 0 { 8 } else { msb_offset };
-
-                let mut buffer = <T as modular_bitfield::Specifier>::Base::default();
-
-                if lsb_offset == 0 && msb_offset == 8 {
-                    // Edge-case for whole bytes manipulation.
-                    for byte in self.data[ls_byte..(ms_byte + 1)].iter().rev() {
-                        buffer.push_bits(8, *byte)
-                    }
-                } else {
-                    if ls_byte != ms_byte {
-                        // Most-significant byte
-                        buffer.push_bits(msb_offset as u32, self.data[ms_byte]);
-                    }
-
-                    if ms_byte - ls_byte >= 2 {
-                        // Middle bytes
-                        for byte in self.data[(ls_byte + 1)..ms_byte].iter().rev() {
-                            buffer.push_bits(8, *byte);
-                        }
-                    }
-
-                    if ls_byte == ms_byte {
-                        buffer.push_bits(<T as modular_bitfield::Specifier>::BITS as u32, self.data[ls_byte] >> lsb_offset);
-                    } else {
-                        buffer.push_bits(8 - lsb_offset as u32, self.data[ls_byte] >> lsb_offset);
-                    }
-                }
-
-                buffer
-            }
-
-            #[inline(always)]
-            fn set<T>(&mut self, start: usize, new_val: <T as modular_bitfield::Specifier>::Base)
-            where
-                T: modular_bitfield::Specifier,
-            {
-                let end = start + <T as modular_bitfield::Specifier>::BITS;
-                let ls_byte = start / 8; // compile-time
-                let ms_byte = (end - 1) / 8; // compile-time
-                let lsb_offset = start % 8; // compile-time
-                let msb_offset = end % 8; // compile-time
-                let msb_offset = if msb_offset == 0 { 8 } else { msb_offset };
-
-                let mut input = new_val;
-
-                if lsb_offset == 0 && msb_offset == 8 {
-                    // Edge-case for whole bytes manipulation.
-                    for byte in self.data[ls_byte..(ms_byte + 1)].iter_mut() {
-                        *byte = input.pop_bits(8);
-                    }
-                } else {
-                    // Least-significant byte
-                    let stays_same = self.data[ls_byte] &
-                        (
-                            if ls_byte == ms_byte && msb_offset != 8 {
-                                !((0x1 << msb_offset) - 1)
-                            } else {
-                                0
-                            } | ((0x1 << lsb_offset as u32) - 1)
-                        );
-                    let overwrite = input.pop_bits(8 - lsb_offset as u32);
-                    self.data[ls_byte] = stays_same | (overwrite << lsb_offset as u32);
-
-                    if ms_byte - ls_byte >= 2 {
-                        // Middle bytes
-                        for byte in self.data[(ls_byte + 1)..ms_byte].iter_mut() {
-                            *byte = input.pop_bits(8);
-                        }
-                    }
-
-                    if ls_byte != ms_byte {
-                        // Most-significant byte
-                        if msb_offset == 8 {
-                            // We don't need to respect what was formerly stored in the byte.
-                            self.data[ms_byte] = input.pop_bits(msb_offset as u32);
-                        } else {
-                            // All bits that do not belong to this field should be preserved.
-                            let stays_same = self.data[ms_byte] & !((0x1 << msb_offset) - 1);
-                            let overwrite = input.pop_bits(msb_offset as u32);
-                            self.data[ms_byte] = stays_same | overwrite;
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    fn expand_getters_and_setters(&self) -> Result<TokenStream2> {
-        let mut expanded = quote! {};
-        let mut offset = Punctuated::<syn::Expr, Token![+]>::new();
-        offset.push(syn::parse_quote! { 0 });
-        for (n, field) in self.ast.fields.iter().enumerate() {
-            let field_name: &dyn quote::IdentFragment = match field.ident.as_ref() {
-                Some(field) => field,
-                None => &n,
-            };
-            let getter_name = match field.ident.as_ref() {
-                Some(field_name) => field_name.clone(),
-                None => format_ident!("get_{}", field_name),
-            };
-            let setter_name = format_ident!("set_{}", field_name);
-            let checked_setter_name = format_ident!("set_{}_checked", field_name);
-            let field_name_in_doc = field
-                .ident
-                .as_ref()
-                .map(ToString::to_string)
-                .unwrap_or(format!("{}", n));
-
-            let with_name = format_ident!("with_{}", field_name);
-            let checked_with_name = format_ident!("with_{}_checked", field_name);
-            let field_type = &field.ty;
-            let field_vis = &field.vis;
-
-            let mut bits_check_tokens = quote! {};
-            for attr in field.attrs.iter() {
-                if !attr.path.is_ident("bits") {
-                    bail!(attr, "unsupported field attribute");
-                }
-                let bits_arg = syn::parse::<BitsAttributeArgs>(attr.tokens.clone().into()).unwrap();
-                let expected_bits = bits_arg.size;
-                bits_check_tokens.extend(quote_spanned! { expected_bits.span() =>
-                    let _ = modular_bitfield::checks::BitsCheck::<
-                        [(); #expected_bits]
-                    >{
-                        arr: [(); <#field_type as modular_bitfield::Specifier>::BITS]
+    /// Generates code to check for the bit size arguments of bitfields.
+    fn expand_getters_and_setters_checks_for_field(&self, field: &syn::Field) -> TokenStream2 {
+        let span = field.span();
+        let ty = &field.ty;
+        let checks = field.attrs.iter().map(|attr| {
+            let bits_arg = syn::parse::<BitsAttributeArgs>(attr.tokens.clone().into())
+                .expect("encountered unexpected invalid bitfield attribute");
+            let expected_bits = bits_arg.bits;
+            quote_spanned!(expected_bits.span() =>
+                let _: ::modular_bitfield::private::checks::BitsCheck::<[(); #expected_bits]> =
+                    ::modular_bitfield::private::checks::BitsCheck::<[(); #expected_bits]>{
+                        arr: [(); <#ty as ::modular_bitfield::Specifier>::BITS]
                     };
-                })
-            }
-
-            let set_assert_msg = proc_macro2::Literal::string(&format!(
-                "value out of bounds for field {}.{}",
-                self.ast.ident, field_name_in_doc
-            ));
-
-            let getter_docs = format!("Returns the value of {}.", field_name_in_doc);
-            let setter_docs = format!(
-                "Sets the value of {} to the given value.\n\n\
-                 #Panics\n\n\
-                 If the given value is out of bounds for {}",
-                field_name_in_doc, field_name_in_doc,
-            );
-            let checked_setter_docs = format!(
-                "Sets the value of {} to the given value.\n\n\
-                 #Errors\n\n\
-                 If the given value is out of bounds for {}",
-                field_name_in_doc, field_name_in_doc,
-            );
-
-            let with_docs = format!(
-                "Returns a copy of the bitfield with the value of {} \
-                 set to the given value.\n\n\
-                 #Panics\n\n\
-                 If the given value is out of bounds for {}",
-                field_name_in_doc, field_name_in_doc,
-            );
-            let checked_with_docs = format!(
-                "Returns a copy of the bitfield with the value of {} \
-                 set to the given value.\n\n\
-                 #Errors\n\n\
-                 If the given value is out of bounds for {}",
-                field_name_in_doc, field_name_in_doc,
-            );
-
-            expanded.extend(quote!{
-                #[doc = #getter_docs]
-                #[inline]
-                #field_vis fn #getter_name(&self) -> <#field_type as modular_bitfield::Specifier>::Face {
-                    #bits_check_tokens
-
-                    <#field_type as modular_bitfield::Specifier>::Face::from_bits(
-                        modular_bitfield::Bits(self.get::<#field_type>(#offset))
-                    )
-                }
-
-                #[doc = #with_docs]
-                #[inline]
-                #field_vis fn #with_name(mut self, new_val: <#field_type as modular_bitfield::Specifier>::Face) -> Self {
-                    self.#setter_name(new_val);
-                    self
-                }
-
-                #[doc = #checked_with_docs]
-                #[inline]
-                #field_vis fn #checked_with_name(mut self, new_val: <#field_type as modular_bitfield::Specifier>::Face) -> Result<Self, modular_bitfield::Error> {
-                    self.#checked_setter_name(new_val)?;
-                    Ok(self)
-                }
-
-                #[doc = #setter_docs]
-                #[inline]
-                #field_vis fn #setter_name(&mut self, new_val: <#field_type as modular_bitfield::Specifier>::Face) {
-                    self.#checked_setter_name(new_val).expect(#set_assert_msg)
-                }
-
-                #[doc = #checked_setter_docs]
-                #[inline]
-                #field_vis fn #checked_setter_name(
-                    &mut self,
-                    new_val: <#field_type as modular_bitfield::Specifier>::Face
-                ) -> Result<(), modular_bitfield::Error> {
-                    use ::core::mem::size_of;
-                    let base_bits = 8 * size_of::<<#field_type as modular_bitfield::Specifier>::Base>();
-                    let max_value: <#field_type as modular_bitfield::Specifier>::Base = {
-                        !0 >> (base_bits - <#field_type as modular_bitfield::Specifier>::BITS)
-                    };
-                    let spec_bits = <#field_type as modular_bitfield::Specifier>::BITS;
-                    let raw_val = new_val.into_bits().into_raw();
-                    // We compare base bits with spec bits to drop this condition
-                    // if there cannot be invalid inputs.
-                    if !(base_bits == spec_bits || raw_val <= max_value) {
-                        return Err(modular_bitfield::Error::OutOfBounds)
-                    }
-                    self.set::<#field_type>(#offset, raw_val);
-                    Ok(())
-                }
-            });
-            offset.push(syn::parse_quote! { <#field_type as modular_bitfield::Specifier>::BITS });
-        }
-        Ok(expanded)
-    }
-
-    pub fn has_generics(&self) -> bool {
-        // The `lt_token` and `gt_token` don't constitute generics on their own.
-        // Rustc accepts this as a struct without generics:
-        //
-        // ```
-        // struct S<> {
-        //     ...
-        // }
-        // ```
-        //
-        // So we have to check whether the params are actually empty.
-        !self.ast.generics.params.is_empty()
-    }
-
-    pub fn validate(&self) -> Result<()> {
-        if self.has_generics() {
-            bail!(
-                self.ast.generics,
-                "generics are not supported for bitfields",
             )
-        }
-        if let unit @ syn::Fields::Unit = &self.ast.fields {
-            bail!(unit, "unit structs are not supported",)
-        }
-        Ok(())
+        });
+        quote_spanned!(span=>
+            const _: () = {
+                #( #checks )*
+            };
+        )
+    }
+
+    fn expand_getters_and_setters_for_field(
+        &self,
+        offset: &mut Punctuated<syn::Expr, syn::Token![+]>,
+        n: usize,
+        field: &syn::Field,
+    ) -> TokenStream2 {
+        let span = field.span();
+        let struct_ident = &self.item_struct.ident;
+        let ident_frag: &dyn quote::IdentFragment = match field.ident.as_ref() {
+            Some(field) => field,
+            None => &n,
+        };
+        let get_ident = field
+            .ident
+            .as_ref()
+            .cloned()
+            .unwrap_or_else(|| format_ident!("get_{}", n));
+        let set_ident = format_ident!("set_{}", ident_frag);
+        let set_checked_ident = format_ident!("set_{}_checked", ident_frag);
+        let with_ident = format_ident!("with_{}", ident_frag);
+        let with_checked_ident = format_ident!("with_{}_checked", ident_frag);
+
+        let doc_ident = field
+            .ident
+            .as_ref()
+            .map(ToString::to_string)
+            .unwrap_or(format!("{}", n));
+        let ty = &field.ty;
+        let vis = &field.vis;
+        let bits_checks = self.expand_getters_and_setters_checks_for_field(field);
+
+        let set_assert_msg = format!(
+            "value out of bounds for field {}.{}",
+            struct_ident, doc_ident
+        );
+        let getter_docs = format!("Returns the value of {}.", doc_ident);
+        let setter_docs = format!(
+            "Sets the value of {} to the given value.\n\n\
+             #Panics\n\n\
+             If the given value is out of bounds for {}.",
+            doc_ident, doc_ident,
+        );
+        let checked_setter_docs = format!(
+            "Sets the value of {} to the given value.\n\n\
+             #Errors\n\n\
+             If the given value is out of bounds for {}.",
+            doc_ident, doc_ident,
+        );
+        let with_docs = format!(
+            "Returns a copy of the bitfield with the value of {} \
+             set to the given value.\n\n\
+             #Panics\n\n\
+             If the given value is out of bounds for {}.",
+            doc_ident, doc_ident,
+        );
+        let checked_with_docs = format!(
+            "Returns a copy of the bitfield with the value of {} \
+             set to the given value.\n\n\
+             #Errors\n\n\
+             If the given value is out of bounds for {}.",
+            doc_ident, doc_ident,
+        );
+
+        let expanded = quote_spanned!(span=>
+            #[doc = #getter_docs]
+            #[inline]
+            #vis fn #get_ident(&self) -> <#ty as ::modular_bitfield::Specifier>::Face {
+                #bits_checks
+                let read: <#ty as ::modular_bitfield::Specifier>::Base = {
+                    ::modular_bitfield::private::read_specifier::<#ty>(&self.bytes[..], #offset)
+                };
+                let bits: ::modular_bitfield::private::Bits<
+                    <#ty as ::modular_bitfield::Specifier>::Base
+                > = ::modular_bitfield::private::Bits(read);
+                <<#ty as ::modular_bitfield::Specifier>::Face as ::modular_bitfield::private::FromBits<
+                    <#ty as ::modular_bitfield::Specifier>::Base
+                >>::from_bits(bits)
+            }
+
+            #[doc = #with_docs]
+            #[inline]
+            #vis fn #with_ident(
+                mut self,
+                new_val: <#ty as ::modular_bitfield::Specifier>::Face
+            ) -> Self {
+                self.#set_ident(new_val);
+                self
+            }
+
+            #[doc = #checked_with_docs]
+            #[inline]
+            #vis fn #with_checked_ident(
+                mut self,
+                new_val: <#ty as ::modular_bitfield::Specifier>::Face,
+            ) -> ::core::result::Result<Self, ::modular_bitfield::Error> {
+                self.#set_checked_ident(new_val)?;
+                Ok(self)
+            }
+
+            #[doc = #setter_docs]
+            #[inline]
+            #vis fn #set_ident(&mut self, new_val: <#ty as ::modular_bitfield::Specifier>::Face) {
+                self.#set_checked_ident(new_val).expect(#set_assert_msg)
+            }
+
+            #[doc = #checked_setter_docs]
+            #[inline]
+            #vis fn #set_checked_ident(
+                &mut self,
+                new_val: <#ty as ::modular_bitfield::Specifier>::Face
+            ) -> ::core::result::Result<(), ::modular_bitfield::Error> {
+                let base_bits: ::core::primitive::usize = 8usize * ::core::mem::size_of::<<#ty as ::modular_bitfield::Specifier>::Base>();
+                let max_value: <#ty as ::modular_bitfield::Specifier>::Base = {
+                    !0 >> (base_bits - <#ty as ::modular_bitfield::Specifier>::BITS)
+                };
+                let spec_bits: ::core::primitive::usize = <#ty as ::modular_bitfield::Specifier>::BITS;
+                let raw_val: <#ty as ::modular_bitfield::Specifier>::Base = <
+                    <#ty as ::modular_bitfield::Specifier>::Face as ::modular_bitfield::private::IntoBits<
+                        <#ty as ::modular_bitfield::Specifier>::Base
+                    >
+                >::into_bits(new_val).into_raw();
+                // We compare base bits with spec bits to drop this condition
+                // if there cannot be invalid inputs.
+                if !(base_bits == spec_bits || raw_val <= max_value) {
+                    return Err(::modular_bitfield::Error::OutOfBounds)
+                }
+                ::modular_bitfield::private::write_specifier::<#ty>(&mut self.bytes[..], #offset, raw_val);
+                Ok(())
+            }
+        );
+        offset.push(syn::parse_quote! { <#ty as ::modular_bitfield::Specifier>::BITS });
+        expanded
+    }
+
+    fn expand_getters_and_setters(&self) -> TokenStream2 {
+        let span = self.item_struct.span();
+        let ident = &self.item_struct.ident;
+        let mut offset = {
+            let mut offset = Punctuated::<syn::Expr, Token![+]>::new();
+            offset.push(syn::parse_quote! { 0usize });
+            offset
+        };
+        let setters_and_getters = self
+            .item_struct
+            .fields
+            .iter()
+            .enumerate()
+            .map(|(n, field)| self.expand_getters_and_setters_for_field(&mut offset, n, field));
+        quote_spanned!(span=>
+            impl #ident {
+                #( #setters_and_getters )*
+            }
+        )
     }
 }

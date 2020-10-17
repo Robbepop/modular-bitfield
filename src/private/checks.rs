@@ -3,6 +3,15 @@ pub(crate) mod private {
     pub trait Sealed {}
 }
 
+macro_rules! impl_sealed_for {
+    ( $($primitive:ty),* ) => {
+        $(
+            impl private::Sealed for $primitive {}
+        )*
+    }
+}
+impl_sealed_for!(bool, u8, u16, u32, u64, u128);
+
 /// Helper trait to check whether the size of bitfield structs
 /// is a multiple of 8 to form complete bytes.
 pub trait TotalSizeIsMultipleOfEightBits: private::Sealed {}

@@ -1,55 +1,11 @@
 use modular_bitfield::prelude::*;
 
-#[derive(BitfieldSpecifier, Debug, PartialEq, Copy, Clone)]
-pub enum Mode {
-    A = 0b00,
-    B = 0b01,
-    C = 0b10,
-    D = 0b11,
-}
-
 #[bitfield]
-#[derive(Debug)]
-pub struct StatFlag {
-    x: bool,
-    y: bool,
-    z: B4,
-    #[bits = 2]
-    mode: Mode,
+pub struct MyFourBytes {
+    a: B1,
+    b: B3,
+    c: B4,
+    d: B24,
 }
 
-fn main() {
-    let mut flag = StatFlag::new();
-
-    assert_eq!(flag.get_x(), false);
-    assert_eq!(flag.get_y(), false);
-    assert_eq!(flag.get_z(), 0);
-    assert_eq!(flag.get_mode(), Mode::A);
-
-    let new_mode = Mode::B;
-
-    println!("main :: 0");
-
-    println!("data 0 = {:?}", flag.to_bytes());
-    flag.set_mode(new_mode);
-    println!("data 1 = {:?}", flag.to_bytes());
-    assert_eq!(flag.get_mode(), new_mode);
-
-    // println!("main :: 1");
-
-    // flag.set_x(true);
-    // assert_eq!(flag.get_x(), true);
-    // assert_eq!(flag.get_mode(), new_mode);
-
-    flag.set_y(true);
-    assert_eq!(flag.get_y(), true);
-    assert_eq!(flag.get_mode(), new_mode);
-
-    flag.set_z(0b01);
-    assert_eq!(flag.get_z(), 0b01);
-    assert_eq!(flag.get_mode(), new_mode);
-
-    flag.set_z(0b11);
-    assert_eq!(flag.get_z(), 0b11);
-    assert_eq!(flag.get_mode(), new_mode);
-}
+fn main() {}

@@ -1,12 +1,10 @@
-error[E0277]: the trait bound `modular_bitfield::checks::SevenMod8: modular_bitfield::checks::TotalSizeIsMultipleOfEightBits` is not satisfied
-  --> $DIR/04-multiple-of-8bits.rs:53:1
+error[E0277]: the trait bound `modular_bitfield::private::checks::SevenMod8: modular_bitfield::private::checks::TotalSizeIsMultipleOfEightBits` is not satisfied
+  --> $DIR/04-multiple-of-8bits.rs:54:1
    |
-53 | #[bitfield]
-   | ^^^^^^^^^^^ the trait `modular_bitfield::checks::TotalSizeIsMultipleOfEightBits` is not implemented for `modular_bitfield::checks::SevenMod8`
+54 | pub struct NotQuiteFourBytes {
+   | ^^^ the trait `modular_bitfield::private::checks::TotalSizeIsMultipleOfEightBits` is not implemented for `modular_bitfield::private::checks::SevenMod8`
    |
-  ::: $WORKSPACE/src/checks.rs
+  ::: $WORKSPACE/src/private/checks.rs
    |
    |     <Self::Size as RenameSizeType>::CheckType: TotalSizeIsMultipleOfEightBits,
-   |                                                ------------------------------ required by this bound in `modular_bitfield::checks::CheckTotalSizeMultipleOf8`
-   |
-   = note: this error originates in an attribute macro (in Nightly builds, run with -Z macro-backtrace for more info)
+   |                                                ------------------------------ required by this bound in `modular_bitfield::private::checks::CheckTotalSizeMultipleOf8`

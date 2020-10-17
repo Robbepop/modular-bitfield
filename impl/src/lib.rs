@@ -39,10 +39,10 @@ pub fn define_specifiers(input: TokenStream) -> TokenStream {
 ///
 /// #[bitfield]
 /// struct Example {
-///     a: B1,  // Uses 1 bit
+///     a: B1,      // Uses 1 bit
 ///     #[bits = 7] // Optional, just asserts that B7 uses exactly 7 bits.
-///     b: B7,  // Uses 7 bits
-///     c: B24, // Uses 24 bits
+///     b: B7,      // Uses 7 bits
+///     c: B24,     // Uses 24 bits
 /// }
 ///
 /// #[bitfield]
@@ -69,7 +69,8 @@ pub fn define_specifiers(input: TokenStream) -> TokenStream {
 /// ```
 #[proc_macro_attribute]
 pub fn bitfield(args: TokenStream, input: TokenStream) -> TokenStream {
-    bitfield::generate(args.into(), input.into()).into()
+    // bitfield::generate(args.into(), input.into()).into()
+    bitfield::analyse_and_expand(args.into(), input.into()).into()
 }
 
 /// Derive macro for enums.
