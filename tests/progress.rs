@@ -29,4 +29,6 @@ fn tests() {
     t.pass("tests/23-no-implicit-prelude.rs");
     t.pass("tests/24-primitives-as-specifiers.rs");
     t.pass("tests/25-regression-issue-8.rs");
+    t.compile_fail("tests/26-invalid-struct-specifier.rs");
+    t.compile_fail("tests/27-invalid-union-specifier.rs");
 }
