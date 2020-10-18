@@ -1,15 +1,17 @@
-// //! In this benchmark we compare the macro generated code for
-// //! setters and getters to some hand-written code for the same
-// //! data structure.
-// //!
-// //! We do a performance analysis for the getter and setter of
-// //! all fields of both structs.
-// //!
-// //! Also we test here that our hand-written code and the macro
-// //! generated code actually are semantically equivalent.
-// //! This allows us to further enhance the hand-written code
-// //! and to eventually come up with new optimization tricks
-// //! for the macro generated code while staying correct.
+//! In this benchmark we compare the macro generated code for
+//! setters and getters to some hand-written code for the same
+//! data structure.
+//!
+//! We do a performance analysis for the getter and setter of
+//! all fields of both structs.
+//!
+//! Also we test here that our hand-written code and the macro
+//! generated code actually are semantically equivalent.
+//! This allows us to further enhance the hand-written code
+//! and to eventually come up with new optimization tricks
+//! for the macro generated code while staying correct.
+
+#![allow(dead_code)]
 
 use modular_bitfield::prelude::*;
 
@@ -29,7 +31,6 @@ use modular_bitfield::prelude::*;
 ///
 /// More cases could be missing and might be added in the future.
 #[bitfield]
-#[allow(dead_code)]
 pub struct Generated {
     pub a: B9,
     pub b: B6,
@@ -125,13 +126,11 @@ impl Handwritten {
 macro_rules! impl_getter_setter_tests {
     ( $( ($name:ident, $getter:ident, $setter:ident, $n:expr), )* ) => {
         mod generated_is_equal_to_handwritten {
-            use super::*;
-
             $(
                 #[test]
                 fn $name() {
-                    let mut macro_struct = Generated::new();
-                    let mut hand_struct = Handwritten::new();
+                    let mut macro_struct = super::Generated::new();
+                    let mut hand_struct = super::Handwritten::new();
                     assert_eq!(hand_struct.$getter(), macro_struct.$getter());
                     macro_struct.$setter($n);
                     hand_struct.$setter($n);
@@ -142,7 +141,6 @@ macro_rules! impl_getter_setter_tests {
         }
     }
 }
-
 impl_getter_setter_tests!(
     (get_set_a, a, set_a, 444),
     (get_set_b, b, set_b, 50),
