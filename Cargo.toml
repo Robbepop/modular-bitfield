@@ -26,6 +26,10 @@ criterion = "0.3"
 name = "benchmarks"
 harness = false
 
+# [[bin]]
+# name = "workshop"
+# path = "main.rs"
+
 [dependencies]
 modular-bitfield-impl = { path = "impl", version = "0.6" }
 
