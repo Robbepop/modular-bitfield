@@ -1,5 +1,6 @@
 mod panic_tests;
 
+#[cfg(all(test, not(miri)))]
 #[test]
 fn tests() {
     let t = trybuild::TestCases::new();
