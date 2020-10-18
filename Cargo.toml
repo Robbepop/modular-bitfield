@@ -20,6 +20,11 @@ path = "tests/progress.rs"
 
 [dev-dependencies]
 trybuild = "1.0"
+criterion = "0.3"
+
+[[bench]]
+name = "benchmarks"
+harness = false
 
 [dependencies]
 modular-bitfield-impl = { path = "impl", version = "0.6" }
