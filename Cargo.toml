@@ -14,16 +14,20 @@ keywords   = ["bitfield", "bit", "bitfields"]
 
 autotests = false
 
-[[test]]
-name = "tests"
-path = "tests/progress.rs"
-
 [dev-dependencies]
 trybuild = "1.0"
 criterion = "0.3"
 
+[[test]]
+name = "tests"
+path = "tests/progress.rs"
+
 [[bench]]
 name = "benchmarks"
+harness = false
+
+[[bench]]
+name = "cmp_handwritten"
 harness = false
 
 # [[bin]]
