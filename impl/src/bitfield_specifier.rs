@@ -1,6 +1,6 @@
+use proc_macro2::TokenStream as TokenStream2;
 use quote::{
     format_ident,
-    quote,
     quote_spanned,
 };
 use syn::spanned::Spanned as _;
@@ -89,7 +89,7 @@ fn generate_enum(input: syn::ItemEnum) -> syn::Result<TokenStream2> {
         )
     });
 
-    Ok(quote! {
+    Ok(quote_spanned!(span=>
         #( #check_discriminants )*
 
         impl ::modular_bitfield::Specifier for #enum_ident {
@@ -119,5 +119,5 @@ fn generate_enum(input: syn::ItemEnum) -> syn::Result<TokenStream2> {
                 )
             }
         }
-    })
+    ))
 }
