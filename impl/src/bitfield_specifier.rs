@@ -1,7 +1,3 @@
-use proc_macro2::{
-    Span as Span2,
-    TokenStream as TokenStream2,
-};
 use quote::{
     format_ident,
     quote,
@@ -46,11 +42,12 @@ fn generate_or_error(input: TokenStream2) -> syn::Result<TokenStream2> {
 }
 
 fn generate_enum(input: syn::ItemEnum) -> syn::Result<TokenStream2> {
+    let span = input.span();
     let enum_ident = &input.ident;
     let count_variants = input.variants.iter().count();
     if !count_variants.is_power_of_two() {
-        return Err(syn::Error::new(
-            Span2::call_site(),
+        return Err(format_err!(
+            span,
             "BitfieldSpecifier expected a number of variants which is a power of 2",
         ))
     }
