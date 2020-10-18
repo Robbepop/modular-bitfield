@@ -10,6 +10,9 @@ mod define_specifiers;
 
 use proc_macro::TokenStream;
 
+/// Generates the `B1`, `B2`, ..., `B128` bitfield specifiers.
+///
+/// Only of use witihn the `modular_bitfield` crate itself.
 #[proc_macro]
 pub fn define_specifiers(input: TokenStream) -> TokenStream {
     define_specifiers::generate(input.into()).into()
