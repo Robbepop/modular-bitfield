@@ -19,6 +19,7 @@ pub fn generate(_input: TokenStream2) -> TokenStream2 {
         let doc_comment = format!("Specifier for {} bits.", n);
         tokens.extend(quote! {
             #[doc = #doc_comment]
+            #[derive(Copy, Clone)]
             pub enum #ident {}
 
             impl crate::Specifier for #ident {
