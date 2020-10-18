@@ -54,7 +54,7 @@
 
 use modular_bitfield::prelude::*;
 
-//#[bitfield]
+// #[bitfield]
 pub struct MyFourBytes {
     a: B1,
     b: B3,
