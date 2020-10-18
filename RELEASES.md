@@ -1,3 +1,7 @@
+# 0.8.0 (WIP)
+
+- Add `Specifier` implementations for `u8`, `u16`, `u32`, `u64` and `u128`.
+
 # 0.7.0 (2020-10-18)
 
 - Tons of macro generated code hygiene improvements for both `#[bitfield]` and `#[derive(BitfieldSpecifier)]`.
