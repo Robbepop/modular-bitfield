@@ -11,13 +11,23 @@
 [C1]: https://github.com/Robbepop/modular-bitfield/workflows/Rust%20-%20Continuous%20Integration/badge.svg
 [C2]: https://github.com/Robbepop/modular-bitfield/actions?query=workflow%3A%22Rust+-+Continuous+Integration%22
 
-This crate implements the `#[bitfield]` macros introduced and specified in David Tolnay's [procedural macro workshop][procedural-macro-workshop].
+## Description
 
-Check out his workshop and learn from it!
+Allows to have bitfield structs and enums as bitfield specifiers that work very similar to C and C++ bitfields.
 
-Thanks go to David Tolnay for designing the specification for the macros implemented in `modular_bitfield`.
+## Advantages
 
-### Showcase
+- **Safety:** Macro embraced enums and structs are checked for valid structure during compilation time.
+- **Speed:** Generated code is as fast as handwritten code. (See benchmarks below.)
+- **Modularity:** Enums can be used modular within bitfield structs.
+
+## Attribution
+
+Implements the `#[bitfield]` macros introduced and specified in David Tolnay's [procedural macro workshop][procedural-macro-workshop].
+
+Thanks go to David Tolnay for designing the specification for the macros implemented in this crate.
+
+## Example
 
 ```rust
 use modular_bitfield::prelude::*;
@@ -82,18 +92,12 @@ fn main() {
     // Can convert from and to bytes.
     assert_eq!(example.to_bytes(), &[255, 171, 128, 3]);
     use std::convert::TryFrom as _;
-    let copy = Example::try_from(example.to_bytes()).unwrap();
+    let copy = unsafe { Example::from_bytes_unchecked(example.to_bytes()) };
     assert_eq!(example, copy);
 }
 ```
 
-### Advantages
-
-- **Safety:** Macro embraced enums and structs are checked for valid structure during compilation time.
-- **Speed:** Generated code is as fast as handwritten code.
-- **Modularity:** Enums can be used modular within bitfield structs.
-
-### Benchmarks
+## Benchmarks
 
 Below are some benchmarks between the [hand-written code][benchmark-code] and the macro-generated code for some example getters and setters that cover a decent variety of use cases.
 
@@ -126,7 +130,7 @@ handwritten::set_d ... bench:         606 ns/iter (+/- 21)
 handwritten::set_e ... bench:         456 ns/iter (+/- 21)
 ```
 
-### License
+## License
 
 <sup>
 Licensed under either of <a href="LICENSE-APACHE">Apache License, Version
