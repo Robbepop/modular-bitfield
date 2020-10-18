@@ -1,8 +1,17 @@
 use core::convert::TryFrom;
 use proc_macro2::TokenStream as TokenStream2;
-use quote::{format_ident, quote, quote_spanned};
-use syn::spanned::Spanned as _;
-use syn::{self, parse::Result, punctuated::Punctuated, Token};
+use quote::{
+    format_ident,
+    quote,
+    quote_spanned,
+};
+use syn::{
+    self,
+    parse::Result,
+    punctuated::Punctuated,
+    spanned::Spanned as _,
+    Token,
+};
 
 /// Analyzes the given token stream for `#[bitfield]` properties and expands code if valid.
 pub fn analyse_and_expand(args: TokenStream2, input: TokenStream2) -> TokenStream2 {
@@ -17,7 +26,10 @@ pub fn analyse_and_expand(args: TokenStream2, input: TokenStream2) -> TokenStrea
 /// # Errors
 ///
 /// If the given token stream does not yield a valid `#[bitfield]` specifier.
-fn analyse_and_expand_or_error(_args: TokenStream2, input: TokenStream2) -> Result<TokenStream2> {
+fn analyse_and_expand_or_error(
+    _args: TokenStream2,
+    input: TokenStream2,
+) -> Result<TokenStream2> {
     let input = syn::parse::<syn::ItemStruct>(input.into())?;
     let bitfield = BitfieldStruct::try_from(input)?;
     Ok(bitfield.expand())
@@ -61,7 +73,7 @@ impl BitfieldStruct {
             return Err(format_err_spanned!(
                 unit,
                 "encountered invalid bitfield struct without fields"
-            ));
+            ))
         }
         Ok(())
     }
@@ -72,7 +84,7 @@ impl BitfieldStruct {
             return Err(format_err_spanned!(
                 item_struct,
                 "encountered invalid generic bitfield struct"
-            ));
+            ))
         }
         Ok(())
     }
@@ -86,7 +98,7 @@ impl BitfieldStruct {
                         attr,
                         "encountered unsupported attribute `#[bits]` of field at {}",
                         n
-                    ));
+                    ))
                 }
             }
         }
@@ -251,7 +263,10 @@ impl BitfieldStruct {
     }
 
     /// Generates code to check for the bit size arguments of bitfields.
-    fn expand_getters_and_setters_checks_for_field(&self, field: &syn::Field) -> TokenStream2 {
+    fn expand_getters_and_setters_checks_for_field(
+        &self,
+        field: &syn::Field,
+    ) -> TokenStream2 {
         let span = field.span();
         let ty = &field.ty;
         let checks = field.attrs.iter().map(|attr| {
@@ -414,12 +429,14 @@ impl BitfieldStruct {
             offset.push(syn::parse_quote! { 0usize });
             offset
         };
-        let setters_and_getters = self
-            .item_struct
-            .fields
-            .iter()
-            .enumerate()
-            .map(|(n, field)| self.expand_getters_and_setters_for_field(&mut offset, n, field));
+        let setters_and_getters =
+            self.item_struct
+                .fields
+                .iter()
+                .enumerate()
+                .map(|(n, field)| {
+                    self.expand_getters_and_setters_for_field(&mut offset, n, field)
+                });
         quote_spanned!(span=>
             impl #ident {
                 #( #setters_and_getters )*

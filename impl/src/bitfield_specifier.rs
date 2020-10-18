@@ -1,5 +1,12 @@
-use proc_macro2::{Span as Span2, TokenStream as TokenStream2};
-use quote::{format_ident, quote, quote_spanned};
+use proc_macro2::{
+    Span as Span2,
+    TokenStream as TokenStream2,
+};
+use quote::{
+    format_ident,
+    quote,
+    quote_spanned,
+};
 use syn::spanned::Spanned as _;
 
 pub fn generate(input: TokenStream2) -> TokenStream2 {
@@ -12,23 +19,29 @@ pub fn generate(input: TokenStream2) -> TokenStream2 {
 fn generate_or_error(input: TokenStream2) -> syn::Result<TokenStream2> {
     let input = syn::parse::<syn::DeriveInput>(input.into())?;
     match input.data {
-        syn::Data::Enum(data_enum) => generate_enum(syn::ItemEnum {
-            attrs: input.attrs,
-            vis: input.vis,
-            enum_token: data_enum.enum_token,
-            ident: input.ident,
-            generics: input.generics,
-            brace_token: data_enum.brace_token,
-            variants: data_enum.variants,
-        }),
-        syn::Data::Struct(_) => return Err(format_err!(
-            input.ident,
-            "structs are not supported as bitfield specifiers",
-        )),
-        syn::Data::Union(_) => return Err(format_err!(
-            input.ident,
-            "unions are not supported as bitfield specifiers",
-        )),
+        syn::Data::Enum(data_enum) => {
+            generate_enum(syn::ItemEnum {
+                attrs: input.attrs,
+                vis: input.vis,
+                enum_token: data_enum.enum_token,
+                ident: input.ident,
+                generics: input.generics,
+                brace_token: data_enum.brace_token,
+                variants: data_enum.variants,
+            })
+        }
+        syn::Data::Struct(_) => {
+            return Err(format_err!(
+                input.ident,
+                "structs are not supported as bitfield specifiers",
+            ))
+        }
+        syn::Data::Union(_) => {
+            return Err(format_err!(
+                input.ident,
+                "unions are not supported as bitfield specifiers",
+            ))
+        }
     }
 }
 
@@ -39,7 +52,7 @@ fn generate_enum(input: syn::ItemEnum) -> syn::Result<TokenStream2> {
         return Err(syn::Error::new(
             Span2::call_site(),
             "BitfieldSpecifier expected a number of variants which is a power of 2",
-        ));
+        ))
     }
     // We can take `trailing_zeros` returns type as the required amount of bits.
     let bits = count_variants.trailing_zeros() as usize;
@@ -47,9 +60,11 @@ fn generate_enum(input: syn::ItemEnum) -> syn::Result<TokenStream2> {
     let variants = input
         .variants
         .iter()
-        .filter_map(|variant| match &variant.fields {
-            syn::Fields::Unit => Some(&variant.ident),
-            _ => None,
+        .filter_map(|variant| {
+            match &variant.fields {
+                syn::Fields::Unit => Some(&variant.ident),
+                _ => None,
+            }
         })
         .collect::<Vec<_>>();
 

@@ -1,5 +1,10 @@
-use crate::private::{PopBits, PushBits};
-use crate::Specifier;
+use crate::{
+    private::{
+        PopBits,
+        PushBits,
+    },
+    Specifier,
+};
 
 #[doc(hidden)]
 #[inline(always)]
@@ -43,8 +48,11 @@ where
 
 #[doc(hidden)]
 #[inline(always)]
-pub fn write_specifier<T>(bytes: &mut [u8], offset: usize, new_val: <T as Specifier>::Base)
-where
+pub fn write_specifier<T>(
+    bytes: &mut [u8],
+    offset: usize,
+    new_val: <T as Specifier>::Base,
+) where
     T: Specifier,
 {
     let end = offset + <T as Specifier>::BITS;

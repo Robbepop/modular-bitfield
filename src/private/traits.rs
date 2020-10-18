@@ -1,5 +1,7 @@
-use super::checks;
-use super::Bits;
+use super::{
+    checks,
+    Bits,
+};
 
 /// Helper trait for underlying primitives handling of bitfields.
 ///

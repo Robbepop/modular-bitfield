@@ -1,5 +1,8 @@
 use proc_macro2::TokenStream as TokenStream2;
-use quote::{format_ident, quote};
+use quote::{
+    format_ident,
+    quote,
+};
 
 pub fn generate(_input: TokenStream2) -> TokenStream2 {
     let mut tokens = quote! {};

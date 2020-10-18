@@ -1,5 +1,10 @@
-use super::Bits;
-use super::{FromBits, IntoBits, PopBits, PushBits};
+use super::{
+    Bits,
+    FromBits,
+    IntoBits,
+    PopBits,
+    PushBits,
+};
 use crate::Specifier;
 
 impl Specifier for bool {

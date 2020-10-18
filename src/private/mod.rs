@@ -5,7 +5,16 @@ mod traits;
 mod utils;
 
 pub use self::{
-    proc::{read_specifier, write_specifier},
-    traits::{FromBits, IntoBits, PopBits, PushBits, SpecifierBase},
+    proc::{
+        read_specifier,
+        write_specifier,
+    },
+    traits::{
+        FromBits,
+        IntoBits,
+        PopBits,
+        PushBits,
+        SpecifierBase,
+    },
     utils::Bits,
 };

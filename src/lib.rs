@@ -139,7 +139,10 @@
 
 #![no_std]
 
-pub use modular_bitfield_impl::{bitfield, BitfieldSpecifier};
+pub use modular_bitfield_impl::{
+    bitfield,
+    BitfieldSpecifier,
+};
 
 #[doc(hidden)]
 pub mod private;
@@ -149,7 +152,13 @@ pub use self::error::Error;
 
 /// The prelude: `use modular_bitfield::prelude::*;`
 pub mod prelude {
-    pub use super::{bitfield, error::Error, specifiers::*, BitfieldSpecifier, Specifier};
+    pub use super::{
+        bitfield,
+        error::Error,
+        specifiers::*,
+        BitfieldSpecifier,
+        Specifier,
+    };
 }
 
 /// Trait implemented by all bitfield specifiers.
