@@ -22,4 +22,4 @@ proc-macro2 = "1"
 heck = "0.3"
 
 [dev-dependencies]
-modular-bitfield = { path = "..", version = "0.6" }
+modular-bitfield = { path = "..", version = "0.7" }
