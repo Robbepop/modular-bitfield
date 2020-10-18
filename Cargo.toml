@@ -35,8 +35,4 @@ harness = false
 # path = "main.rs"
 
 [dependencies]
-modular-bitfield-impl = { path = "impl", version = "0.6" }
-
-[badges]
-travis-ci = { repository = "robbepop/modular-bitfield" }
-appveyor = { repository = "robbepop/modular-bitfield", branch = "master", service = "github" }
+modular-bitfield-impl = { path = "impl", version = "0.7" }
