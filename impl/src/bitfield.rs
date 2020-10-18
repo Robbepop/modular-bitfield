@@ -186,7 +186,7 @@ impl BitfieldStruct {
         quote_spanned!(span=>
             const _: () = {
                 impl ::modular_bitfield::private::checks::CheckTotalSizeMultipleOf8 for #ident {
-                    type Size = ::modular_bitfield::private::checks::TotalSize<[(); (#size) % 8usize]>;
+                    type Size = ::modular_bitfield::private::checks::TotalSize<[(); #size % 8usize]>;
                 }
             };
         )
