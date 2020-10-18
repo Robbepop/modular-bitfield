@@ -1,6 +1,6 @@
 [package]
 name = "modular-bitfield-impl"
-version = "0.6.0"
+version = "0.7.0"
 edition = "2018"
 authors = ["Robin Freyler <robinfreyler@web.de>"]
 license = "MIT/Apache-2.0"
