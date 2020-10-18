@@ -50,7 +50,7 @@ fn generate_enum(input: syn::ItemEnum) -> syn::Result<TokenStream2> {
     let count_variants = input.variants.iter().count();
     if !count_variants.is_power_of_two() {
         return Err(syn::Error::new(
-            Span2::mixed_site(),
+            Span2::call_site(),
             "BitfieldSpecifier expected a number of variants which is a power of 2",
         ))
     }
