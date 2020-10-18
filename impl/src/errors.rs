@@ -1,9 +1,3 @@
-macro_rules! bail {
-    ($($args:tt)*) => {
-        return Err(format_err!($($args)*).into())
-    }
-}
-
 /// Creates a [`syn::Error`] with the format message and infers the
 /// [`Span`](`proc_macro2::Span`) using [`ToTokens`](`quote::ToTokens`).
 ///

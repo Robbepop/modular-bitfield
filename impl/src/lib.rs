@@ -2,7 +2,6 @@
 
 extern crate proc_macro;
 
-mod ident_ext;
 #[macro_use]
 mod errors;
 mod bitfield;

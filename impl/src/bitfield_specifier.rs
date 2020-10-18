@@ -21,14 +21,14 @@ fn generate_or_error(input: TokenStream2) -> syn::Result<TokenStream2> {
             brace_token: data_enum.brace_token,
             variants: data_enum.variants,
         }),
-        syn::Data::Struct(_) => bail!(
+        syn::Data::Struct(_) => return Err(format_err!(
             input.ident,
             "structs are not supported as bitfield specifiers",
-        ),
-        syn::Data::Union(_) => bail!(
+        )),
+        syn::Data::Union(_) => return Err(format_err!(
             input.ident,
             "unions are not supported as bitfield specifiers",
-        ),
+        )),
     }
 }
 
