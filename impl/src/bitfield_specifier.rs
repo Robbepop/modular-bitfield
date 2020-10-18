@@ -68,30 +68,32 @@ fn generate_enum(input: syn::ItemEnum) -> syn::Result<TokenStream2> {
         })
         .collect::<Vec<_>>();
 
-    let mut check_discriminants_tokens = quote! {};
-    let mut from_bits_match_arms = quote! {};
-    for variant in &variants {
-        check_discriminants_tokens.extend(quote_spanned! { variant.span() =>
-            impl ::modular_bitfield::private::checks::CheckDiscriminantInRange<[(); #enum_ident::#variant as usize]> for #enum_ident {
-                type CheckType = [(); ((#enum_ident::#variant as usize) < (0x1 << #bits)) as usize ];
+    let check_discriminants = variants.iter().map(|ident| {
+        let span = ident.span();
+        quote_spanned!(span =>
+            impl ::modular_bitfield::private::checks::CheckDiscriminantInRange<[(); Self::#ident as usize]> for #enum_ident {
+                type CheckType = [(); ((Self::#ident as usize) < (0x01_usize << #bits)) as usize ];
             }
-        });
+        )
+    });
+    let match_arms = variants.iter().map(|ident| {
         use heck::SnakeCase as _;
-        let snake_variant = &variant.to_string().to_snake_case();
+        let span = ident.span();
+        let snake_variant = &ident.to_string().to_snake_case();
         let snake_variant = match syn::parse_str::<syn::Ident>(snake_variant) {
             Ok(parsed_ident) => parsed_ident,
             // Use a raw identifier to allow strict keywords.
             Err(_) => format_ident!("r#{}", snake_variant),
         };
-        from_bits_match_arms.extend(quote! {
-            #snake_variant if #snake_variant == #enum_ident::#variant as <#enum_ident as ::modular_bitfield::Specifier>::Base => {
-                #enum_ident::#variant
+        quote_spanned!(span=>
+            #snake_variant if #snake_variant == Self::#ident as <Self as ::modular_bitfield::Specifier>::Base => {
+                Self::#ident
             }
-        });
-    }
+        )
+    });
 
     Ok(quote! {
-        #check_discriminants_tokens
+        #( #check_discriminants )*
 
         impl ::modular_bitfield::Specifier for #enum_ident {
             const BITS: usize = #bits;
@@ -99,24 +101,24 @@ fn generate_enum(input: syn::ItemEnum) -> syn::Result<TokenStream2> {
             type Face = Self;
         }
 
-        impl ::modular_bitfield::private::FromBits<<#enum_ident as ::modular_bitfield::Specifier>::Base> for #enum_ident {
+        impl ::modular_bitfield::private::FromBits<<Self as ::modular_bitfield::Specifier>::Base> for #enum_ident {
             #[inline(always)]
-            fn from_bits(bits: ::modular_bitfield::private::Bits<<#enum_ident as ::modular_bitfield::Specifier>::Base>) -> Self {
+            fn from_bits(bits: ::modular_bitfield::private::Bits<<Self as ::modular_bitfield::Specifier>::Base>) -> Self {
                 match bits.into_raw() {
-                    #from_bits_match_arms
+                    #( #match_arms )*
                     // This API is only used internally and is only invoked on valid input.
                     // Thus it is find to omit error handling for cases where the incoming
                     // value is out of bounds to improve performance.
-                    _ => unsafe { ::core::hint::unreachable_unchecked() },
+                    _ => { unsafe { ::core::hint::unreachable_unchecked() } }
                 }
             }
         }
 
-        impl ::modular_bitfield::private::IntoBits<<#enum_ident as ::modular_bitfield::Specifier>::Base> for #enum_ident {
+        impl ::modular_bitfield::private::IntoBits<<Self as ::modular_bitfield::Specifier>::Base> for #enum_ident {
             #[inline(always)]
-            fn into_bits(self) -> ::modular_bitfield::private::Bits<<#enum_ident as ::modular_bitfield::Specifier>::Base> {
+            fn into_bits(self) -> ::modular_bitfield::private::Bits<<Self as ::modular_bitfield::Specifier>::Base> {
                 ::modular_bitfield::private::Bits(
-                    self as <#enum_ident as ::modular_bitfield::Specifier>::Base
+                    self as <Self as ::modular_bitfield::Specifier>::Base
                 )
             }
         }
