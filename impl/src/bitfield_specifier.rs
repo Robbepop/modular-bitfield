@@ -28,13 +28,13 @@ fn generate_or_error(input: TokenStream2) -> syn::Result<TokenStream2> {
         }
         syn::Data::Struct(_) => {
             Err(format_err!(
-                input.ident,
+                input,
                 "structs are not supported as bitfield specifiers",
             ))
         }
         syn::Data::Union(_) => {
             Err(format_err!(
-                input.ident,
+                input,
                 "unions are not supported as bitfield specifiers",
             ))
         }
