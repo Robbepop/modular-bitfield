@@ -371,6 +371,7 @@ impl BitfieldStruct {
 
             #[doc = #with_docs]
             #[inline]
+            #[allow(dead_code)]
             #vis fn #with_ident(
                 mut self,
                 new_val: <#ty as ::modular_bitfield::Specifier>::Face
@@ -381,6 +382,7 @@ impl BitfieldStruct {
 
             #[doc = #checked_with_docs]
             #[inline]
+            #[allow(dead_code)]
             #vis fn #with_checked_ident(
                 mut self,
                 new_val: <#ty as ::modular_bitfield::Specifier>::Face,
@@ -391,6 +393,7 @@ impl BitfieldStruct {
 
             #[doc = #setter_docs]
             #[inline]
+            #[allow(dead_code)]
             #vis fn #set_ident(&mut self, new_val: <#ty as ::modular_bitfield::Specifier>::Face) {
                 self.#set_checked_ident(new_val).expect(#set_assert_msg)
             }
