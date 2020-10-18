@@ -27,4 +27,5 @@ fn tests() {
     t.pass("tests/21-raw-identifiers.rs");
     t.pass("tests/22-with-setter.rs");
     t.pass("tests/23-no-implicit-prelude.rs");
+    t.pass("tests/24-primitives-as-specifiers.rs");
 }
