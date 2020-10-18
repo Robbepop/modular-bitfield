@@ -25,4 +25,5 @@ fn tests() {
     t.compile_fail("tests/20-access-test.rs");
     t.pass("tests/21-raw-identifiers.rs");
     t.pass("tests/22-with-setter.rs");
+    t.pass("tests/23-no-implicit-prelude.rs");
 }
