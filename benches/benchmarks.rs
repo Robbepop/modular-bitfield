@@ -23,8 +23,9 @@ use modular_bitfield::{
     },
 };
 
-criterion_group!(bench_get, bench_get_small);
-criterion_main!(bench_get);
+criterion_group!(bench_get, bench_get_variants);
+criterion_group!(bench_set, bench_set_variants);
+criterion_main!(bench_get, bench_set);
 
 #[bitfield]
 pub struct Color {
@@ -113,7 +114,115 @@ where
     }
 }
 
-fn bench_get_small(c: &mut Criterion) {
+fn bench_set_variants(c: &mut Criterion) {
+    let mut g = c.benchmark_group("set_variants");
+    g.bench_function("Color", |b| {
+        let mut input = Color::new();
+        b.iter(|| {
+            repeat(|| {
+                black_box(&mut input).set_r(1);
+                black_box(&mut input).set_g(1);
+                black_box(&mut input).set_b(1);
+                black_box(&mut input).set_a(1);
+            })
+        });
+    });
+    g.bench_function("SingleBitsInSingleByte", |b| {
+        let mut input = SingleBitsInSingleByte::new();
+        b.iter(|| {
+            repeat(|| {
+                black_box(&mut input).set_b0(true);
+                black_box(&mut input).set_b1(true);
+                black_box(&mut input).set_b2(true);
+                black_box(&mut input).set_b3(true);
+                black_box(&mut input).set_b4(true);
+                black_box(&mut input).set_b5(true);
+                black_box(&mut input).set_b6(true);
+                black_box(&mut input).set_b7(true);
+            })
+        });
+    });
+    g.bench_function("TwoHalfBytes", |b| {
+        let mut input = TwoHalfBytes::new();
+        b.iter(|| {
+            repeat(|| {
+                black_box(&mut input).set_h0(1);
+                black_box(&mut input).set_h1(1);
+            })
+        });
+    });
+    g.bench_function("SingleBitAndRest", |b| {
+        let mut input = SingleBitAndRest::new();
+        b.iter(|| {
+            repeat(|| {
+                black_box(&mut input).set_head(true);
+                black_box(&mut input).set_rest(1);
+            })
+        });
+    });
+    g.bench_function("B7B1", |b| {
+        let mut input = B7B1::new();
+        b.iter(|| {
+            repeat(|| {
+                black_box(&mut input).set_b7(1);
+                black_box(&mut input).set_b1(true);
+            })
+        });
+    });
+    g.bench_function("B3B1B4", |b| {
+        let mut input = B3B1B4::new();
+        b.iter(|| {
+            repeat(|| {
+                black_box(&mut input).set_b3(1);
+                black_box(&mut input).set_b1(true);
+                black_box(&mut input).set_b4(1);
+            })
+        });
+    });
+    g.bench_function("TwoHalfWords", |b| {
+        let mut input = TwoHalfWords::new();
+        b.iter(|| {
+            repeat(|| {
+                black_box(&mut input).set_fst(1);
+                black_box(&mut input).set_snd(1);
+            })
+        });
+    });
+    g.bench_function("B6B12B6", |b| {
+        let mut input = B6B12B6::new();
+        b.iter(|| {
+            repeat(|| {
+                black_box(&mut input).set_front(1);
+                black_box(&mut input).set_middle(1);
+                black_box(&mut input).set_back(1);
+            })
+        });
+    });
+    g.bench_function("B6B36B6", |b| {
+        let mut input = B6B36B6::new();
+        b.iter(|| {
+            repeat(|| {
+                black_box(&mut input).set_front(1);
+                black_box(&mut input).set_middle(1);
+                black_box(&mut input).set_back(1);
+            })
+        });
+    });
+    g.bench_function("Complex", |b| {
+        let mut input = Complex::new();
+        b.iter(|| {
+            repeat(|| {
+                black_box(&mut input).set_a(1);
+                black_box(&mut input).set_b(1);
+                black_box(&mut input).set_c(1);
+                black_box(&mut input).set_d(1);
+                black_box(&mut input).set_e(1);
+            })
+        });
+    });
+}
+
+fn bench_get_variants(c: &mut Criterion) {
     let mut g = c.benchmark_group("get");
     g.bench_function("Color", |b| {
         let input = Color::new();
