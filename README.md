@@ -1,5 +1,16 @@
 # Modular Bitfields for Rust
 
+|   Continuous Integration  |  Documentation   |       Crates.io      |
+|:-------------------------:|:----------------:|:--------------------:|
+| [![GHActions][C1]][C2]    | [![docs][A1]][A2] | [![crates][B1]][B2]  |
+
+[A1]:  https://docs.rs/string-interner/badge.svg
+[A2]: https://docs.rs/string-interner
+[B1]: https://img.shields.io/crates/v/string-interner.svg
+[B2]: https://crates.io/crates/string-interner
+[C1]: https://github.com/Robbepop/modular-bitfield/workflows/Rust%20-%20Continuous%20Integration/badge.svg
+[C2]: https://github.com/Robbepop/modular-bitfield/actions?query=workflow%3A%22Rust+-+Continuous+Integration%22
+
 This crate implements the `#[bitfield]` macros introduced and specified in David Tolnay's [procedural macro workshop][procedural-macro-workshop].
 
 Check out his workshop and learn from it!
