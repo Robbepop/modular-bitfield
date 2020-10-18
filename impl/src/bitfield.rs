@@ -383,7 +383,7 @@ impl BitfieldStruct {
                 new_val: <#ty as ::modular_bitfield::Specifier>::Face,
             ) -> ::core::result::Result<Self, ::modular_bitfield::Error> {
                 self.#set_checked_ident(new_val)?;
-                Ok(self)
+                ::core::result::Result::Ok(self)
             }
 
             #[doc = #setter_docs]
@@ -411,10 +411,10 @@ impl BitfieldStruct {
                 // We compare base bits with spec bits to drop this condition
                 // if there cannot be invalid inputs.
                 if !(__bf_base_bits == __bf_spec_bits || __bf_raw_val <= __bf_max_value) {
-                    return Err(::modular_bitfield::Error::OutOfBounds)
+                    return ::core::result::Result::Err(::modular_bitfield::Error::OutOfBounds)
                 }
                 ::modular_bitfield::private::write_specifier::<#ty>(&mut self.bytes[..], #offset, __bf_raw_val);
-                Ok(())
+                ::core::result::Result::Ok(())
             }
         );
         offset.push(syn::parse_quote! { <#ty as ::modular_bitfield::Specifier>::BITS });

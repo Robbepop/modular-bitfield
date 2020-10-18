@@ -101,7 +101,7 @@ fn generate_enum(input: syn::ItemEnum) -> syn::Result<TokenStream2> {
 
         impl ::modular_bitfield::private::FromBits<<#enum_ident as ::modular_bitfield::Specifier>::Base> for #enum_ident {
             #[inline(always)]
-            fn from_bits(bits: ::modular_bitfield::private::Bits<<#enum_ident as modular_bitfield::Specifier>::Base>) -> Self {
+            fn from_bits(bits: ::modular_bitfield::private::Bits<<#enum_ident as ::modular_bitfield::Specifier>::Base>) -> Self {
                 match bits.into_raw() {
                     #from_bits_match_arms
                     // This API is only used internally and is only invoked on valid input.
@@ -112,7 +112,7 @@ fn generate_enum(input: syn::ItemEnum) -> syn::Result<TokenStream2> {
             }
         }
 
-        impl modular_bitfield::private::IntoBits<<#enum_ident as ::modular_bitfield::Specifier>::Base> for #enum_ident {
+        impl ::modular_bitfield::private::IntoBits<<#enum_ident as ::modular_bitfield::Specifier>::Base> for #enum_ident {
             #[inline(always)]
             fn into_bits(self) -> ::modular_bitfield::private::Bits<<#enum_ident as ::modular_bitfield::Specifier>::Base> {
                 ::modular_bitfield::private::Bits(
