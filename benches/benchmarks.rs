@@ -1,5 +1,7 @@
 #![allow(dead_code)]
 
+mod utils;
+
 use criterion::{
     black_box,
     criterion_group,
@@ -22,6 +24,7 @@ use modular_bitfield::{
         B9,
     },
 };
+use utils::repeat;
 
 criterion_group!(bench_get, bench_get_variants);
 criterion_group!(bench_set, bench_set_variants);
@@ -99,19 +102,6 @@ pub struct Complex {
     c: B13, // 1st, 2nd, 3rd
     d: B4,  // 3rd
     e: B32, // 4th, .., 7th
-}
-
-/// Repeats the given closure several times.
-///
-/// We do this in order to measure benchmarks that require at least some
-/// amount of nanoseconds to run through.
-fn repeat<F>(mut f: F)
-where
-    F: FnMut(),
-{
-    for _ in 0..10 {
-        f();
-    }
 }
 
 fn bench_set_variants(c: &mut Criterion) {

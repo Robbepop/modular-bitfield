@@ -12,6 +12,7 @@
 //! for the macro generated code while staying correct.
 
 mod handwritten;
+mod utils;
 
 use criterion::{
     black_box,
@@ -23,6 +24,7 @@ use handwritten::{
     Generated,
     Handwritten,
 };
+use utils::repeat;
 
 criterion_group!(
     bench_get,
@@ -41,19 +43,6 @@ criterion_group!(
     bench_set_e
 );
 criterion_main!(bench_get, bench_set);
-
-/// Repeats the given closure several times.
-///
-/// We do this in order to measure benchmarks that require at least some
-/// amount of nanoseconds to run through.
-fn repeat<F>(mut f: F)
-where
-    F: FnMut(),
-{
-    for _ in 0..10 {
-        f();
-    }
-}
 
 macro_rules! generate_cmp_benchmark_for {
     (
