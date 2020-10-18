@@ -1,4 +1,3 @@
-
 /// Repeats the given closure several times.
 ///
 /// We do this in order to measure benchmarks that require at least some
