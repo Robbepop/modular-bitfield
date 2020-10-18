@@ -4,10 +4,10 @@
 |:-------------------------:|:----------------:|:--------------------:|
 | [![GHActions][C1]][C2]    | [![docs][A1]][A2] | [![crates][B1]][B2]  |
 
-[A1]:  https://docs.rs/string-interner/badge.svg
-[A2]: https://docs.rs/string-interner
-[B1]: https://img.shields.io/crates/v/string-interner.svg
-[B2]: https://crates.io/crates/string-interner
+[A1]: https://docs.rs/modular-bitfield/badge.svg
+[A2]: https://docs.rs/modular-bitfield
+[B1]: https://img.shields.io/crates/v/modular_bitfield.svg
+[B2]: https://crates.io/crates/modular_bitfield
 [C1]: https://github.com/Robbepop/modular-bitfield/workflows/Rust%20-%20Continuous%20Integration/badge.svg
 [C2]: https://github.com/Robbepop/modular-bitfield/actions?query=workflow%3A%22Rust+-+Continuous+Integration%22
 
