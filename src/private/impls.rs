@@ -13,6 +13,25 @@ impl Specifier for bool {
     type Face = bool;
 }
 
+macro_rules! impl_specifier_for_primitive {
+    ( $( ($prim:ty: $bits:literal) ),* $(,)? ) => {
+        $(
+            impl Specifier for $prim {
+                const BITS: usize = $bits;
+                type Base = $prim;
+                type Face = $prim;
+            }
+        )*
+    };
+}
+impl_specifier_for_primitive!(
+    (u8: 8),
+    (u16: 16),
+    (u32: 32),
+    (u64: 64),
+    (u128: 128),
+);
+
 impl PopBits for u8 {
     #[inline(always)]
     fn pop_bits(&mut self, amount: u32) -> u8 {
@@ -101,5 +120,4 @@ macro_rules! impl_wrapper_from_naive {
         )*
     }
 }
-
 impl_wrapper_from_naive!(bool, u8, u16, u32, u64, u128);
