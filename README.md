@@ -108,44 +108,67 @@ We can conclude that the macro-generated code is as fast as hand-written code wo
 - `cargo bench` to run the benchmarks
 - `cargo test --benches` to run the benchmark tests
 
-```
-generated::get_a   ... bench:          99 ns/iter (+/- 4)
-generated::get_b   ... bench:          98 ns/iter (+/- 4)
-generated::get_c   ... bench:          98 ns/iter (+/- 14)
-generated::get_d   ... bench:          97 ns/iter (+/- 2)
-generated::get_e   ... bench:          99 ns/iter (+/- 2)
-generated::set_a   ... bench:         481 ns/iter (+/- 19)
-generated::set_b   ... bench:         627 ns/iter (+/- 37)
-generated::set_c   ... bench:         507 ns/iter (+/- 35)
-generated::set_d   ... bench:         622 ns/iter (+/- 24)
-generated::set_e   ... bench:         459 ns/iter (+/- 16)
+We tested the following `struct`:
 
-handwritten::get_a ... bench:          99 ns/iter (+/- 3)
-handwritten::get_b ... bench:         102 ns/iter (+/- 14)
-handwritten::get_c ... bench:         102 ns/iter (+/- 8)
-handwritten::get_d ... bench:         100 ns/iter (+/- 20)
-handwritten::get_e ... bench:          98 ns/iter (+/- 6)
-handwritten::set_a ... bench:         582 ns/iter (+/- 20)
-handwritten::set_b ... bench:         614 ns/iter (+/- 35)
-handwritten::set_c ... bench:         533 ns/iter (+/- 18)
-handwritten::set_d ... bench:         606 ns/iter (+/- 21)
-handwritten::set_e ... bench:         456 ns/iter (+/- 21)
+```rust
+#[bitfield]
+pub struct Generated {
+    pub a: B9,  // Spans 2 bytes.
+    pub b: B6,  // Within 2nd byte.
+    pub c: B13, // Spans 3 bytes.
+    pub d: B4,  // Within 4rd byte.
+    pub e: B32, // Spans rest 4 bytes.
+}
+```
+
+**Note:** All benchmarks timing results sum 10 runs each.
+
+### Getter Performance
+
+```
+cmp_get_a/generated     time:   [3.0490 ns 3.0628 ns 3.0791 ns]
+cmp_get_a/handwritten   time:   [3.0640 ns 3.0782 ns 3.0928 ns]
+
+cmp_get_b/generated     time:   [3.0600 ns 3.0731 ns 3.0871 ns]
+cmp_get_b/handwritten   time:   [3.0457 ns 3.0592 ns 3.0744 ns]
+
+cmp_get_c/generated     time:   [3.0762 ns 3.1040 ns 3.1368 ns]
+cmp_get_c/handwritten   time:   [3.0638 ns 3.0782 ns 3.0934 ns]
+
+cmp_get_d/generated     time:   [3.0603 ns 3.0729 ns 3.0869 ns]
+cmp_get_d/handwritten   time:   [3.0833 ns 3.1358 ns 3.2064 ns]
+
+cmp_get_e/generated     time:   [3.0688 ns 3.0915 ns 3.1203 ns]
+cmp_get_e/handwritten   time:   [3.0634 ns 3.0753 ns 3.0877 ns]
+```
+
+### Setter Performance
+
+```
+cmp_set_a/generated     time:   [15.643 ns 15.707 ns 15.775 ns]
+cmp_set_a/handwritten   time:   [15.593 ns 15.661 ns 15.736 ns]
+
+cmp_set_b/generated     time:   [20.334 ns 20.439 ns 20.550 ns]
+cmp_set_b/handwritten   time:   [20.262 ns 20.327 ns 20.397 ns]
+
+cmp_set_c/generated     time:   [19.634 ns 19.847 ns 20.111 ns]
+cmp_set_c/handwritten   time:   [19.544 ns 19.632 ns 19.729 ns]
+
+cmp_set_d/generated     time:   [20.316 ns 20.376 ns 20.437 ns]
+cmp_set_d/handwritten   time:   [20.291 ns 20.371 ns 20.457 ns]
+
+cmp_set_e/generated     time:   [6.1394 ns 6.1640 ns 6.1873 ns]
+cmp_set_e/handwritten   time:   [6.1172 ns 6.1459 ns 6.1767 ns]
 ```
 
 ## License
 
-<sup>
 Licensed under either of <a href="LICENSE-APACHE">Apache License, Version
 2.0</a> or <a href="LICENSE-MIT">MIT license</a> at your option.
-</sup>
 
-<br>
-
-<sub>
 Unless you explicitly state otherwise, any contribution intentionally submitted
 for inclusion in this codebase by you, as defined in the Apache-2.0 license,
 shall be dual licensed as above, without any additional terms or conditions.
-</sub>
 
 [procedural-macro-workshop]: https://github.com/dtolnay/proc-macro-workshop/blob/master/README.md
 [benchmark-code]: ./benches/get_and_set.rs
