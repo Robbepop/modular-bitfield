@@ -1,8 +1,8 @@
 # Modular Bitfields for Rust
 
-|   Continuous Integration  |  Documentation   |       Crates.io      |
-|:-------------------------:|:----------------:|:--------------------:|
-| [![GHActions][C1]][C2]    | [![docs][A1]][A2] | [![crates][B1]][B2]  |
+|   Continuous Integration  |  Documentation    |       Crates.io      |       LoC        |
+|:-------------------------:|:-----------------:|:--------------------:|:----------------:|
+| [![GHActions][C1]][C2]    | [![docs][A1]][A2] | [![crates][B1]][B2]  | [![loc][D1]][D2] |
 
 [A1]: https://docs.rs/modular-bitfield/badge.svg
 [A2]: https://docs.rs/modular-bitfield
@@ -10,6 +10,8 @@
 [B2]: https://crates.io/crates/modular_bitfield
 [C1]: https://github.com/Robbepop/modular-bitfield/workflows/Rust%20-%20Continuous%20Integration/badge.svg
 [C2]: https://github.com/Robbepop/modular-bitfield/actions?query=workflow%3A%22Rust+-+Continuous+Integration%22
+[D1]: https://tokei.rs/b1/github/Robbepop/modular-bitfield?category=code
+[D2]: https://github.com/Aaronepower/tokei#badges
 
 ## Description
 
