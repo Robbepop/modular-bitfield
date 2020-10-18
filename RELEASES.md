@@ -1,6 +1,8 @@
 # 0.8.0 (WIP)
 
 - Add `Specifier` implementations for `u8`, `u16`, `u32`, `u64` and `u128`.
+- Silence repetitive `dead_code` warnings originating from generated `#[bitfield]` getters and setters.
+- Improve error span information in a few use cases.
 
 # 0.7.0 (2020-10-18)
 
