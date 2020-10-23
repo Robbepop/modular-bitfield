@@ -32,7 +32,8 @@ criterion_group!(
     bench_get_b,
     bench_get_c,
     bench_get_d,
-    bench_get_e
+    bench_get_e,
+    bench_get_f,
 );
 criterion_group!(
     bench_set,
@@ -40,7 +41,8 @@ criterion_group!(
     bench_set_b,
     bench_set_c,
     bench_set_d,
-    bench_set_e
+    bench_set_e,
+    bench_set_f,
 );
 criterion_main!(bench_get, bench_set);
 
@@ -120,5 +122,11 @@ generate_cmp_benchmark_for!(
     test(bench_get_e, bench_set_e) {
         fn e("cmp_get_e");
         fn set_e("cmp_set_e");
+    }
+);
+generate_cmp_benchmark_for!(
+    test(bench_get_f, bench_set_f) {
+        fn f("cmp_get_f");
+        fn set_f("cmp_set_f");
     }
 );
