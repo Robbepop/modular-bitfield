@@ -24,10 +24,12 @@ path = "tests/progress.rs"
 
 [[bench]]
 name = "benchmarks"
+path = "benches/benchmarks.rs"
 harness = false
 
 [[bench]]
 name = "cmp_handwritten"
+path = "benches/cmp_handwritten.rs"
 harness = false
 
 # [[bin]]
