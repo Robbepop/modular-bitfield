@@ -35,8 +35,9 @@ pub struct Generated {
     pub a: B9,
     pub b: B6,
     pub c: B13,
-    pub d: B4,
-    pub e: B32,
+    pub d: B1,
+    pub e: B3,
+    pub f: B32,
 }
 
 /// This is the hand-written part that the macro generated getters
@@ -99,22 +100,32 @@ impl Handwritten {
 
     /// Returns the value of `d`.
     pub fn d(&self) -> u8 {
-        self.data[3] >> 4
+        (self.data[3] >> 4) & 0b0000_0001
     }
 
     /// Sets the value of `d`.
     pub fn set_d(&mut self, new_val: u8) {
-        assert!(new_val < (0x01 << 4));
-        self.data[3] = (self.data[3] & 0xF0) | ((new_val & 0x0F) << 4)
+        self.data[3] = (self.data[3] & 0b0001_0000) | ((new_val & 0b0000_0001) << 4)
     }
 
     /// Returns the value of `e`.
-    pub fn e(&self) -> u32 {
+    pub fn e(&self) -> u8 {
+        (self.data[3] >> 5) & 0b0000_0111
+    }
+
+    /// Sets the value of `e`.
+    pub fn set_e(&mut self, new_val: u8) {
+        assert!(new_val < (0x01 << 3));
+        self.data[3] = (self.data[3] & 0b1110_0000) | ((new_val & 0b0000_0111) << 5)
+    }
+
+    /// Returns the value of `e`.
+    pub fn f(&self) -> u32 {
         u32::from_le_bytes([self.data[4], self.data[5], self.data[6], self.data[7]])
     }
 
     /// Sets the value of `e`.
-    pub fn set_e(&mut self, new_val: u32) {
+    pub fn set_f(&mut self, new_val: u32) {
         assert!((new_val as u64) < (0x01_u64 << 32));
         let le_bytes = new_val.to_le_bytes();
         for (n, byte) in le_bytes.iter().copied().enumerate() {
@@ -142,9 +153,10 @@ macro_rules! impl_getter_setter_tests {
     }
 }
 impl_getter_setter_tests!(
-    (get_set_a, a, set_a, 444),
-    (get_set_b, b, set_b, 50),
-    (get_set_c, c, set_c, 1234),
-    (get_set_d, d, set_d, 12),
-    (get_set_e, e, set_e, 7654321),
+    (get_set_a, a, set_a, 0b0001_1111_1111),
+    (get_set_b, b, set_b, 0b0011_1111),
+    (get_set_c, c, set_c, 0b0001_1111_1111_1111),
+    (get_set_d, d, set_d, 0b0001),
+    (get_set_e, e, set_e, 0b0111),
+    (get_set_f, f, set_f, u32::MAX),
 );
