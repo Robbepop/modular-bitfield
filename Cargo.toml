@@ -17,6 +17,7 @@ autotests = false
 [dev-dependencies]
 trybuild = "1.0"
 criterion = "0.3"
+bitfield = "0.13"
 
 [[test]]
 name = "tests"
@@ -32,9 +33,14 @@ name = "cmp_handwritten"
 path = "benches/cmp_handwritten.rs"
 harness = false
 
-# [[bin]]
-# name = "workshop"
-# path = "main.rs"
+[[bench]]
+name = "cmp_bitfield_crate"
+path = "benches/cmp_bitfield_crate.rs"
+harness = false
+
+[[bin]]
+name = "workshop"
+path = "main.rs"
 
 [dependencies]
 modular-bitfield-impl = { path = "impl", version = "0.7" }
