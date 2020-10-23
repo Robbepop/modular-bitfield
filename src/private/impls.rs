@@ -37,7 +37,7 @@ impl PopBits for u8 {
     fn pop_bits(&mut self, amount: u32) -> u8 {
         let orig_bits = self.count_ones();
         debug_assert!(0 < amount && amount <= 8);
-        let res = *self & ((0x1_u16.wrapping_shl(amount)).wrapping_sub(1) as u8);
+        let res = *self & ((0x01_u16.wrapping_shl(amount)).wrapping_sub(1) as u8);
         *self = match self.overflowing_shr(amount) {
             (v, false) => v,
             _ => 0,
