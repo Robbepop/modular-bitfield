@@ -16,7 +16,7 @@
     - It didn't check for invalid bit patterns and thus could trigger undefined behaviour.
 - The `#[bitfield]` generated `new` constructor is now a `const fn`.
 - Rename the `#[bitfield]` generated `to_bytes` to `as_bytes`.
-    - Also it now returns a refernce to an array, e.g. `&[u8; N]` instead of a slice.
+    - Also it now returns a reference to an array, e.g. `&[u8; N]` instead of a slice.
 - The `#[bitfield]` macro now generates an `unsafe fn from_bytes_unchecked` that allows constructing from raw bytes.
     - This is meant as an `unsafe` replacement for the removed `TryFrom` implementation.
     - We plan to create safer alternatives in future updates.
