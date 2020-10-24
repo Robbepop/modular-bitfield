@@ -174,6 +174,15 @@ pub mod prelude {
 pub trait Specifier {
     /// The amount of bits used by the specifier.
     const BITS: usize;
+
+    /// The maximum value allowed to be stored for this specifier.
+    ///
+    /// # Note
+    ///
+    /// This is for example `0x01` for 1-bit specifiers and `0x0111`
+    /// for 3 bit specifiers, or `u32::MAX` for 32-bit specifiers.
+    const MAX_VALUE: Self::Base;
+
     /// The base type of the specifier.
     ///
     /// # Note

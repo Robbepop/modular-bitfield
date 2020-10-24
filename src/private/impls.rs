@@ -9,6 +9,7 @@ use crate::Specifier;
 
 impl Specifier for bool {
     const BITS: usize = 1;
+    const MAX_VALUE: u8 = 1;
     type Base = u8;
     type Face = bool;
 }
@@ -18,6 +19,7 @@ macro_rules! impl_specifier_for_primitive {
         $(
             impl Specifier for $prim {
                 const BITS: usize = $bits;
+                const MAX_VALUE: Self::Base = <$prim>::MAX;
                 type Base = $prim;
                 type Face = $prim;
             }
