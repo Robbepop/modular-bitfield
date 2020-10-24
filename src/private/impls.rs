@@ -6,12 +6,30 @@ use super::{
     PushBits,
 };
 use crate::Specifier;
+use crate::{
+    OutOfBounds,
+    InvalidBitPattern,
+};
 
 impl Specifier for bool {
     const BITS: usize = 1;
-    const MAX_VALUE: u8 = 1;
     type Base = u8;
     type Face = bool;
+
+    type Bytes = [::core::primitive::u8; 1];
+    type InOut = bool;
+
+    fn into_bytes(input: Self::InOut) -> Result<Self::Bytes, OutOfBounds> {
+        Ok([input as u8])
+    }
+
+    fn from_bytes(bytes: Self::Bytes) -> Result<Self::InOut, InvalidBitPattern<Self::Bytes>> {
+        match bytes {
+            [0] => Ok(false),
+            [1] => Ok(true),
+            invalid_bytes => Err(InvalidBitPattern { invalid_bytes })
+        }
+    }
 }
 
 macro_rules! impl_specifier_for_primitive {
@@ -19,9 +37,19 @@ macro_rules! impl_specifier_for_primitive {
         $(
             impl Specifier for $prim {
                 const BITS: usize = $bits;
-                const MAX_VALUE: Self::Base = <$prim>::MAX;
                 type Base = $prim;
                 type Face = $prim;
+
+                type Bytes = [::core::primitive::u8; $bits / 8];
+                type InOut = $prim;
+
+                fn into_bytes(input: Self::InOut) -> Result<Self::Bytes, OutOfBounds> {
+                    Ok(input.to_le_bytes())
+                }
+
+                fn from_bytes(bytes: Self::Bytes) -> Result<Self::InOut, InvalidBitPattern<Self::Bytes>> {
+                    Ok(<$prim>::from_le_bytes(bytes))
+                }
             }
         )*
     };

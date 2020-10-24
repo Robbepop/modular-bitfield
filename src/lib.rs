@@ -175,26 +175,31 @@ pub trait Specifier {
     /// The amount of bits used by the specifier.
     const BITS: usize;
 
-    /// The maximum value allowed to be stored for this specifier.
-    ///
-    /// # Note
-    ///
-    /// This is for example `0x01` for 1-bit specifiers and `0x0111`
-    /// for 3 bit specifiers, or `u32::MAX` for 32-bit specifiers.
-    const MAX_VALUE: Self::Base;
-
     /// The base type of the specifier.
     ///
     /// # Note
     ///
     /// This is the type that is used internally for computations.
     type Base: Default + private::PushBits + private::PopBits;
+
     /// The interface type of the specifier.
     ///
     /// # Note
     ///
     /// This is the type that is used for the getters and setters.
-    type Face: private::FromBits<Self::Base> + private::IntoBits<Self::Base>;
+    type Face: private::FromBits<Self::Base>
+        + private::IntoBits<Self::Base>;
+
+    type Bytes;
+    type InOut;
+
+    fn into_bytes(input: Self::InOut) -> Result<Self::Bytes, OutOfBounds>;
+    fn from_bytes(bytes: Self::Bytes) -> Result<Self::InOut, InvalidBitPattern<Self::Bytes>>;
+}
+
+pub struct OutOfBounds;
+pub struct InvalidBitPattern<Bytes> {
+    pub invalid_bytes: Bytes,
 }
 
 /// The default set of predefined specifiers.
