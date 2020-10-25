@@ -1,8 +1,5 @@
 use proc_macro2::TokenStream as TokenStream2;
-use quote::{
-    format_ident,
-    quote_spanned,
-};
+use quote::quote_spanned;
 use syn::spanned::Spanned as _;
 
 pub fn generate(input: TokenStream2) -> TokenStream2 {
@@ -52,7 +49,15 @@ fn generate_enum(input: syn::ItemEnum) -> syn::Result<TokenStream2> {
         ))
     }
     // We can take `trailing_zeros` returns type as the required amount of bits.
-    let bits = count_variants.trailing_zeros() as usize;
+    let bits = match count_variants.checked_next_power_of_two() {
+        Some(power_of_two) => power_of_two.trailing_zeros() as usize,
+        None => {
+            return Err(format_err!(
+                span,
+                "BitfieldSpecifier has too many variants to pack into a bitfield",
+            ))
+        }
+    };
 
     let variants = input
         .variants
@@ -73,18 +78,11 @@ fn generate_enum(input: syn::ItemEnum) -> syn::Result<TokenStream2> {
             }
         )
     });
-    let match_arms = variants.iter().map(|ident| {
-        use heck::SnakeCase as _;
+    let from_bytes_arms = variants.iter().map(|ident| {
         let span = ident.span();
-        let snake_variant = &ident.to_string().to_snake_case();
-        let snake_variant = match syn::parse_str::<syn::Ident>(snake_variant) {
-            Ok(parsed_ident) => parsed_ident,
-            // Use a raw identifier to allow strict keywords.
-            Err(_) => format_ident!("r#{}", snake_variant),
-        };
         quote_spanned!(span=>
-            #snake_variant if #snake_variant == Self::#ident as <Self as ::modular_bitfield::Specifier>::Base => {
-                Self::#ident
+            __bitfield_binding if __bitfield_binding == Self::#ident as <Self as ::modular_bitfield::Specifier>::Bytes => {
+                ::core::result::Result::Ok(Self::#ident)
             }
         )
     });
@@ -94,29 +92,24 @@ fn generate_enum(input: syn::ItemEnum) -> syn::Result<TokenStream2> {
 
         impl ::modular_bitfield::Specifier for #enum_ident {
             const BITS: usize = #bits;
-            type Base = <[(); #bits] as ::modular_bitfield::private::SpecifierBase>::Base;
-            type Face = Self;
-        }
+            type Bytes = <[(); #bits] as ::modular_bitfield::private::SpecifierBytes>::Bytes;
+            type InOut = Self;
 
-        impl ::modular_bitfield::private::FromBits<<Self as ::modular_bitfield::Specifier>::Base> for #enum_ident {
-            #[inline(always)]
-            fn from_bits(bits: ::modular_bitfield::private::Bits<<Self as ::modular_bitfield::Specifier>::Base>) -> Self {
-                match bits.into_raw() {
-                    #( #match_arms )*
-                    // This API is only used internally and is only invoked on valid input.
-                    // Thus it is find to omit error handling for cases where the incoming
-                    // value is out of bounds to improve performance.
-                    _ => { unsafe { ::core::hint::unreachable_unchecked() } }
-                }
+            #[inline]
+            fn into_bytes(input: Self::InOut) -> ::core::result::Result<Self::Bytes, ::modular_bitfield::error::OutOfBounds> {
+                ::core::result::Result::Ok(input as Self::Bytes)
             }
-        }
 
-        impl ::modular_bitfield::private::IntoBits<<Self as ::modular_bitfield::Specifier>::Base> for #enum_ident {
-            #[inline(always)]
-            fn into_bits(self) -> ::modular_bitfield::private::Bits<<Self as ::modular_bitfield::Specifier>::Base> {
-                ::modular_bitfield::private::Bits(
-                    self as <Self as ::modular_bitfield::Specifier>::Base
-                )
+            #[inline]
+            fn from_bytes(bytes: Self::Bytes) -> ::core::result::Result<Self::InOut, ::modular_bitfield::error::InvalidBitPattern<Self::Bytes>> {
+                match bytes {
+                    #( #from_bytes_arms ),*
+                    invalid_bytes => {
+                        ::core::result::Result::Err(
+                            <::modular_bitfield::error::InvalidBitPattern<Self::Bytes>>::new(invalid_bytes)
+                        )
+                    }
+                }
             }
         }
     ))

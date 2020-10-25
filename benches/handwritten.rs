@@ -119,7 +119,7 @@ impl Handwritten {
         self.data[3] = (self.data[3] & 0b1110_0000) | ((new_val & 0b0000_0111) << 5)
     }
 
-    /// Returns the value of `e`.
+    /// Returns the value of `f`.
     pub fn f(&self) -> u32 {
         u32::from_le_bytes([self.data[4], self.data[5], self.data[6], self.data[7]])
     }
@@ -128,9 +128,7 @@ impl Handwritten {
     pub fn set_f(&mut self, new_val: u32) {
         assert!((new_val as u64) < (0x01_u64 << 32));
         let le_bytes = new_val.to_le_bytes();
-        for (n, byte) in le_bytes.iter().copied().enumerate() {
-            self.data[n + 4] = byte;
-        }
+        self.data[4..].copy_from_slice(&le_bytes[..]);
     }
 }
 

@@ -1,7 +1,4 @@
-use super::{
-    checks,
-    Bits,
-};
+use super::checks;
 
 /// Helper trait for underlying primitives handling of bitfields.
 ///
@@ -25,27 +22,7 @@ pub trait PopBits: checks::private::Sealed {
 
 /// Trait implemented by primitives that drive bitfield manipulations generically.
 #[doc(hidden)]
-pub trait SpecifierBase: checks::private::Sealed {
+pub trait SpecifierBytes: checks::private::Sealed {
     /// The base type that the specifier is operating on.
-    type Base;
-}
-
-/// Helper trait to convert to bits.
-///
-/// # Note
-///
-/// Implemented by primitive specifier types.
-#[doc(hidden)]
-pub trait IntoBits<T> {
-    fn into_bits(self) -> Bits<T>;
-}
-
-/// Helper trait to convert from bits.
-///
-/// # Note
-///
-/// Implemented by primitive specifier types.
-#[doc(hidden)]
-pub trait FromBits<T> {
-    fn from_bits(bits: Bits<T>) -> Self;
+    type Bytes;
 }

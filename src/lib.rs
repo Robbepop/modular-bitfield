@@ -16,6 +16,7 @@
 //!
 //! ```
 //! use modular_bitfield::prelude::*;
+//! # use modular_bitfield::error::OutOfBounds;
 //!
 //! // Works with aliases - just for the showcase.
 //! type Vitamin = B12;
@@ -75,7 +76,7 @@
 //! assert_eq!(example.e(), 1_u8);
 //!
 //! // Safe API allows for better testing
-//! assert_eq!(example.set_e_checked(200), Err(Error::OutOfBounds));
+//! assert_eq!(example.set_e_checked(200), Err(OutOfBounds));
 //!
 //! // Can convert from and to bytes.
 //! assert_eq!(example.as_bytes(), &[255, 171, 128, 3]);
@@ -147,8 +148,12 @@ pub use modular_bitfield_impl::{
 #[doc(hidden)]
 pub mod private;
 
-mod error;
+pub mod error;
 pub use self::error::Error;
+use self::error::{
+    InvalidBitPattern,
+    OutOfBounds,
+};
 
 /// The prelude: `use modular_bitfield::prelude::*;`
 pub mod prelude {
@@ -174,18 +179,41 @@ pub mod prelude {
 pub trait Specifier {
     /// The amount of bits used by the specifier.
     const BITS: usize;
+
     /// The base type of the specifier.
     ///
     /// # Note
     ///
     /// This is the type that is used internally for computations.
-    type Base: Default + private::PushBits + private::PopBits;
+    type Bytes;
+
     /// The interface type of the specifier.
     ///
     /// # Note
     ///
     /// This is the type that is used for the getters and setters.
-    type Face: private::FromBits<Self::Base> + private::IntoBits<Self::Base>;
+    type InOut;
+
+    /// Converts some bytes into the in-out type.
+    ///
+    /// # Errors
+    ///
+    /// If the in-out type is out of bounds. This can for example happen if your
+    /// in-out type is `u8` (for `B7`) but you specified a value that is bigger
+    /// or equal to 128 which exceeds the 7 bits.
+    fn into_bytes(input: Self::InOut) -> Result<Self::Bytes, OutOfBounds>;
+
+    /// Converts the given bytes into the in-out type.
+    ///
+    /// # Errors
+    ///
+    /// If the given byte pattern is invalid for the in-out type.
+    /// This can happen for example for enums that have a number of variants which
+    /// is not equal to the power of two and therefore yields some invalid bit
+    /// patterns.
+    fn from_bytes(
+        bytes: Self::Bytes,
+    ) -> Result<Self::InOut, InvalidBitPattern<Self::Bytes>>;
 }
 
 /// The default set of predefined specifiers.
