@@ -16,6 +16,7 @@
 //!
 //! ```
 //! use modular_bitfield::prelude::*;
+//! # use modular_bitfield::error::OutOfBounds;
 //!
 //! // Works with aliases - just for the showcase.
 //! type Vitamin = B12;
@@ -75,7 +76,7 @@
 //! assert_eq!(example.e(), 1_u8);
 //!
 //! // Safe API allows for better testing
-//! assert_eq!(example.set_e_checked(200), Err(Error::OutOfBounds));
+//! assert_eq!(example.set_e_checked(200), Err(OutOfBounds));
 //!
 //! // Can convert from and to bytes.
 //! assert_eq!(example.as_bytes(), &[255, 171, 128, 3]);
@@ -191,7 +192,7 @@ pub trait Specifier {
     /// # Note
     ///
     /// This is the type that is used for the getters and setters.
-    type InOut: private::FromBits<Self::Bytes> + private::IntoBits<Self::Bytes>;
+    type InOut;
 
     /// Converts some bytes into the in-out type.
     ///

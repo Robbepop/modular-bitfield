@@ -386,7 +386,7 @@ impl BitfieldStruct {
             #vis fn #with_checked_ident(
                 mut self,
                 new_val: <#ty as ::modular_bitfield::Specifier>::InOut,
-            ) -> ::core::result::Result<Self, ::modular_bitfield::Error> {
+            ) -> ::core::result::Result<Self, ::modular_bitfield::error::OutOfBounds> {
                 self.#set_checked_ident(new_val)?;
                 ::core::result::Result::Ok(self)
             }
@@ -403,21 +403,19 @@ impl BitfieldStruct {
             #vis fn #set_checked_ident(
                 &mut self,
                 new_val: <#ty as ::modular_bitfield::Specifier>::InOut
-            ) -> ::core::result::Result<(), ::modular_bitfield::Error> {
+            ) -> ::core::result::Result<(), ::modular_bitfield::error::OutOfBounds> {
                 let __bf_base_bits: ::core::primitive::usize = 8usize * ::core::mem::size_of::<<#ty as ::modular_bitfield::Specifier>::Bytes>();
                 let __bf_max_value: <#ty as ::modular_bitfield::Specifier>::Bytes = {
                     !0 >> (__bf_base_bits - <#ty as ::modular_bitfield::Specifier>::BITS)
                 };
                 let __bf_spec_bits: ::core::primitive::usize = <#ty as ::modular_bitfield::Specifier>::BITS;
-                let __bf_raw_val: <#ty as ::modular_bitfield::Specifier>::Bytes = <
-                    <#ty as ::modular_bitfield::Specifier>::InOut as ::modular_bitfield::private::IntoBits<
-                        <#ty as ::modular_bitfield::Specifier>::Bytes
-                    >
-                >::into_bits(new_val).into_raw();
+                let __bf_raw_val: <#ty as ::modular_bitfield::Specifier>::Bytes = {
+                    <#ty as ::modular_bitfield::Specifier>::into_bytes(new_val)
+                }?;
                 // We compare base bits with spec bits to drop this condition
                 // if there cannot be invalid inputs.
                 if !(__bf_base_bits == __bf_spec_bits || __bf_raw_val <= __bf_max_value) {
-                    return ::core::result::Result::Err(::modular_bitfield::Error::OutOfBounds)
+                    return ::core::result::Result::Err(::modular_bitfield::error::OutOfBounds)
                 }
                 ::modular_bitfield::private::write_specifier::<#ty>(&mut self.bytes[..], #offset, __bf_raw_val);
                 ::core::result::Result::Ok(())
