@@ -13,6 +13,9 @@
 [D1]: https://tokei.rs/b1/github/Robbepop/modular-bitfield?category=code
 [D2]: https://github.com/Aaronepower/tokei#badges
 
+- `no_std`: Supports embedded development without `std` library.
+- This crate uses 100% safe Rust code.
+
 ## Description
 
 Allows to have bitfield structs and enums as bitfield specifiers that work very similar to C and C++ bitfields.
