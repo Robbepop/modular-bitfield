@@ -1,6 +1,7 @@
 /// Tests to check for correct execution of checked setters.
 
 use modular_bitfield::prelude::*;
+use modular_bitfield::error::OutOfBounds;
 
 #[bitfield]
 #[derive(Debug, PartialEq)]
@@ -19,9 +20,9 @@ fn main() {
     assert_eq!(bitfield.c(), 0);
 
     // Do some invalid manipulations.
-    assert_eq!(bitfield.set_a_checked(2), Err(Error::OutOfBounds));
-    assert_eq!(bitfield.set_b_checked(4), Err(Error::OutOfBounds));
-    assert_eq!(bitfield.set_c_checked(12345), Err(Error::OutOfBounds));
+    assert_eq!(bitfield.set_a_checked(2), Err(OutOfBounds));
+    assert_eq!(bitfield.set_b_checked(4), Err(OutOfBounds));
+    assert_eq!(bitfield.set_c_checked(12345), Err(OutOfBounds));
 
     // Asserts that nothing has changed.
     assert_eq!(bitfield.a(), 0);
@@ -39,8 +40,8 @@ fn main() {
     assert_eq!(bitfield.c(), 42);
 
     // Check the checked with statement throws error
-    assert_eq!(MyTwoBytes::new().with_a_checked(2), Err(Error::OutOfBounds));
-    assert_eq!(MyTwoBytes::new().with_a_checked(1).unwrap().with_b_checked(4), Err(Error::OutOfBounds));
+    assert_eq!(MyTwoBytes::new().with_a_checked(2), Err(OutOfBounds));
+    assert_eq!(MyTwoBytes::new().with_a_checked(1).unwrap().with_b_checked(4), Err(OutOfBounds));
 
     // Check that with_checked populates values without touching other fields
     let bitfield = bitfield
