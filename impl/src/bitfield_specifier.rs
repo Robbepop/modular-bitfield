@@ -1,8 +1,5 @@
 use proc_macro2::TokenStream as TokenStream2;
-use quote::{
-    format_ident,
-    quote_spanned,
-};
+use quote::quote_spanned;
 use syn::spanned::Spanned as _;
 
 pub fn generate(input: TokenStream2) -> TokenStream2 {
@@ -81,21 +78,6 @@ fn generate_enum(input: syn::ItemEnum) -> syn::Result<TokenStream2> {
             }
         )
     });
-    let match_arms = variants.iter().map(|ident| {
-        use heck::SnakeCase as _;
-        let span = ident.span();
-        let snake_variant = &ident.to_string().to_snake_case();
-        let snake_variant = match syn::parse_str::<syn::Ident>(snake_variant) {
-            Ok(parsed_ident) => parsed_ident,
-            // Use a raw identifier to allow strict keywords.
-            Err(_) => format_ident!("r#{}", snake_variant),
-        };
-        quote_spanned!(span=>
-            #snake_variant if #snake_variant == Self::#ident as <Self as ::modular_bitfield::Specifier>::Bytes => {
-                Self::#ident
-            }
-        )
-    });
     let from_bytes_arms = variants.iter().map(|ident| {
         let span = ident.span();
         quote_spanned!(span=>
@@ -128,28 +110,6 @@ fn generate_enum(input: syn::ItemEnum) -> syn::Result<TokenStream2> {
                         )
                     }
                 }
-            }
-        }
-
-        impl ::modular_bitfield::private::FromBits<<Self as ::modular_bitfield::Specifier>::Bytes> for #enum_ident {
-            #[inline(always)]
-            fn from_bits(bits: ::modular_bitfield::private::Bits<<Self as ::modular_bitfield::Specifier>::Bytes>) -> Self {
-                match bits.into_raw() {
-                    #( #match_arms )*
-                    // This API is only used internally and is only invoked on valid input.
-                    // Thus it is find to omit error handling for cases where the incoming
-                    // value is out of bounds to improve performance.
-                    _ => { unsafe { ::core::hint::unreachable_unchecked() } }
-                }
-            }
-        }
-
-        impl ::modular_bitfield::private::IntoBits<<Self as ::modular_bitfield::Specifier>::Bytes> for #enum_ident {
-            #[inline(always)]
-            fn into_bits(self) -> ::modular_bitfield::private::Bits<<Self as ::modular_bitfield::Specifier>::Bytes> {
-                ::modular_bitfield::private::Bits(
-                    self as <Self as ::modular_bitfield::Specifier>::Bytes
-                )
             }
         }
     ))
