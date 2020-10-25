@@ -109,7 +109,7 @@ pub fn bitfield(args: TokenStream, input: TokenStream) -> TokenStream {
 /// assert_eq!(example.a(), true); // `true as u8` is 1
 /// assert_eq!(example.b(), Mode::Awake);
 /// ```
-#[proc_macro_derive(BitfieldSpecifier)]
+#[proc_macro_derive(BitfieldSpecifier, attributes(bits))]
 pub fn bitfield_specifier(input: TokenStream) -> TokenStream {
     bitfield_specifier::generate(input.into()).into()
 }

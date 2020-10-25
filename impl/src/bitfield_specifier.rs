@@ -37,25 +37,69 @@ fn generate_or_error(input: TokenStream2) -> syn::Result<TokenStream2> {
         }
     }
 }
+struct Attributes {
+    bits: Option<usize>,
+}
+
+fn parse_attrs(attrs: &[syn::Attribute]) -> syn::Result<Attributes> {
+    let attributes = attrs
+        .iter()
+        .filter(|attr| attr.path.is_ident("bits"))
+        .fold(
+            Ok(Attributes { bits: None }),
+            |acc: syn::Result<Attributes>, attr| {
+                let mut acc = acc?;
+                if acc.bits.is_some() {
+                    return Err(format_err_spanned!(
+                        attr,
+                        "More than one 'bits' attributes is not permitted",
+                    ))
+                }
+                let meta = attr.parse_meta()?;
+                acc.bits = match meta {
+                    syn::Meta::NameValue(syn::MetaNameValue {
+                        lit: syn::Lit::Int(lit),
+                        ..
+                    }) => Some(lit.base10_parse::<usize>()?),
+                    _ => {
+                        return Err(format_err_spanned!(
+                            attr,
+                            "could not parse 'bits' attribute",
+                        ))
+                    }
+                };
+                Ok(acc)
+            },
+        )?;
+    Ok(attributes)
+}
 
 fn generate_enum(input: syn::ItemEnum) -> syn::Result<TokenStream2> {
     let span = input.span();
+    let attributes = parse_attrs(&input.attrs)?;
     let enum_ident = &input.ident;
-    let count_variants = input.variants.iter().count();
-    if !count_variants.is_power_of_two() {
-        return Err(format_err!(
-            span,
-            "BitfieldSpecifier expected a number of variants which is a power of 2",
-        ))
-    }
-    // We can take `trailing_zeros` returns type as the required amount of bits.
-    let bits = match count_variants.checked_next_power_of_two() {
-        Some(power_of_two) => power_of_two.trailing_zeros() as usize,
+
+    let bits = match attributes.bits {
+        Some(bits) => bits,
         None => {
-            return Err(format_err!(
-                span,
-                "BitfieldSpecifier has too many variants to pack into a bitfield",
-            ))
+            let count_variants = input.variants.iter().count();
+            if !count_variants.is_power_of_two() {
+                return Err(format_err!(
+                    span,
+                    "BitfieldSpecifier expected a number of variants which is a power of 2, specify #[bits = {}] if that was your intent",
+                    count_variants.next_power_of_two().trailing_zeros(),
+                ))
+            }
+            // We can take `trailing_zeros` returns type as the required amount of bits.
+            match count_variants.checked_next_power_of_two() {
+                Some(power_of_two) => power_of_two.trailing_zeros() as usize,
+                None => {
+                    return Err(format_err!(
+                        span,
+                        "BitfieldSpecifier has too many variants to pack into a bitfield",
+                    ))
+                }
+            }
         }
     };
 
