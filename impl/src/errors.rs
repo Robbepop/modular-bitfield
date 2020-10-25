@@ -48,3 +48,14 @@ macro_rules! format_err {
         )
     }}
 }
+
+pub trait CombineError {
+    fn into_combine(self, another: syn::Error) -> Self;
+}
+
+impl CombineError for syn::Error {
+    fn into_combine(mut self, another: syn::Error) -> Self {
+        self.combine(another);
+        self
+    }
+}
