@@ -16,7 +16,11 @@ pub fn generate(_input: TokenStream2) -> TokenStream2 {
             _ => unreachable!(),
         };
         let ident = format_ident!("B{}", bits);
-        let doc_comment = format!("Specifier for {} bits.", bits);
+        let doc_comment = if bits == 1 {
+            format!("Specifier for a single bit.")
+        } else {
+            format!("Specifier for {} bits.", bits)
+        };
         let max_value = if bits.is_power_of_two() && bits >= 8 {
             // The compiler can eliminate a check against `x > MAX` entirely
             // so this will yield a no-op in release mode builds.
