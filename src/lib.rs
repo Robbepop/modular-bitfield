@@ -149,7 +149,6 @@ pub use modular_bitfield_impl::{
 pub mod private;
 
 pub mod error;
-pub use self::error::Error;
 use self::error::{
     InvalidBitPattern,
     OutOfBounds,
@@ -159,7 +158,6 @@ use self::error::{
 pub mod prelude {
     pub use super::{
         bitfield,
-        error::Error,
         specifiers::*,
         BitfieldSpecifier,
         Specifier,
