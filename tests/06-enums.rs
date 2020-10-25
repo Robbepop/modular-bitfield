@@ -21,12 +21,9 @@
 // explicit discriminant that is an integer literal. We will relax this
 // requirement in a later test case.
 //
-// Optionally if you are interested, come up with a way to support enums with a
-// number of variants that is not a power of two, but this is not necessary for
-// the test suite. Maybe there could be a #[bits = N] attribute that determines
-// the bit width of the specifier, and the getter (only for such enums) would
-// return Result<T, Unrecognized> with the raw value accessible through the
-// error type as u64:
+// Additionally, enums may support a "bits" attribute which allows to enum to
+// have a number of variants that is not a power of two. If the #[bits = N]
+// attribute is specified, like so:
 //
 //     #[derive(BitfieldSpecifier)]
 //     #[bits = 4]
@@ -39,13 +36,15 @@
 //         Thirteen = 0b1101,
 //     }
 //
-//     ...
+// then the number of bits required to represent the struct is coerced to N.
+//
 //     let mut bitfield = MyBitfield::new();
-//     assert_eq!(0, bitfield.small_prime().unwrap_err().raw_value());
+//     assert_eq!(0, bitfield.small_prime_or_err().unwrap_err().invalid_bytes);
 //
 //     bitfield.set_small_prime(SmallPrime::Seven);
-//     let p = bitfield.small_prime().unwrap_or(SmallPrime::Two);
+//     let p = bitfield.small_prime_or_err().unwrap_or(SmallPrime::Two);
 
+use modular_bitfield::error::InvalidBitPattern;
 use modular_bitfield::prelude::*;
 
 #[bitfield]
@@ -53,7 +52,9 @@ pub struct RedirectionTableEntry {
     acknowledged: bool,
     trigger_mode: TriggerMode,
     delivery_mode: DeliveryMode,
+    small_prime: SmallPrime,
     reserved: B3,
+    another_small_prime: SmallPrime,
 }
 
 #[derive(BitfieldSpecifier, Debug, PartialEq)]
@@ -74,18 +75,34 @@ pub enum DeliveryMode {
     External = 0b111,
 }
 
+#[derive(BitfieldSpecifier, Debug, PartialEq)]
+#[bits = 4]
+pub enum SmallPrime {
+    Two = 0b0010,
+    Three = 0b0011,
+    Five = 0b0101,
+    Seven = 0b0111,
+    Eleven = 0b1011,
+    Thirteen = 0b1101,
+}
+
 fn main() {
-    assert_eq!(std::mem::size_of::<RedirectionTableEntry>(), 1);
+    assert_eq!(std::mem::size_of::<RedirectionTableEntry>(), 2);
 
     // Initialized to all 0 bits.
     let mut entry = RedirectionTableEntry::new();
     assert_eq!(entry.acknowledged(), false);
     assert_eq!(entry.trigger_mode(), TriggerMode::Edge);
     assert_eq!(entry.delivery_mode(), DeliveryMode::Fixed);
+    assert_eq!(entry.small_prime_or_err(), Err(InvalidBitPattern{ invalid_bytes: 0 }));
+    assert_eq!(entry.small_prime_or_err().unwrap_err().invalid_bytes, 0);
 
     entry.set_acknowledged(true);
     entry.set_delivery_mode(DeliveryMode::SMI);
+    entry.set_small_prime(SmallPrime::Five);
     assert_eq!(entry.acknowledged(), true);
     assert_eq!(entry.trigger_mode(), TriggerMode::Edge);
     assert_eq!(entry.delivery_mode(), DeliveryMode::SMI);
+    assert_eq!(entry.small_prime(), SmallPrime::Five);
+    assert_eq!(entry.small_prime_or_err(), Ok(SmallPrime::Five));
 }
