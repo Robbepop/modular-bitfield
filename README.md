@@ -8,8 +8,8 @@
 [A2]: https://docs.rs/modular-bitfield
 [B1]: https://img.shields.io/crates/v/modular_bitfield.svg
 [B2]: https://crates.io/crates/modular_bitfield
-[C1]: https://github.com/Robbepop/modular-bitfield/workflows/Rust%20-%20Continuous%20Integration/badge.svg
-[C2]: https://github.com/Robbepop/modular-bitfield/actions?query=workflow%3A%22Rust+-+Continuous+Integration%22
+[C1]: https://github.com/Robbepop/modular-bitfield/workflows/Rust%20-%20Continuous%20Integration/badge.svg?branch=master&event=push
+[C2]: https://github.com/Robbepop/modular-bitfield/actions?query=workflow%3A%22Rust+-+Continuous+Integration%22+branch%3Amaster+event%3Apush
 [D1]: https://tokei.rs/b1/github/Robbepop/modular-bitfield?category=code
 [D2]: https://github.com/Aaronepower/tokei#badges
 
