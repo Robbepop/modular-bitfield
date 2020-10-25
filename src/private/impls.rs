@@ -1,8 +1,3 @@
-use super::{
-    Bits,
-    FromBits,
-    IntoBits,
-};
 use crate::{
     error::{
         InvalidBitPattern,
@@ -61,38 +56,3 @@ impl_specifier_for_primitive!(
     (u64: 64),
     (u128: 128),
 );
-
-impl FromBits<u8> for bool {
-    #[inline(always)]
-    fn from_bits(bits: Bits<u8>) -> Self {
-        bits.into_raw() != 0
-    }
-}
-
-impl IntoBits<u8> for bool {
-    #[inline(always)]
-    fn into_bits(self) -> Bits<u8> {
-        Bits(self as u8)
-    }
-}
-
-macro_rules! impl_wrapper_from_naive {
-    ( $($type:ty),* ) => {
-        $(
-            impl IntoBits<$type> for $type {
-                #[inline(always)]
-                fn into_bits(self) -> Bits<$type> {
-                    Bits(self)
-                }
-            }
-
-            impl FromBits<$type> for $type {
-                #[inline(always)]
-                fn from_bits(bits: Bits<$type>) -> Self {
-                    bits.into_raw()
-                }
-            }
-        )*
-    }
-}
-impl_wrapper_from_naive!(bool, u8, u16, u32, u64, u128);

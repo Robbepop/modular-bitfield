@@ -3,7 +3,6 @@ mod impls;
 mod proc;
 mod push_pop;
 mod traits;
-mod utils;
 
 pub use self::{
     proc::{
@@ -15,11 +14,8 @@ pub use self::{
         PushBuffer,
     },
     traits::{
-        FromBits,
-        IntoBits,
         PopBits,
         PushBits,
         SpecifierBytes,
     },
-    utils::Bits,
 };
