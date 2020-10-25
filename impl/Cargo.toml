@@ -1,6 +1,6 @@
 [package]
 name = "modular-bitfield-impl"
-version = "0.7.0"
+version = "0.8.0"
 edition = "2018"
 authors = ["Robin Freyler <robinfreyler@web.de>"]
 license = "MIT/Apache-2.0"
@@ -21,4 +21,4 @@ syn = { version = "1", features = ["full"] }
 proc-macro2 = "1"
 
 [dev-dependencies]
-modular-bitfield = { path = "..", version = "0.7" }
+modular-bitfield = { path = "..", version = "0.8" }
