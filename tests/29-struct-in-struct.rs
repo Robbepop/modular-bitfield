@@ -19,5 +19,8 @@ fn main() {
     assert_eq!(base.header(), Header::new());
     let h = Header::new().with_a(1).with_b(2);
     base.set_header(h);
-    assert_eq!(base.header(), h);
+    let h2 = base.header();
+    assert_eq!(h2, h);
+    assert_eq!(h2.a(), 1);
+    assert_eq!(h2.b(), 2);
 }
