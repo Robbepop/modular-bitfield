@@ -1,8 +1,14 @@
-# 0.8.0 (WIP)
+# 0.8.0 (2020-10-25)
 
+- The `#[derive(BitfieldSpecifier)]` now allows an amount of variants that is not a power of two via
+  the new attribute `#[bits = N]` where `N` is the bit width of the deriving enum. (Thanks @lkolbly)
 - Add `Specifier` implementations for `u8`, `u16`, `u32`, `u64` and `u128`.
+- The `#[bitfield]` macro now additionally generates getters for expected failures just as it already
+  does for the various setters. For a field `a` the new fail-safe getter is called `a_or_err` and returns
+  a `Result`.
 - Silence repetitive `dead_code` warnings originating from generated `#[bitfield]` getters and setters.
 - Improve error span information in a few use cases.
+- Cleaned up backend code for `modular_bitfield` crate and its generated code.
 
 # 0.7.0 (2020-10-18)
 
