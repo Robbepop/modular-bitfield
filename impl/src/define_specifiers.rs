@@ -18,6 +18,8 @@ pub fn generate(_input: TokenStream2) -> TokenStream2 {
         let ident = format_ident!("B{}", bits);
         let doc_comment = format!("Specifier for {} bits.", bits);
         let max_value = if bits.is_power_of_two() && bits >= 8 {
+            // The compiler can eliminate a check against `x > MAX` entirely
+            // so this will yield a no-op in release mode builds.
             quote! {{ <#in_out>::MAX }}
         } else {
             quote! {{ ((0x01 as #in_out) << #bits) - 1 }}
@@ -37,16 +39,15 @@ pub fn generate(_input: TokenStream2) -> TokenStream2 {
                     if input > #max_value {
                         return Err(crate::OutOfBounds)
                     }
-                    Ok(input.to_le_bytes())
+                    Ok(input)
                 }
 
                 #[inline]
                 fn from_bytes(bytes: Self::Bytes) -> Result<Self::InOut, crate::InvalidBitPattern<Self::Bytes>> {
-                    let value = <#in_out>::from_le_bytes(bytes);
-                    if value > #max_value {
+                    if bytes > #max_value {
                         return Err(crate::InvalidBitPattern { invalid_bytes: bytes })
                     }
-                    Ok(value)
+                    Ok(bytes)
                 }
             }
 
