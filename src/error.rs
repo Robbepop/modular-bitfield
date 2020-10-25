@@ -23,7 +23,11 @@ where
     Bytes: Debug,
 {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-        write!(f, "encountered an invalid bit pattern: {:X?}", self.invalid_bytes)
+        write!(
+            f,
+            "encountered an invalid bit pattern: {:X?}",
+            self.invalid_bytes
+        )
     }
 }
 
