@@ -30,9 +30,6 @@ pub fn generate(_input: TokenStream2) -> TokenStream2 {
             impl crate::Specifier for #ident {
                 const BITS: usize = #bits;
                 type Bytes = #in_out;
-                type Face = #in_out;
-
-                type Bytes = [::core::primitive::u8; ::core::mem::size_of::<Self::InOut>()];
                 type InOut = #in_out;
 
                 #[inline]
