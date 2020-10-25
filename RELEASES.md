@@ -1,5 +1,7 @@
 # 0.9.0 (WIP)
 
+- Add `#[bitfield(specifier = bool)]` parameter with which it now is possible to have bitfield structs automatically also
+  implement the `modular_bitfield::Specifier` trait which makes it possible to have bitfields as fields of bitfields.
 - No longer generates an `unsafe fn from_bytes_unchecked`. Now generates a safe `fn from_bytes` that is basically identical.
   The difference is that we no longer consider bitfields containing invalid bit patterns as invalid since generated getters
   will protect their access anyways.
