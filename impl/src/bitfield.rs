@@ -1,8 +1,11 @@
+use crate::bitfield_attr::{
+    AttributeArgs,
+    Config,
+};
 use core::convert::TryFrom;
 use proc_macro2::TokenStream as TokenStream2;
 use quote::{
     format_ident,
-    quote,
     quote_spanned,
 };
 use syn::{
@@ -27,12 +30,14 @@ pub fn analyse_and_expand(args: TokenStream2, input: TokenStream2) -> TokenStrea
 ///
 /// If the given token stream does not yield a valid `#[bitfield]` specifier.
 fn analyse_and_expand_or_error(
-    _args: TokenStream2,
+    args: TokenStream2,
     input: TokenStream2,
 ) -> Result<TokenStream2> {
     let input = syn::parse::<syn::ItemStruct>(input.into())?;
+    let attrs = syn::parse::<AttributeArgs>(args.into())?;
+    let config = Config::try_from(attrs)?;
     let bitfield = BitfieldStruct::try_from(input)?;
-    Ok(bitfield.expand())
+    Ok(bitfield.expand(&config))
 }
 
 /// Type used to guide analysis and expansion of `#[bitfield]` structs.
@@ -106,11 +111,12 @@ impl BitfieldStruct {
     }
 
     /// Expands the given `#[bitfield]` struct into an actual bitfield definition.
-    pub fn expand(&self) -> TokenStream2 {
+    pub fn expand(&self, config: &Config) -> TokenStream2 {
         let span = self.item_struct.span();
-        let check_multiple_of_8 = self.generate_check_multiple_of_8();
+        let check_multiple_of_8 = self.generate_check_multiple_of_8(config);
         let struct_definition = self.generate_struct();
         let constructor_definition = self.generate_constructor();
+        let specifier_impl = self.generate_specifier_impl(config);
 
         let byte_conversion_impls = self.expand_byte_conversion_impls();
         let getters_and_setters = self.expand_getters_and_setters();
@@ -121,7 +127,49 @@ impl BitfieldStruct {
             #constructor_definition
             #byte_conversion_impls
             #getters_and_setters
+            #specifier_impl
         )
+    }
+
+    /// Expands to the `Specifier` impl for the `#[bitfield]` struct if `specifier = true`.
+    ///
+    /// Otherwise returns `None`.
+    pub fn generate_specifier_impl(&self, config: &Config) -> Option<TokenStream2> {
+        if !config.specifier {
+            return None
+        }
+        let span = self.item_struct.span();
+        let ident = &self.item_struct.ident;
+        let bits = self.generate_bitfield_size();
+        let next_divisible_by_8 = Self::next_divisible_by_8(&bits);
+        Some(quote_spanned!(span =>
+            impl ::modular_bitfield::Specifier for #ident {
+                const BITS: usize = #bits;
+
+                type Bytes = <[(); #next_divisible_by_8] as ::modular_bitfield::private::SpecifierBytes>::Bytes;
+                type InOut = Self;
+
+                #[inline]
+                fn into_bytes(
+                    value: Self::InOut,
+                ) -> ::core::result::Result<Self::Bytes, ::modular_bitfield::error::OutOfBounds> {
+                    ::core::result::Result::Ok(<Self::Bytes>::from_le_bytes(value.bytes))
+                }
+
+                #[inline]
+                fn from_bytes(
+                    bytes: Self::Bytes,
+                ) -> ::core::result::Result<Self::InOut, ::modular_bitfield::error::InvalidBitPattern<Self::Bytes>>
+                {
+                    if bytes > ((0x01 << Self::BITS) - 1) {
+                        return ::core::result::Result::Err(::modular_bitfield::error::InvalidBitPattern::new(bytes))
+                    }
+                    ::core::result::Result::Ok(Self {
+                        bytes: bytes.to_le_bytes(),
+                    })
+                }
+            }
+        ))
     }
 
     /// Generates the expression denoting the sum of all field bit specifier sizes.
@@ -182,17 +230,30 @@ impl BitfieldStruct {
     }
 
     /// Generates the `CheckTotalSizeMultipleOf8` trait implementation to check for correct bitfield sizes.
-    fn generate_check_multiple_of_8(&self) -> TokenStream2 {
+    ///
+    /// Won't generate a check if `#[bitfield(specifier = true)]` is set.
+    fn generate_check_multiple_of_8(&self, config: &Config) -> Option<TokenStream2> {
+        if config.specifier {
+            return None
+        }
         let span = self.item_struct.span();
         let ident = &self.item_struct.ident;
         let size = self.generate_bitfield_size();
-        quote_spanned!(span=>
+        Some(quote_spanned!(span=>
             const _: () = {
                 impl ::modular_bitfield::private::checks::CheckTotalSizeMultipleOf8 for #ident {
                     type Size = ::modular_bitfield::private::checks::TotalSize<[(); #size % 8usize]>;
                 }
             };
-        )
+        ))
+    }
+
+    /// Returns a token stream representing the next greater value divisible by 8.
+    fn next_divisible_by_8(value: &TokenStream2) -> TokenStream2 {
+        let span = value.span();
+        quote_spanned!(span=> {
+            (((#value - 1) / 8) + 1) * 8
+        })
     }
 
     /// Generates the actual item struct definition for the `#[bitfield]`.
@@ -205,12 +266,13 @@ impl BitfieldStruct {
         let vis = &self.item_struct.vis;
         let ident = &self.item_struct.ident;
         let size = self.generate_bitfield_size();
+        let next_divisible_by_8 = Self::next_divisible_by_8(&size);
         quote_spanned!(span=>
             #( #attrs )*
             #[repr(transparent)]
             #vis struct #ident
             {
-                bytes: [::core::primitive::u8; #size / 8usize],
+                bytes: [::core::primitive::u8; #next_divisible_by_8 / 8usize],
             }
         )
     }
@@ -220,13 +282,14 @@ impl BitfieldStruct {
         let span = self.item_struct.span();
         let ident = &self.item_struct.ident;
         let size = self.generate_bitfield_size();
+        let next_divisible_by_8 = Self::next_divisible_by_8(&size);
         quote_spanned!(span=>
             impl #ident
             {
                 /// Returns an instance with zero initialized data
                 pub const fn new() -> Self {
                     Self {
-                        bytes: [0u8; #size / 8usize],
+                        bytes: [0u8; #next_divisible_by_8 / 8usize],
                     }
                 }
             }
@@ -235,10 +298,11 @@ impl BitfieldStruct {
 
     /// Generates routines to allow conversion from and to bytes for the `#[bitfield]` struct.
     fn expand_byte_conversion_impls(&self) -> TokenStream2 {
+        let span = self.item_struct.span();
         let ident = &self.item_struct.ident;
         let size = self.generate_bitfield_size();
-
-        quote! {
+        let next_divisible_by_8 = Self::next_divisible_by_8(&size);
+        quote_spanned!(span=>
             impl #ident {
                 /// Returns the underlying bits.
                 ///
@@ -247,17 +311,17 @@ impl BitfieldStruct {
                 /// The returned byte array is layed out in the same way as described
                 /// [here](https://docs.rs/modular-bitfield/#generated-structure).
                 #[inline]
-                pub const fn as_bytes(&self) -> &[::core::primitive::u8; #size / 8usize] {
+                pub const fn as_bytes(&self) -> &[::core::primitive::u8; #next_divisible_by_8 / 8usize] {
                     &self.bytes
                 }
 
                 /// Converts the given bytes directly into the bitfield struct.
                 #[inline]
-                pub const fn from_bytes(bytes: [::core::primitive::u8; #size / 8usize]) -> Self {
+                pub const fn from_bytes(bytes: [::core::primitive::u8; #next_divisible_by_8 / 8usize]) -> Self {
                     Self { bytes }
                 }
             }
-        }
+        )
     }
 
     /// Generates code to check for the bit size arguments of bitfields.
