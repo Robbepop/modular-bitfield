@@ -143,10 +143,16 @@ impl BitfieldStruct {
         let bits = self.generate_bitfield_size();
         let next_divisible_by_8 = Self::next_divisible_by_8(&bits);
         Some(quote_spanned!(span =>
+            const _: () = {
+                impl ::modular_bitfield::private::checks::CheckSpecifierHasAtMost128Bits for #ident {
+                    type CheckType = [(); (#bits <= 128) as usize];
+                }
+            };
+
             impl ::modular_bitfield::Specifier for #ident {
                 const BITS: usize = #bits;
 
-                type Bytes = <[(); #next_divisible_by_8] as ::modular_bitfield::private::SpecifierBytes>::Bytes;
+                type Bytes = <[(); if #next_divisible_by_8 > 128 { 128 } else #next_divisible_by_8] as ::modular_bitfield::private::SpecifierBytes>::Bytes;
                 type InOut = Self;
 
                 #[inline]

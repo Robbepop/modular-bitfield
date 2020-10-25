@@ -63,6 +63,10 @@ where
 /// is within valid bounds.
 pub trait DiscriminantInRange: private::Sealed {}
 
+/// Helper trait to check if a `#[bitfield(specifier = true)]` bitfield requires
+/// at most 128 bits.
+pub trait SpecifierHasAtMost128Bits: private::Sealed {}
+
 /// Helper type to state that something is `true`.
 ///
 /// # Note
@@ -79,6 +83,7 @@ pub enum False {}
 
 impl private::Sealed for True {}
 impl DiscriminantInRange for True {}
+impl SpecifierHasAtMost128Bits for True {}
 
 /// Helper trait to improve compile time error messages.
 pub trait DispatchTrueFalse: private::Sealed {
@@ -101,6 +106,15 @@ impl DispatchTrueFalse for [(); 1] {
 pub trait CheckDiscriminantInRange<A>
 where
     <Self::CheckType as DispatchTrueFalse>::Out: DiscriminantInRange,
+{
+    type CheckType: DispatchTrueFalse;
+}
+
+/// Traits to check at compile-time if a `#[bitfield(specifier = true)]` type requires
+/// no more than 128 bits.
+pub trait CheckSpecifierHasAtMost128Bits
+where
+    <Self::CheckType as DispatchTrueFalse>::Out: SpecifierHasAtMost128Bits,
 {
     type CheckType: DispatchTrueFalse;
 }
