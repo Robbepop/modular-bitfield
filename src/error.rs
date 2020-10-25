@@ -29,10 +29,25 @@ impl core::fmt::Display for Error {
 #[derive(Debug, PartialEq, Eq)]
 pub struct OutOfBounds;
 
+impl core::fmt::Display for OutOfBounds {
+    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+        write!(f, "encountered an out of bounds value")
+    }
+}
+
 /// The bitfield contained an invalid bit pattern.
 #[derive(Debug, PartialEq, Eq)]
 pub struct InvalidBitPattern<Bytes> {
     pub invalid_bytes: Bytes,
+}
+
+impl<Bytes> core::fmt::Display for InvalidBitPattern<Bytes>
+where
+    Bytes: Debug,
+{
+    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+        write!(f, "encountered an invalid bit pattern: {:X?}", self.invalid_bytes)
+    }
 }
 
 impl<Bytes> InvalidBitPattern<Bytes> {
