@@ -8,6 +8,7 @@ mod errors;
 mod bitfield;
 mod bitfield_specifier;
 mod define_specifiers;
+mod bitfield_attr;
 
 use proc_macro::TokenStream;
 

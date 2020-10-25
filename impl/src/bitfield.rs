@@ -12,6 +12,10 @@ use syn::{
     spanned::Spanned as _,
     Token,
 };
+use crate::bitfield_attr::{
+    AttributeArgs,
+    Config,
+};
 
 /// Analyzes the given token stream for `#[bitfield]` properties and expands code if valid.
 pub fn analyse_and_expand(args: TokenStream2, input: TokenStream2) -> TokenStream2 {
@@ -27,10 +31,12 @@ pub fn analyse_and_expand(args: TokenStream2, input: TokenStream2) -> TokenStrea
 ///
 /// If the given token stream does not yield a valid `#[bitfield]` specifier.
 fn analyse_and_expand_or_error(
-    _args: TokenStream2,
+    args: TokenStream2,
     input: TokenStream2,
 ) -> Result<TokenStream2> {
     let input = syn::parse::<syn::ItemStruct>(input.into())?;
+    let attrs = syn::parse::<AttributeArgs>(args.into())?;
+    let _config = Config::try_from(attrs)?;
     let bitfield = BitfieldStruct::try_from(input)?;
     Ok(bitfield.expand())
 }
