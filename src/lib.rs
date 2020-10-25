@@ -147,8 +147,12 @@ pub use modular_bitfield_impl::{
 #[doc(hidden)]
 pub mod private;
 
-mod error;
+pub mod error;
 pub use self::error::Error;
+use self::error::{
+    InvalidBitPattern,
+    OutOfBounds,
+};
 
 /// The prelude: `use modular_bitfield::prelude::*;`
 pub mod prelude {

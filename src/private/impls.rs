@@ -4,8 +4,10 @@ use super::{
     IntoBits,
 };
 use crate::{
-    OutOfBounds,
-    InvalidBitPattern,
+    error::{
+        InvalidBitPattern,
+        OutOfBounds,
+    },
     Specifier,
 };
 
@@ -14,15 +16,19 @@ impl Specifier for bool {
     type Bytes = u8;
     type InOut = bool;
 
+    #[inline]
     fn into_bytes(input: Self::InOut) -> Result<Self::Bytes, OutOfBounds> {
-        Ok([input as u8])
+        Ok(input as u8)
     }
 
-    fn from_bytes(bytes: Self::Bytes) -> Result<Self::InOut, InvalidBitPattern<Self::Bytes>> {
+    #[inline]
+    fn from_bytes(
+        bytes: Self::Bytes,
+    ) -> Result<Self::InOut, InvalidBitPattern<Self::Bytes>> {
         match bytes {
-            [0] => Ok(false),
-            [1] => Ok(true),
-            invalid_bytes => Err(InvalidBitPattern { invalid_bytes })
+            0 => Ok(false),
+            1 => Ok(true),
+            invalid_bytes => Err(InvalidBitPattern { invalid_bytes }),
         }
     }
 }
@@ -35,12 +41,14 @@ macro_rules! impl_specifier_for_primitive {
                 type Bytes = $prim;
                 type InOut = $prim;
 
+                #[inline]
                 fn into_bytes(input: Self::InOut) -> Result<Self::Bytes, OutOfBounds> {
-                    Ok(input.to_le_bytes())
+                    Ok(input)
                 }
 
+                #[inline]
                 fn from_bytes(bytes: Self::Bytes) -> Result<Self::InOut, InvalidBitPattern<Self::Bytes>> {
-                    Ok(<$prim>::from_le_bytes(bytes))
+                    Ok(bytes)
                 }
             }
         )*
