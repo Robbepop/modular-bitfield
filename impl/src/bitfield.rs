@@ -307,6 +307,11 @@ impl BitfieldStruct {
             .as_ref()
             .cloned()
             .unwrap_or_else(|| format_ident!("get_{}", n));
+        let get_checked_ident = field
+            .ident
+            .as_ref()
+            .map(|ident| format_ident!("{}_or_err", ident))
+            .unwrap_or_else(|| format_ident!("get_{}_or_err", n));
         let set_ident = format_ident!("set_{}", ident_frag);
         let set_checked_ident = format_ident!("set_{}_checked", ident_frag);
         let with_ident = format_ident!("with_{}", ident_frag);
@@ -321,11 +326,21 @@ impl BitfieldStruct {
         let vis = &field.vis;
         let bits_checks = self.expand_getters_and_setters_checks_for_field(field);
 
+        let get_assert_msg = format!(
+            "value contains invalid bit pattern for field {}.{}",
+            struct_ident, doc_ident
+        );
         let set_assert_msg = format!(
             "value out of bounds for field {}.{}",
             struct_ident, doc_ident
         );
         let getter_docs = format!("Returns the value of {}.", doc_ident);
+        let checked_getter_docs = format!(
+            "Returns the value of {}.\n\n\
+             #Errors\n\n\
+             If the returned value contains an invalid bit pattern for {}.",
+            doc_ident, doc_ident,
+        );
         let setter_docs = format!(
             "Sets the value of {} to the given value.\n\n\
              #Panics\n\n\
@@ -357,16 +372,23 @@ impl BitfieldStruct {
             #[doc = #getter_docs]
             #[inline]
             #vis fn #get_ident(&self) -> <#ty as ::modular_bitfield::Specifier>::InOut {
+                self.#get_checked_ident().expect(#get_assert_msg)
+            }
+
+            #[doc = #checked_getter_docs]
+            #[inline]
+            #vis fn #get_checked_ident(
+                &self,
+            ) -> ::core::result::Result<
+                <#ty as ::modular_bitfield::Specifier>::InOut,
+                ::modular_bitfield::error::InvalidBitPattern<<#ty as ::modular_bitfield::Specifier>::Bytes>
+            > {
                 #bits_checks
+
                 let __bf_read: <#ty as ::modular_bitfield::Specifier>::Bytes = {
                     ::modular_bitfield::private::read_specifier::<#ty>(&self.bytes[..], #offset)
                 };
-                let __bf_bits: ::modular_bitfield::private::Bits<
-                    <#ty as ::modular_bitfield::Specifier>::Bytes
-                > = ::modular_bitfield::private::Bits(__bf_read);
-                <<#ty as ::modular_bitfield::Specifier>::InOut as ::modular_bitfield::private::FromBits<
-                    <#ty as ::modular_bitfield::Specifier>::Bytes
-                >>::from_bits(__bf_bits)
+                <#ty as ::modular_bitfield::Specifier>::from_bytes(__bf_read)
             }
 
             #[doc = #with_docs]
