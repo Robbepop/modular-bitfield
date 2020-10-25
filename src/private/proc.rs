@@ -67,7 +67,7 @@ pub fn write_specifier<T>(
     if lsb_offset == 0 && msb_offset == 8 {
         // Edge-case for whole bytes manipulation.
         for byte in bytes[ls_byte..(ms_byte + 1)].iter_mut() {
-            *byte = input.pop_bits(8);
+            *byte = buffer.pop_bits(8);
         }
     } else {
         // Least-significant byte
@@ -77,23 +77,23 @@ pub fn write_specifier<T>(
             } else {
                 0u8
             } | ((0x01 << lsb_offset as u32) - 1));
-        let overwrite = input.pop_bits(8 - lsb_offset as u32);
+        let overwrite = buffer.pop_bits(8 - lsb_offset as u32);
         bytes[ls_byte] = stays_same | (overwrite << lsb_offset as u32);
         if ms_byte - ls_byte >= 2 {
             // Middle bytes
             for byte in bytes[(ls_byte + 1)..ms_byte].iter_mut() {
-                *byte = input.pop_bits(8);
+                *byte = buffer.pop_bits(8);
             }
         }
         if ls_byte != ms_byte {
             // Most-significant byte
             if msb_offset == 8 {
                 // We don't need to respect what was formerly stored in the byte.
-                bytes[ms_byte] = input.pop_bits(msb_offset as u32);
+                bytes[ms_byte] = buffer.pop_bits(msb_offset as u32);
             } else {
                 // All bits that do not belong to this field should be preserved.
                 let stays_same = bytes[ms_byte] & !((0x01 << msb_offset) - 1);
-                let overwrite = input.pop_bits(msb_offset as u32);
+                let overwrite = buffer.pop_bits(msb_offset as u32);
                 bytes[ms_byte] = stays_same | overwrite;
             }
         }
