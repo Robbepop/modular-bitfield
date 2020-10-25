@@ -96,6 +96,14 @@ fn generate_enum(input: syn::ItemEnum) -> syn::Result<TokenStream2> {
             }
         )
     });
+    let from_bytes_arms = variants.iter().map(|ident| {
+        let span = ident.span();
+        quote_spanned!(span=>
+            __bitfield_binding if __bitfield_binding == Self::#ident as <Self as ::modular_bitfield::Specifier>::Bytes => {
+                ::core::result::Result::Ok(Self::#ident)
+            }
+        )
+    });
 
     Ok(quote_spanned!(span=>
         #( #check_discriminants )*
@@ -104,6 +112,23 @@ fn generate_enum(input: syn::ItemEnum) -> syn::Result<TokenStream2> {
             const BITS: usize = #bits;
             type Bytes = <[(); #bits] as ::modular_bitfield::private::SpecifierBytes>::Bytes;
             type InOut = Self;
+
+            #[inline]
+            fn into_bytes(input: Self::InOut) -> ::core::result::Result<Self::Bytes, ::modular_bitfield::error::OutOfBounds> {
+                ::core::result::Result::Ok(input as Self::Bytes)
+            }
+
+            #[inline]
+            fn from_bytes(bytes: Self::Bytes) -> ::core::result::Result<Self::InOut, ::modular_bitfield::error::InvalidBitPattern<Self::Bytes>> {
+                match bytes {
+                    #( #from_bytes_arms ),*
+                    invalid_bytes => {
+                        ::core::result::Result::Err(
+                            <::modular_bitfield::error::InvalidBitPattern<Self::Bytes>>::new(invalid_bytes)
+                        )
+                    }
+                }
+            }
         }
 
         impl ::modular_bitfield::private::FromBits<<Self as ::modular_bitfield::Specifier>::Bytes> for #enum_ident {
