@@ -1,3 +1,5 @@
+//! Errors that can occure while operating on modular bitfields.
+
 use core::fmt::Debug;
 
 /// The given value was out of range for the bitfield.
