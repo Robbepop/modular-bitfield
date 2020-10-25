@@ -180,15 +180,14 @@ pub trait Specifier {
     /// # Note
     ///
     /// This is the type that is used internally for computations.
-    type Base: Default + private::PushBits + private::PopBits;
+    type Bytes: Default + private::PushBits + private::PopBits;
 
     /// The interface type of the specifier.
     ///
     /// # Note
     ///
     /// This is the type that is used for the getters and setters.
-    type Face: private::FromBits<Self::Base>
-        + private::IntoBits<Self::Base>;
+    type Face: private::FromBits<Self::Bytes> + private::IntoBits<Self::Bytes>;
 
     type Bytes;
     type InOut;

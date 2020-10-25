@@ -25,9 +25,9 @@ pub trait PopBits: checks::private::Sealed {
 
 /// Trait implemented by primitives that drive bitfield manipulations generically.
 #[doc(hidden)]
-pub trait SpecifierBase: checks::private::Sealed {
+pub trait SpecifierBytes: checks::private::Sealed {
     /// The base type that the specifier is operating on.
-    type Base;
+    type Bytes;
 }
 
 /// Helper trait to convert to bits.

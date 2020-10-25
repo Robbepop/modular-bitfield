@@ -83,7 +83,7 @@ fn generate_enum(input: syn::ItemEnum) -> syn::Result<TokenStream2> {
             Err(_) => format_ident!("r#{}", snake_variant),
         };
         quote_spanned!(span=>
-            #snake_variant if #snake_variant == Self::#ident as <Self as ::modular_bitfield::Specifier>::Base => {
+            #snake_variant if #snake_variant == Self::#ident as <Self as ::modular_bitfield::Specifier>::Bytes => {
                 Self::#ident
             }
         )
@@ -94,13 +94,13 @@ fn generate_enum(input: syn::ItemEnum) -> syn::Result<TokenStream2> {
 
         impl ::modular_bitfield::Specifier for #enum_ident {
             const BITS: usize = #bits;
-            type Base = <[(); #bits] as ::modular_bitfield::private::SpecifierBase>::Base;
+            type Bytes = <[(); #bits] as ::modular_bitfield::private::SpecifierBytes>::Bytes;
             type Face = Self;
         }
 
-        impl ::modular_bitfield::private::FromBits<<Self as ::modular_bitfield::Specifier>::Base> for #enum_ident {
+        impl ::modular_bitfield::private::FromBits<<Self as ::modular_bitfield::Specifier>::Bytes> for #enum_ident {
             #[inline(always)]
-            fn from_bits(bits: ::modular_bitfield::private::Bits<<Self as ::modular_bitfield::Specifier>::Base>) -> Self {
+            fn from_bits(bits: ::modular_bitfield::private::Bits<<Self as ::modular_bitfield::Specifier>::Bytes>) -> Self {
                 match bits.into_raw() {
                     #( #match_arms )*
                     // This API is only used internally and is only invoked on valid input.
@@ -111,11 +111,11 @@ fn generate_enum(input: syn::ItemEnum) -> syn::Result<TokenStream2> {
             }
         }
 
-        impl ::modular_bitfield::private::IntoBits<<Self as ::modular_bitfield::Specifier>::Base> for #enum_ident {
+        impl ::modular_bitfield::private::IntoBits<<Self as ::modular_bitfield::Specifier>::Bytes> for #enum_ident {
             #[inline(always)]
-            fn into_bits(self) -> ::modular_bitfield::private::Bits<<Self as ::modular_bitfield::Specifier>::Base> {
+            fn into_bits(self) -> ::modular_bitfield::private::Bits<<Self as ::modular_bitfield::Specifier>::Bytes> {
                 ::modular_bitfield::private::Bits(
-                    self as <Self as ::modular_bitfield::Specifier>::Base
+                    self as <Self as ::modular_bitfield::Specifier>::Bytes
                 )
             }
         }

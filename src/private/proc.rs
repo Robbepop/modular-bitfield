@@ -8,7 +8,7 @@ use crate::{
 
 #[doc(hidden)]
 #[inline(always)]
-pub fn read_specifier<T>(bytes: &[u8], offset: usize) -> <T as Specifier>::Base
+pub fn read_specifier<T>(bytes: &[u8], offset: usize) -> <T as Specifier>::Bytes
 where
     T: Specifier,
 {
@@ -19,7 +19,7 @@ where
     let msb_offset = end % 8; // compile-time
     let msb_offset = if msb_offset == 0 { 8 } else { msb_offset };
 
-    let mut buffer = <<T as Specifier>::Base as Default>::default();
+    let mut buffer = <<T as Specifier>::Bytes as Default>::default();
 
     if lsb_offset == 0 && msb_offset == 8 {
         // Edge-case for whole bytes manipulation.
@@ -51,7 +51,7 @@ where
 pub fn write_specifier<T>(
     bytes: &mut [u8],
     offset: usize,
-    new_val: <T as Specifier>::Base,
+    new_val: <T as Specifier>::Bytes,
 ) where
     T: Specifier,
 {

@@ -29,7 +29,7 @@ pub fn generate(_input: TokenStream2) -> TokenStream2 {
 
             impl crate::Specifier for #ident {
                 const BITS: usize = #bits;
-                type Base = #in_out;
+                type Bytes = #in_out;
                 type Face = #in_out;
 
                 type Bytes = [::core::primitive::u8; ::core::mem::size_of::<Self::InOut>()];
@@ -53,8 +53,8 @@ pub fn generate(_input: TokenStream2) -> TokenStream2 {
                 }
             }
 
-            impl crate::private::SpecifierBase for [(); #bits] {
-                type Base = #in_out;
+            impl crate::private::SpecifierBytes for [(); #bits] {
+                type Bytes = #in_out;
             }
 
             impl crate::private::checks::private::Sealed for [(); #bits] {}

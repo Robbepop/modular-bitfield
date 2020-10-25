@@ -358,14 +358,14 @@ impl BitfieldStruct {
             #[inline]
             #vis fn #get_ident(&self) -> <#ty as ::modular_bitfield::Specifier>::Face {
                 #bits_checks
-                let __bf_read: <#ty as ::modular_bitfield::Specifier>::Base = {
+                let __bf_read: <#ty as ::modular_bitfield::Specifier>::Bytes = {
                     ::modular_bitfield::private::read_specifier::<#ty>(&self.bytes[..], #offset)
                 };
                 let __bf_bits: ::modular_bitfield::private::Bits<
-                    <#ty as ::modular_bitfield::Specifier>::Base
+                    <#ty as ::modular_bitfield::Specifier>::Bytes
                 > = ::modular_bitfield::private::Bits(__bf_read);
                 <<#ty as ::modular_bitfield::Specifier>::Face as ::modular_bitfield::private::FromBits<
-                    <#ty as ::modular_bitfield::Specifier>::Base
+                    <#ty as ::modular_bitfield::Specifier>::Bytes
                 >>::from_bits(__bf_bits)
             }
 
@@ -404,14 +404,14 @@ impl BitfieldStruct {
                 &mut self,
                 new_val: <#ty as ::modular_bitfield::Specifier>::Face
             ) -> ::core::result::Result<(), ::modular_bitfield::Error> {
-                let __bf_base_bits: ::core::primitive::usize = 8usize * ::core::mem::size_of::<<#ty as ::modular_bitfield::Specifier>::Base>();
-                let __bf_max_value: <#ty as ::modular_bitfield::Specifier>::Base = {
+                let __bf_base_bits: ::core::primitive::usize = 8usize * ::core::mem::size_of::<<#ty as ::modular_bitfield::Specifier>::Bytes>();
+                let __bf_max_value: <#ty as ::modular_bitfield::Specifier>::Bytes = {
                     !0 >> (__bf_base_bits - <#ty as ::modular_bitfield::Specifier>::BITS)
                 };
                 let __bf_spec_bits: ::core::primitive::usize = <#ty as ::modular_bitfield::Specifier>::BITS;
-                let __bf_raw_val: <#ty as ::modular_bitfield::Specifier>::Base = <
+                let __bf_raw_val: <#ty as ::modular_bitfield::Specifier>::Bytes = <
                     <#ty as ::modular_bitfield::Specifier>::Face as ::modular_bitfield::private::IntoBits<
-                        <#ty as ::modular_bitfield::Specifier>::Base
+                        <#ty as ::modular_bitfield::Specifier>::Bytes
                     >
                 >::into_bits(new_val).into_raw();
                 // We compare base bits with spec bits to drop this condition

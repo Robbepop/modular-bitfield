@@ -14,7 +14,7 @@ pub use self::{
         IntoBits,
         PopBits,
         PushBits,
-        SpecifierBase,
+        SpecifierBytes,
     },
     utils::Bits,
 };

@@ -13,7 +13,7 @@ use crate::{
 
 impl Specifier for bool {
     const BITS: usize = 1;
-    type Base = u8;
+    type Bytes = u8;
     type Face = bool;
 
     type Bytes = [::core::primitive::u8; 1];
@@ -37,7 +37,7 @@ macro_rules! impl_specifier_for_primitive {
         $(
             impl Specifier for $prim {
                 const BITS: usize = $bits;
-                type Base = $prim;
+                type Bytes = $prim;
                 type Face = $prim;
 
                 type Bytes = [::core::primitive::u8; $bits / 8];
