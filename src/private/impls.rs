@@ -74,24 +74,6 @@ impl PopBits for u8 {
     }
 }
 
-macro_rules! impl_push_bits {
-    ( $($type:ty),+ ) => {
-        $(
-            impl PushBits for $type {
-                #[inline(always)]
-                fn push_bits(&mut self, amount: u32, bits: u8) {
-                    let orig_ones = self.count_ones();
-                    debug_assert!(0 < amount && amount <= 8);
-                    let bitmask = 0xFF >> (8 - amount as u8);
-                    *self = self.wrapping_shl(amount) | ((bits & bitmask) as $type);
-                    debug_assert_eq!((bits & bitmask).count_ones() + orig_ones, self.count_ones());
-                }
-            }
-        )+
-    }
-}
-impl_push_bits!(u8, u16, u32, u64, u128);
-
 macro_rules! impl_pop_bits {
     ( $($type:ty),+ ) => {
         $(
@@ -111,6 +93,24 @@ macro_rules! impl_pop_bits {
     };
 }
 impl_pop_bits!(u16, u32, u64, u128);
+
+macro_rules! impl_push_bits {
+    ( $($type:ty),+ ) => {
+        $(
+            impl PushBits for $type {
+                #[inline(always)]
+                fn push_bits(&mut self, amount: u32, bits: u8) {
+                    let orig_ones = self.count_ones();
+                    debug_assert!(0 < amount && amount <= 8);
+                    let bitmask = 0xFF >> (8 - amount as u8);
+                    *self = self.wrapping_shl(amount) | ((bits & bitmask) as $type);
+                    debug_assert_eq!((bits & bitmask).count_ones() + orig_ones, self.count_ones());
+                }
+            }
+        )+
+    }
+}
+impl_push_bits!(u8, u16, u32, u64, u128);
 
 impl FromBits<u8> for bool {
     #[inline(always)]
