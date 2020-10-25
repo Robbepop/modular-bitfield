@@ -22,7 +22,7 @@ fn generate_specifier_for(bits: usize) -> TokenStream2 {
     };
     let ident = format_ident!("B{}", bits);
     let doc_comment = if bits == 1 {
-        format!("Specifier for a single bit.")
+        "Specifier for a single bit.".to_string()
     } else {
         format!("Specifier for {} bits.", bits)
     };
