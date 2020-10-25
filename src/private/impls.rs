@@ -3,10 +3,10 @@ use super::{
     FromBits,
     IntoBits,
 };
-use crate::Specifier;
 use crate::{
     OutOfBounds,
     InvalidBitPattern,
+    Specifier,
 };
 
 impl Specifier for bool {
