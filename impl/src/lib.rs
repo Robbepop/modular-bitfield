@@ -72,7 +72,6 @@ pub fn define_specifiers(input: TokenStream) -> TokenStream {
 /// ```
 #[proc_macro_attribute]
 pub fn bitfield(args: TokenStream, input: TokenStream) -> TokenStream {
-    // bitfield::generate(args.into(), input.into()).into()
     bitfield::analyse_and_expand(args.into(), input.into()).into()
 }
 
