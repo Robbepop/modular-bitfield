@@ -143,10 +143,18 @@ impl BitfieldStruct {
         let bits = self.generate_bitfield_size();
         let next_divisible_by_8 = Self::next_divisible_by_8(&bits);
         Some(quote_spanned!(span =>
+            #[allow(clippy::identity_op)]
+            const _: () = {
+                impl ::modular_bitfield::private::checks::CheckSpecifierHasAtMost128Bits for #ident {
+                    type CheckType = [(); (#bits <= 128) as usize];
+                }
+            };
+
+            #[allow(clippy::identity_op)]
             impl ::modular_bitfield::Specifier for #ident {
                 const BITS: usize = #bits;
 
-                type Bytes = <[(); #next_divisible_by_8] as ::modular_bitfield::private::SpecifierBytes>::Bytes;
+                type Bytes = <[(); if #next_divisible_by_8 > 128 { 128 } else #next_divisible_by_8] as ::modular_bitfield::private::SpecifierBytes>::Bytes;
                 type InOut = Self;
 
                 #[inline]
@@ -240,6 +248,7 @@ impl BitfieldStruct {
         let ident = &self.item_struct.ident;
         let size = self.generate_bitfield_size();
         Some(quote_spanned!(span=>
+            #[allow(clippy::identity_op)]
             const _: () = {
                 impl ::modular_bitfield::private::checks::CheckTotalSizeMultipleOf8 for #ident {
                     type Size = ::modular_bitfield::private::checks::TotalSize<[(); #size % 8usize]>;
@@ -270,6 +279,7 @@ impl BitfieldStruct {
         quote_spanned!(span=>
             #( #attrs )*
             #[repr(transparent)]
+            #[allow(clippy::identity_op)]
             #vis struct #ident
             {
                 bytes: [::core::primitive::u8; #next_divisible_by_8 / 8usize],
@@ -286,7 +296,8 @@ impl BitfieldStruct {
         quote_spanned!(span=>
             impl #ident
             {
-                /// Returns an instance with zero initialized data
+                /// Returns an instance with zero initialized data.
+                #[allow(clippy::identity_op)]
                 pub const fn new() -> Self {
                     Self {
                         bytes: [0u8; #next_divisible_by_8 / 8usize],
@@ -311,12 +322,14 @@ impl BitfieldStruct {
                 /// The returned byte array is layed out in the same way as described
                 /// [here](https://docs.rs/modular-bitfield/#generated-structure).
                 #[inline]
+                #[allow(clippy::identity_op)]
                 pub const fn as_bytes(&self) -> &[::core::primitive::u8; #next_divisible_by_8 / 8usize] {
                     &self.bytes
                 }
 
                 /// Converts the given bytes directly into the bitfield struct.
                 #[inline]
+                #[allow(clippy::identity_op)]
                 pub const fn from_bytes(bytes: [::core::primitive::u8; #next_divisible_by_8 / 8usize]) -> Self {
                     Self { bytes }
                 }
