@@ -80,7 +80,7 @@
 //!
 //! // Can convert from and to bytes.
 //! assert_eq!(example.as_bytes(), &[255, 171, 128, 3]);
-//! let copy = unsafe { Example::from_bytes_unchecked(example.as_bytes().clone()) };
+//! let copy = Example::from_bytes(example.as_bytes().clone());
 //! assert_eq!(example, copy);
 //!
 //! // Accessing fields of a tuple struct bitfield

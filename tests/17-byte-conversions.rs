@@ -28,7 +28,7 @@ fn main() {
     let bytes = bitfield_1.as_bytes().clone();
     assert_eq!(bytes, [231, 13, 57, 5]);
 
-    let bitfield2 = unsafe { MyFourBytes::from_bytes_unchecked(bytes) };
+    let bitfield2 = MyFourBytes::from_bytes(bytes);
 
     assert_eq!(bitfield2.a(), true);
     assert_eq!(bitfield2.b(), 3);

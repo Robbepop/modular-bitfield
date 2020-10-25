@@ -252,13 +252,8 @@ impl BitfieldStruct {
                 }
 
                 /// Converts the given bytes directly into the bitfield struct.
-                ///
-                /// # Safety
-                ///
-                /// This is an `unsafe` operation since it omits checks on every field to ensure
-                /// that the provided byte pattern represents a valid state.
                 #[inline]
-                pub const unsafe fn from_bytes_unchecked(bytes: [::core::primitive::u8; #size / 8usize]) -> Self {
+                pub const fn from_bytes(bytes: [::core::primitive::u8; #size / 8usize]) -> Self {
                     Self { bytes }
                 }
             }

@@ -94,7 +94,7 @@ fn main() {
     // Can convert from and to bytes.
     assert_eq!(example.to_bytes(), &[255, 171, 128, 3]);
     use std::convert::TryFrom as _;
-    let copy = unsafe { Example::from_bytes_unchecked(example.to_bytes()) };
+    let copy = Example::from_bytes(example.to_bytes());
     assert_eq!(example, copy);
 }
 ```

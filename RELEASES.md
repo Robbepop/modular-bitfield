@@ -1,3 +1,9 @@
+# 0.9.0 (WIP)
+
+- No longer generates an `unsafe fn from_bytes_unchecked`. Now generates a safe `fn from_bytes` that is basically identical.
+  The difference is that we no longer consider bitfields containing invalid bit patterns as invalid since generated getters
+  will protect their access anyways.
+
 # 0.8.0 (2020-10-25)
 
 - The `#[derive(BitfieldSpecifier)]` now allows an amount of variants that is not a power of two via
