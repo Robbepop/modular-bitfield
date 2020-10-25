@@ -52,7 +52,15 @@ fn generate_enum(input: syn::ItemEnum) -> syn::Result<TokenStream2> {
         ))
     }
     // We can take `trailing_zeros` returns type as the required amount of bits.
-    let bits = count_variants.trailing_zeros() as usize;
+    let bits = match count_variants.checked_next_power_of_two() {
+        Some(power_of_two) => power_of_two.trailing_zeros() as usize,
+        None => {
+            return Err(format_err!(
+                span,
+                "BitfieldSpecifier has too many variants to pack into a bitfield",
+            ))
+        }
+    };
 
     let variants = input
         .variants
