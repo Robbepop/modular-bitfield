@@ -139,6 +139,7 @@
 //! ```
 
 #![no_std]
+#![forbid(unsafe_code)]
 
 pub use modular_bitfield_impl::{
     bitfield,
