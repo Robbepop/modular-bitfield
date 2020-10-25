@@ -356,7 +356,7 @@ impl BitfieldStruct {
         let expanded = quote_spanned!(span=>
             #[doc = #getter_docs]
             #[inline]
-            #vis fn #get_ident(&self) -> <#ty as ::modular_bitfield::Specifier>::Face {
+            #vis fn #get_ident(&self) -> <#ty as ::modular_bitfield::Specifier>::InOut {
                 #bits_checks
                 let __bf_read: <#ty as ::modular_bitfield::Specifier>::Bytes = {
                     ::modular_bitfield::private::read_specifier::<#ty>(&self.bytes[..], #offset)
@@ -364,7 +364,7 @@ impl BitfieldStruct {
                 let __bf_bits: ::modular_bitfield::private::Bits<
                     <#ty as ::modular_bitfield::Specifier>::Bytes
                 > = ::modular_bitfield::private::Bits(__bf_read);
-                <<#ty as ::modular_bitfield::Specifier>::Face as ::modular_bitfield::private::FromBits<
+                <<#ty as ::modular_bitfield::Specifier>::InOut as ::modular_bitfield::private::FromBits<
                     <#ty as ::modular_bitfield::Specifier>::Bytes
                 >>::from_bits(__bf_bits)
             }
@@ -374,7 +374,7 @@ impl BitfieldStruct {
             #[allow(dead_code)]
             #vis fn #with_ident(
                 mut self,
-                new_val: <#ty as ::modular_bitfield::Specifier>::Face
+                new_val: <#ty as ::modular_bitfield::Specifier>::InOut
             ) -> Self {
                 self.#set_ident(new_val);
                 self
@@ -385,7 +385,7 @@ impl BitfieldStruct {
             #[allow(dead_code)]
             #vis fn #with_checked_ident(
                 mut self,
-                new_val: <#ty as ::modular_bitfield::Specifier>::Face,
+                new_val: <#ty as ::modular_bitfield::Specifier>::InOut,
             ) -> ::core::result::Result<Self, ::modular_bitfield::Error> {
                 self.#set_checked_ident(new_val)?;
                 ::core::result::Result::Ok(self)
@@ -394,7 +394,7 @@ impl BitfieldStruct {
             #[doc = #setter_docs]
             #[inline]
             #[allow(dead_code)]
-            #vis fn #set_ident(&mut self, new_val: <#ty as ::modular_bitfield::Specifier>::Face) {
+            #vis fn #set_ident(&mut self, new_val: <#ty as ::modular_bitfield::Specifier>::InOut) {
                 self.#set_checked_ident(new_val).expect(#set_assert_msg)
             }
 
@@ -402,7 +402,7 @@ impl BitfieldStruct {
             #[inline]
             #vis fn #set_checked_ident(
                 &mut self,
-                new_val: <#ty as ::modular_bitfield::Specifier>::Face
+                new_val: <#ty as ::modular_bitfield::Specifier>::InOut
             ) -> ::core::result::Result<(), ::modular_bitfield::Error> {
                 let __bf_base_bits: ::core::primitive::usize = 8usize * ::core::mem::size_of::<<#ty as ::modular_bitfield::Specifier>::Bytes>();
                 let __bf_max_value: <#ty as ::modular_bitfield::Specifier>::Bytes = {
@@ -410,7 +410,7 @@ impl BitfieldStruct {
                 };
                 let __bf_spec_bits: ::core::primitive::usize = <#ty as ::modular_bitfield::Specifier>::BITS;
                 let __bf_raw_val: <#ty as ::modular_bitfield::Specifier>::Bytes = <
-                    <#ty as ::modular_bitfield::Specifier>::Face as ::modular_bitfield::private::IntoBits<
+                    <#ty as ::modular_bitfield::Specifier>::InOut as ::modular_bitfield::private::IntoBits<
                         <#ty as ::modular_bitfield::Specifier>::Bytes
                     >
                 >::into_bits(new_val).into_raw();

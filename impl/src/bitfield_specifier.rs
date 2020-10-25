@@ -95,7 +95,7 @@ fn generate_enum(input: syn::ItemEnum) -> syn::Result<TokenStream2> {
         impl ::modular_bitfield::Specifier for #enum_ident {
             const BITS: usize = #bits;
             type Bytes = <[(); #bits] as ::modular_bitfield::private::SpecifierBytes>::Bytes;
-            type Face = Self;
+            type InOut = Self;
         }
 
         impl ::modular_bitfield::private::FromBits<<Self as ::modular_bitfield::Specifier>::Bytes> for #enum_ident {

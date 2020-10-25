@@ -187,10 +187,7 @@ pub trait Specifier {
     /// # Note
     ///
     /// This is the type that is used for the getters and setters.
-    type Face: private::FromBits<Self::Bytes> + private::IntoBits<Self::Bytes>;
-
-    type Bytes;
-    type InOut;
+    type InOut: private::FromBits<Self::Bytes> + private::IntoBits<Self::Bytes>;
 
     fn into_bytes(input: Self::InOut) -> Result<Self::Bytes, OutOfBounds>;
     fn from_bytes(bytes: Self::Bytes) -> Result<Self::InOut, InvalidBitPattern<Self::Bytes>>;

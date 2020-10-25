@@ -14,9 +14,6 @@ use crate::{
 impl Specifier for bool {
     const BITS: usize = 1;
     type Bytes = u8;
-    type Face = bool;
-
-    type Bytes = [::core::primitive::u8; 1];
     type InOut = bool;
 
     fn into_bytes(input: Self::InOut) -> Result<Self::Bytes, OutOfBounds> {
