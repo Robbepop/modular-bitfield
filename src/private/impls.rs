@@ -33,9 +33,6 @@ macro_rules! impl_specifier_for_primitive {
             impl Specifier for $prim {
                 const BITS: usize = $bits;
                 type Bytes = $prim;
-                type Face = $prim;
-
-                type Bytes = [::core::primitive::u8; $bits / 8];
                 type InOut = $prim;
 
                 fn into_bytes(input: Self::InOut) -> Result<Self::Bytes, OutOfBounds> {
