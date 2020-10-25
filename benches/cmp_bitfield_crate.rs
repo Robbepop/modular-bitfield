@@ -113,31 +113,31 @@ macro_rules! generate_cmp_benchmark_for {
 }
 generate_cmp_benchmark_for!(
     test(bench_get_a, bench_set_a) {
-        fn a("cmp_get_a");
-        fn set_a("cmp_set_a");
+        fn a("compare_crates/get_a");
+        fn set_a("compare_crates/set_a");
     }
 );
 generate_cmp_benchmark_for!(
     test(bench_get_b, bench_set_b) {
-        fn b("cmp_get_b");
-        fn set_b("cmp_set_b");
+        fn b("compare_crates/get_b");
+        fn set_b("compare_crates/set_b");
     }
 );
 generate_cmp_benchmark_for!(
     test(bench_get_c, bench_set_c) {
-        fn c("cmp_get_c");
-        fn set_c("cmp_set_c");
+        fn c("compare_crates/get_c");
+        fn set_c("compare_crates/set_c");
     }
 );
 generate_cmp_benchmark_for!(
     test(bench_get_d, bench_set_d) {
-        fn d("cmp_get_d");
-        fn set_d("cmp_set_d");
+        fn d("compare_crates/get_d");
+        fn set_d("compare_crates/set_d");
     }
 );
 generate_cmp_benchmark_for!(
     test(bench_get_e, bench_set_e) {
-        fn e("cmp_get_e");
-        fn set_e("cmp_set_e");
+        fn e("compare_crates/get_e");
+        fn set_e("compare_crates/set_e");
     }
 );

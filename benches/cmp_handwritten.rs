@@ -96,37 +96,37 @@ macro_rules! generate_cmp_benchmark_for {
 }
 generate_cmp_benchmark_for!(
     test(bench_get_a, bench_set_a) {
-        fn a("cmp_get_a");
-        fn set_a("cmp_set_a");
+        fn a("generated_vs_handwritten/get_a");
+        fn set_a("generated_vs_handwritten/set_a");
     }
 );
 generate_cmp_benchmark_for!(
     test(bench_get_b, bench_set_b) {
-        fn b("cmp_get_b");
-        fn set_b("cmp_set_b");
+        fn b("generated_vs_handwritten/get_b");
+        fn set_b("generated_vs_handwritten/set_b");
     }
 );
 generate_cmp_benchmark_for!(
     test(bench_get_c, bench_set_c) {
-        fn c("cmp_get_c");
-        fn set_c("cmp_set_c");
+        fn c("generated_vs_handwritten/get_c");
+        fn set_c("generated_vs_handwritten/set_c");
     }
 );
 generate_cmp_benchmark_for!(
     test(bench_get_d, bench_set_d) {
-        fn d("cmp_get_d");
-        fn set_d("cmp_set_d");
+        fn d("generated_vs_handwritten/get_d");
+        fn set_d("generated_vs_handwritten/set_d");
     }
 );
 generate_cmp_benchmark_for!(
     test(bench_get_e, bench_set_e) {
-        fn e("cmp_get_e");
-        fn set_e("cmp_set_e");
+        fn e("generated_vs_handwritten/get_e");
+        fn set_e("generated_vs_handwritten/set_e");
     }
 );
 generate_cmp_benchmark_for!(
     test(bench_get_f, bench_set_f) {
-        fn f("cmp_get_f");
-        fn set_f("cmp_set_f");
+        fn f("generated_vs_handwritten/get_f");
+        fn set_f("generated_vs_handwritten/set_f");
     }
 );
