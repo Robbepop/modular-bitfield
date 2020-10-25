@@ -191,11 +191,7 @@ pub trait Specifier {
 
     fn into_bytes(input: Self::InOut) -> Result<Self::Bytes, OutOfBounds>;
     fn from_bytes(bytes: Self::Bytes) -> Result<Self::InOut, InvalidBitPattern<Self::Bytes>>;
-}
 
-pub struct OutOfBounds;
-pub struct InvalidBitPattern<Bytes> {
-    pub invalid_bytes: Bytes,
 }
 
 /// The default set of predefined specifiers.
