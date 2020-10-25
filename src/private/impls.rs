@@ -2,8 +2,6 @@ use super::{
     Bits,
     FromBits,
     IntoBits,
-    PopBits,
-    PushBits,
 };
 use crate::Specifier;
 use crate::{

@@ -180,7 +180,7 @@ pub trait Specifier {
     /// # Note
     ///
     /// This is the type that is used internally for computations.
-    type Bytes: Default + private::PushBits + private::PopBits;
+    type Bytes;
 
     /// The interface type of the specifier.
     ///

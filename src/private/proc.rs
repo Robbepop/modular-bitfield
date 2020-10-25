@@ -1,16 +1,29 @@
 use crate::{
     private::{
         PopBits,
+        PopBuffer,
         PushBits,
+        PushBuffer,
     },
     Specifier,
 };
+
+/// Creates a new push buffer with all bits initialized to 0.
+#[inline]
+fn push_buffer<T>() -> PushBuffer<<T as Specifier>::Bytes>
+where
+    T: Specifier,
+    PushBuffer<T::Bytes>: Default,
+{
+    <PushBuffer<<T as Specifier>::Bytes> as Default>::default()
+}
 
 #[doc(hidden)]
 #[inline(always)]
 pub fn read_specifier<T>(bytes: &[u8], offset: usize) -> <T as Specifier>::Bytes
 where
     T: Specifier,
+    PushBuffer<T::Bytes>: Default + PushBits,
 {
     let end = offset + <T as Specifier>::BITS;
     let ls_byte = offset / 8; // compile-time
@@ -19,7 +32,7 @@ where
     let msb_offset = end % 8; // compile-time
     let msb_offset = if msb_offset == 0 { 8 } else { msb_offset };
 
-    let mut buffer = <<T as Specifier>::Bytes as Default>::default();
+    let mut buffer = push_buffer::<T>();
 
     if lsb_offset == 0 && msb_offset == 8 {
         // Edge-case for whole bytes manipulation.
@@ -43,7 +56,7 @@ where
             buffer.push_bits(8 - lsb_offset as u32, bytes[ls_byte] >> lsb_offset);
         }
     }
-    buffer
+    buffer.into_bytes()
 }
 
 #[doc(hidden)]
@@ -54,6 +67,7 @@ pub fn write_specifier<T>(
     new_val: <T as Specifier>::Bytes,
 ) where
     T: Specifier,
+    PopBuffer<T::Bytes>: PopBits,
 {
     let end = offset + <T as Specifier>::BITS;
     let ls_byte = offset / 8; // compile-time
@@ -62,7 +76,7 @@ pub fn write_specifier<T>(
     let msb_offset = end % 8; // compile-time
     let msb_offset = if msb_offset == 0 { 8 } else { msb_offset };
 
-    let mut input = new_val;
+    let mut buffer = <PopBuffer<T::Bytes>>::from_bytes(new_val);
 
     if lsb_offset == 0 && msb_offset == 8 {
         // Edge-case for whole bytes manipulation.
