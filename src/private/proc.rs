@@ -19,7 +19,7 @@ where
 }
 
 #[doc(hidden)]
-#[inline(always)]
+#[inline]
 pub fn read_specifier<T>(bytes: &[u8], offset: usize) -> <T as Specifier>::Bytes
 where
     T: Specifier,
@@ -60,7 +60,7 @@ where
 }
 
 #[doc(hidden)]
-#[inline(always)]
+#[inline]
 pub fn write_specifier<T>(
     bytes: &mut [u8],
     offset: usize,
