@@ -44,3 +44,6 @@ harness = false
 
 [dependencies]
 modular-bitfield-impl = { path = "impl", version = "0.8" }
+
+[profile.bench]
+codegen-units = 1
