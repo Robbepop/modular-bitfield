@@ -105,7 +105,7 @@ impl Handwritten {
 
     /// Sets the value of `d`.
     pub fn set_d(&mut self, new_val: u8) {
-        self.data[3] = (self.data[3] & 0b0001_0000) | ((new_val & 0b0000_0001) << 4)
+        self.data[3] = (self.data[3] & (!0b0001_0000)) | ((new_val & 0b0000_0001) << 4)
     }
 
     /// Returns the value of `e`.
@@ -144,7 +144,11 @@ macro_rules! impl_getter_setter_tests {
                     macro_struct.$setter($n);
                     hand_struct.$setter($n);
                     assert_eq!(hand_struct.$getter(), $n);
-                    assert_eq!(hand_struct.$getter(), macro_struct.$getter());
+                    assert_eq!(macro_struct.$getter(), $n);
+                    macro_struct.$setter(0);
+                    hand_struct.$setter(0);
+                    assert_eq!(hand_struct.$getter(), 0);
+                    assert_eq!(macro_struct.$getter(), 0);
                 }
             )*
         }
