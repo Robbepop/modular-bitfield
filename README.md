@@ -32,74 +32,162 @@ Implements the `#[bitfield]` macros introduced and specified in David Tolnay's [
 
 Thanks go to David Tolnay for designing the specification for the macros implemented in this crate.
 
-## Example
+## Usage
+
+Annotate a Rust struct with the `#[bitfield]` attribute in order to convert it into a bitfield.
+The `B1`, `B2`, ... `B128` prelude types can be used as primitives to declare the number of bits per field.
 
 ```rust
-use modular_bitfield::prelude::*;
-
-// Works with aliases - just for the showcase.
-type Vitamin = B12;
-
-/// Bitfield struct with 32 bits in total.
 #[bitfield]
-#[derive(Debug, PartialEq, Eq)]
-pub struct Example {
-    a: bool,         // Uses 1 bit
-    b: B9,           // Uses 9 bits
-    c: Vitamin,      // Uses 12 bits, works with aliases.
-    #[bits = 3]      // Optional, asserts at compiletime that `DeliveryMode` uses 3 bits.
-    d: DeliveryMode, // Uses 3 bits
-    e: B7,           // Uses 7 bits
+pub struct PackedData {
+    header: B4,
+    body: B9,
+    is_alive: B1,
+    status: B2,
+}
+ ```
+
+This produces a `new` constructor as well as a variety of getters and setters that
+allows to interact with the bitfield in a safe fashion:
+
+### Example: Constructors
+
+```rust
+let data = PackedData::new()
+    .with_header(1)
+    .with_body(2)
+    .with_is_alive(0)
+    .with_status(3);
+assert_eq!(data.header(), 1);
+assert_eq!(data.body(), 2);
+assert_eq!(data.is_alive(), 0);
+assert_eq!(data.status(), 3);
+```
+
+### Example: Primitive Types
+
+Any type that implements the `Specifier` trait can be used as a bitfield field.
+Besides the already mentioned `B1`, .. `B128` also the `bool`, `u8, `u16, `u32,
+`u64` or `u128` primitive types can be used from prelude.
+
+We can use this knowledge to encode our `is_alive` as `bool` type instead of `B1`:
+
+```rust
+#[bitfield]
+pub struct PackedData {
+    header: B4,
+    body: B9,
+    is_alive: bool,
+    status: B2,
 }
 
-/// Enums that derive from `BitfieldSpecifier`
-/// can also be used within bitfield structs
-/// as shown above.
-#[derive(BitfieldSpecifier, Debug, PartialEq)]
-pub enum DeliveryMode {
-    Fixed = 1,
-    Lowest,
-    SMI,
-    RemoteRead,
-    NMI,
-    Init = 0,
-    Startup = 6,
-    External,
+let mut data = PackedData::new()
+    .with_is_alive(true);
+assert!(data.is_alive());
+data.set_is_alive(false);
+assert!(!data.is_alive());
+```
+
+### Example: Enum Specifiers
+
+It is possible to derive the `Specifier` trait for `enum` types very easily to make
+them also usable as a field within a bitfield type:
+
+```rust
+#[derive(BitfieldSpecifier)]
+pub enum Status {
+    Red, Green, Yellow, None,
 }
 
-fn main() {
-    let mut example = Example::new();
-
-    // Assert that everything is inizialized to 0.
-    assert_eq!(example.a(), false);
-    assert_eq!(example.b(), 0);
-    assert_eq!(example.c(), 0);
-    assert_eq!(example.d(), DeliveryMode::Init);
-    assert_eq!(example.e(), 0);
-
-    // Modify the bitfields.
-    example.set_a(true);
-    example.set_b(0b0001_1111_1111_u16);  // Uses `u16`
-    example.set_c(42_u16);                // Uses `u16`
-    example.set_d(DeliveryMode::Startup);
-    example.set_e(1);                     // Uses `u8`
-
-    // Assert the previous modifications.
-    assert_eq!(example.a(), true);
-    assert_eq!(example.b(), 0b0001_1111_1111_u16);
-    assert_eq!(example.c(), 42);
-    assert_eq!(example.d(), DeliveryMode::Startup);
-    assert_eq!(example.e(), 1_u8);
-
-    // Safe API allows for better testing
-    assert_eq!(example.set_e_checked(200), Err(Error::OutOfBounds));
-
-    // Can convert from and to bytes.
-    assert_eq!(example.to_bytes(), &[255, 171, 128, 3]);
-    use std::convert::TryFrom as _;
-    let copy = Example::from_bytes(example.to_bytes());
-    assert_eq!(example, copy);
+#[bitfield]
+pub struct PackedData {
+    header: B4,
+    body: B9,
+    is_alive: bool,
+    status: Status,
 }
+```
+
+### Example: Extra Safety Guard
+
+In order to make sure that our `Status` enum still requires exatly 2 bit we can add
+`#[bits = 2]` to its field:
+
+```rust
+#[bitfield]
+pub struct PackedData {
+    header: B4,
+    body: B9,
+    is_alive: bool,
+    #[bits = 2]
+    status: Status,
+}
+```
+
+Setting and getting our new `status` field is naturally as follows:
+
+```rust
+let mut data = PackedData::new()
+    .with_status(Status::Green);
+assert_eq!(data.status(), Status::Green);
+data.set_status(Status::Red);
+assert_eq!(data.status(), Status::Red);
+```
+
+### Example: Recursive Bitfields
+
+It is possible to use `#[bitfield]` structs as fields of `#[bitfield]` structs.
+This is generally useful if there are some common fields for multiple bitfields
+and is achieved by adding `specifier = true` to the parameters of the `#[bitfield]`
+attribute:
+
+```rust
+#[bitfield(specifier = true)]
+pub struct Header {
+    is_compact: bool,
+    is_secure: bool,
+    pre_status: Status,
+}
+
+#[bitfield]
+pub struct PackedData {
+    header: Header,
+    body: B9,
+    is_alive: bool,
+    status: Status,
+}
+```
+
+### Example: Advanced Enum Specifiers
+
+For our `Status` enum we actually just need 3 status variants: `Green`, `Yellow` and `Red`.
+We introduced the `None` status variants because `Specifier` enums by default are required
+to have a number of variants that is a power of two. We can ship around this by specifying
+`#[bits = 2]` on the top and get rid of our placeholder `None` variant while maintaining
+the invariant of it requiring 2 bits:
+
+```rust
+# use modular_bitfield::prelude::*;
+
+#[derive(BitfieldSpecifier)]
+#[bits = 2]
+pub enum Status {
+    Red, Green, Yellow,
+}
+```
+
+However, having such enums now yields the possibility that a bitfield might contain invalid bit
+patterns for such fields. We can safely access those fields with protected getters. For the sake
+of demonstration we will use the generated `from_bytes` constructor with which we can easily
+construct bitfields that may contain invalid bit patterns:
+
+```rust
+let mut data = PackedData::from_bytes([0b0000_0000, 0b1100_0000]);
+//           The 2 status field bits are invalid -----^^
+//           as Red = 0x00, Green = 0x01 and Yellow = 0x10
+assert_eq!(data.status_or_err(), Err(InvalidBitPattern { invalid_bytes: 0b11 }));
+data.set_status(Status::Green);
+assert_eq!(data.status_or_err(), Ok(Status::Green));
 ```
 
 ## Benchmarks
