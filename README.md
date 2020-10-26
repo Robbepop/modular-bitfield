@@ -32,74 +32,162 @@ Implements the `#[bitfield]` macros introduced and specified in David Tolnay's [
 
 Thanks go to David Tolnay for designing the specification for the macros implemented in this crate.
 
-## Example
+## Usage
+
+Annotate a Rust struct with the `#[bitfield]` attribute in order to convert it into a bitfield.
+The `B1`, `B2`, ... `B128` prelude types can be used as primitives to declare the number of bits per field.
 
 ```rust
-use modular_bitfield::prelude::*;
-
-// Works with aliases - just for the showcase.
-type Vitamin = B12;
-
-/// Bitfield struct with 32 bits in total.
 #[bitfield]
-#[derive(Debug, PartialEq, Eq)]
-pub struct Example {
-    a: bool,         // Uses 1 bit
-    b: B9,           // Uses 9 bits
-    c: Vitamin,      // Uses 12 bits, works with aliases.
-    #[bits = 3]      // Optional, asserts at compiletime that `DeliveryMode` uses 3 bits.
-    d: DeliveryMode, // Uses 3 bits
-    e: B7,           // Uses 7 bits
+pub struct PackedData {
+    header: B4,
+    body: B9,
+    is_alive: B1,
+    status: B2,
+}
+ ```
+
+This produces a `new` constructor as well as a variety of getters and setters that
+allows to interact with the bitfield in a safe fashion:
+
+### Example: Constructors
+
+```rust
+let data = PackedData::new()
+    .with_header(1)
+    .with_body(2)
+    .with_is_alive(0)
+    .with_status(3);
+assert_eq!(data.header(), 1);
+assert_eq!(data.body(), 2);
+assert_eq!(data.is_alive(), 0);
+assert_eq!(data.status(), 3);
+```
+
+### Example: Primitive Types
+
+Any type that implements the `Specifier` trait can be used as a bitfield field.
+Besides the already mentioned `B1`, .. `B128` also the `bool`, `u8, `u16, `u32,
+`u64` or `u128` primitive types can be used from prelude.
+
+We can use this knowledge to encode our `is_alive` as `bool` type instead of `B1`:
+
+```rust
+#[bitfield]
+pub struct PackedData {
+    header: B4,
+    body: B9,
+    is_alive: bool,
+    status: B2,
 }
 
-/// Enums that derive from `BitfieldSpecifier`
-/// can also be used within bitfield structs
-/// as shown above.
-#[derive(BitfieldSpecifier, Debug, PartialEq)]
-pub enum DeliveryMode {
-    Fixed = 1,
-    Lowest,
-    SMI,
-    RemoteRead,
-    NMI,
-    Init = 0,
-    Startup = 6,
-    External,
+let mut data = PackedData::new()
+    .with_is_alive(true);
+assert!(data.is_alive());
+data.set_is_alive(false);
+assert!(!data.is_alive());
+```
+
+### Example: Enum Specifiers
+
+It is possible to derive the `Specifier` trait for `enum` types very easily to make
+them also usable as a field within a bitfield type:
+
+```rust
+#[derive(BitfieldSpecifier)]
+pub enum Status {
+    Red, Green, Yellow, None,
 }
 
-fn main() {
-    let mut example = Example::new();
-
-    // Assert that everything is inizialized to 0.
-    assert_eq!(example.a(), false);
-    assert_eq!(example.b(), 0);
-    assert_eq!(example.c(), 0);
-    assert_eq!(example.d(), DeliveryMode::Init);
-    assert_eq!(example.e(), 0);
-
-    // Modify the bitfields.
-    example.set_a(true);
-    example.set_b(0b0001_1111_1111_u16);  // Uses `u16`
-    example.set_c(42_u16);                // Uses `u16`
-    example.set_d(DeliveryMode::Startup);
-    example.set_e(1);                     // Uses `u8`
-
-    // Assert the previous modifications.
-    assert_eq!(example.a(), true);
-    assert_eq!(example.b(), 0b0001_1111_1111_u16);
-    assert_eq!(example.c(), 42);
-    assert_eq!(example.d(), DeliveryMode::Startup);
-    assert_eq!(example.e(), 1_u8);
-
-    // Safe API allows for better testing
-    assert_eq!(example.set_e_checked(200), Err(Error::OutOfBounds));
-
-    // Can convert from and to bytes.
-    assert_eq!(example.to_bytes(), &[255, 171, 128, 3]);
-    use std::convert::TryFrom as _;
-    let copy = Example::from_bytes(example.to_bytes());
-    assert_eq!(example, copy);
+#[bitfield]
+pub struct PackedData {
+    header: B4,
+    body: B9,
+    is_alive: bool,
+    status: Status,
 }
+```
+
+### Example: Extra Safety Guard
+
+In order to make sure that our `Status` enum still requires exatly 2 bit we can add
+`#[bits = 2]` to its field:
+
+```rust
+#[bitfield]
+pub struct PackedData {
+    header: B4,
+    body: B9,
+    is_alive: bool,
+    #[bits = 2]
+    status: Status,
+}
+```
+
+Setting and getting our new `status` field is naturally as follows:
+
+```rust
+let mut data = PackedData::new()
+    .with_status(Status::Green);
+assert_eq!(data.status(), Status::Green);
+data.set_status(Status::Red);
+assert_eq!(data.status(), Status::Red);
+```
+
+### Example: Recursive Bitfields
+
+It is possible to use `#[bitfield]` structs as fields of `#[bitfield]` structs.
+This is generally useful if there are some common fields for multiple bitfields
+and is achieved by adding `specifier = true` to the parameters of the `#[bitfield]`
+attribute:
+
+```rust
+#[bitfield(specifier = true)]
+pub struct Header {
+    is_compact: bool,
+    is_secure: bool,
+    pre_status: Status,
+}
+
+#[bitfield]
+pub struct PackedData {
+    header: Header,
+    body: B9,
+    is_alive: bool,
+    status: Status,
+}
+```
+
+### Example: Advanced Enum Specifiers
+
+For our `Status` enum we actually just need 3 status variants: `Green`, `Yellow` and `Red`.
+We introduced the `None` status variants because `Specifier` enums by default are required
+to have a number of variants that is a power of two. We can ship around this by specifying
+`#[bits = 2]` on the top and get rid of our placeholder `None` variant while maintaining
+the invariant of it requiring 2 bits:
+
+```rust
+# use modular_bitfield::prelude::*;
+
+#[derive(BitfieldSpecifier)]
+#[bits = 2]
+pub enum Status {
+    Red, Green, Yellow,
+}
+```
+
+However, having such enums now yields the possibility that a bitfield might contain invalid bit
+patterns for such fields. We can safely access those fields with protected getters. For the sake
+of demonstration we will use the generated `from_bytes` constructor with which we can easily
+construct bitfields that may contain invalid bit patterns:
+
+```rust
+let mut data = PackedData::from_bytes([0b0000_0000, 0b1100_0000]);
+//           The 2 status field bits are invalid -----^^
+//           as Red = 0x00, Green = 0x01 and Yellow = 0x10
+assert_eq!(data.status_or_err(), Err(InvalidBitPattern { invalid_bytes: 0b11 }));
+data.set_status(Status::Green);
+assert_eq!(data.status_or_err(), Ok(Status::Green));
 ```
 
 ## Benchmarks
@@ -111,7 +199,20 @@ We can conclude that the macro-generated code is as fast as hand-written code wo
 - `cargo bench` to run the benchmarks
 - `cargo test --benches` to run the benchmark tests
 
-We tested the following `struct`:
+[Click here to view all benchmark results.](https://gist.github.com/Robbepop/bcff4fe149e0e622b752f0eb07b31880)
+
+### Summary
+
+The `modular_bitfield` crate generates bitfields that are ...
+
+- just as efficient as the handwritten alternatives.
+- equally efficient or more efficient than the alternative [bitfield] crate.
+
+[bitfield]: https://crates.io/crates/bitfield
+
+### Showcase: Generated vs Handwritten
+
+We tested the following `#[bitfield]` `struct`:
 
 ```rust
 #[bitfield]
@@ -119,8 +220,9 @@ pub struct Generated {
     pub a: B9,  // Spans 2 bytes.
     pub b: B6,  // Within 2nd byte.
     pub c: B13, // Spans 3 bytes.
-    pub d: B4,  // Within 4rd byte.
-    pub e: B32, // Spans rest 4 bytes.
+    pub d: B1,  // Within 4rd byte.
+    pub e: B3,  // Within 4rd byte.
+    pub f: B32, // Spans rest 4 bytes.
 }
 ```
 
@@ -129,39 +231,45 @@ pub struct Generated {
 ### Getter Performance
 
 ```
-cmp_get_a/generated     time:   [3.0490 ns 3.0628 ns 3.0791 ns]
-cmp_get_a/handwritten   time:   [3.0640 ns 3.0782 ns 3.0928 ns]
+get_a/generated     time:   [3.0990 ns 3.1119 ns 3.1263 ns]
+get_a/handwritten   time:   [3.1072 ns 3.1189 ns 3.1318 ns]
 
-cmp_get_b/generated     time:   [3.0600 ns 3.0731 ns 3.0871 ns]
-cmp_get_b/handwritten   time:   [3.0457 ns 3.0592 ns 3.0744 ns]
+get_b/generated     time:   [3.0859 ns 3.0993 ns 3.1140 ns]
+get_b/handwritten   time:   [3.1062 ns 3.1154 ns 3.1244 ns]
 
-cmp_get_c/generated     time:   [3.0762 ns 3.1040 ns 3.1368 ns]
-cmp_get_c/handwritten   time:   [3.0638 ns 3.0782 ns 3.0934 ns]
+get_c/generated     time:   [3.0892 ns 3.1140 ns 3.1491 ns]
+get_c/handwritten   time:   [3.1031 ns 3.1144 ns 3.1266 ns]
 
-cmp_get_d/generated     time:   [3.0603 ns 3.0729 ns 3.0869 ns]
-cmp_get_d/handwritten   time:   [3.0833 ns 3.1358 ns 3.2064 ns]
+get_d/generated     time:   [3.0937 ns 3.1055 ns 3.1182 ns]
+get_d/handwritten   time:   [3.1109 ns 3.1258 ns 3.1422 ns]
 
-cmp_get_e/generated     time:   [3.0688 ns 3.0915 ns 3.1203 ns]
-cmp_get_e/handwritten   time:   [3.0634 ns 3.0753 ns 3.0877 ns]
+get_e/generated     time:   [3.1009 ns 3.1139 ns 3.1293 ns]
+get_e/handwritten   time:   [3.1217 ns 3.1366 ns 3.1534 ns]
+
+get_f/generated     time:   [3.1064 ns 3.1164 ns 3.1269 ns]
+get_f/handwritten   time:   [3.1067 ns 3.1221 ns 3.1404 ns]
 ```
 
 ### Setter Performance
 
 ```
-cmp_set_a/generated     time:   [15.643 ns 15.707 ns 15.775 ns]
-cmp_set_a/handwritten   time:   [15.593 ns 15.661 ns 15.736 ns]
+set_a/generated     time:   [15.784 ns 15.855 ns 15.932 ns]
+set_a/handwritten   time:   [15.841 ns 15.907 ns 15.980 ns]
 
-cmp_set_b/generated     time:   [20.334 ns 20.439 ns 20.550 ns]
-cmp_set_b/handwritten   time:   [20.262 ns 20.327 ns 20.397 ns]
+set_b/generated     time:   [20.496 ns 20.567 ns 20.643 ns]
+set_b/handwritten   time:   [20.319 ns 20.384 ns 20.454 ns]
 
-cmp_set_c/generated     time:   [19.634 ns 19.847 ns 20.111 ns]
-cmp_set_c/handwritten   time:   [19.544 ns 19.632 ns 19.729 ns]
+set_c/generated     time:   [19.155 ns 19.362 ns 19.592 ns]
+set_c/handwritten   time:   [19.265 ns 19.383 ns 19.523 ns]
 
-cmp_set_d/generated     time:   [20.316 ns 20.376 ns 20.437 ns]
-cmp_set_d/handwritten   time:   [20.291 ns 20.371 ns 20.457 ns]
+set_d/generated     time:   [12.325 ns 12.376 ns 12.429 ns]
+set_d/handwritten   time:   [12.416 ns 12.472 ns 12.541 ns]
 
-cmp_set_e/generated     time:   [6.1394 ns 6.1640 ns 6.1873 ns]
-cmp_set_e/handwritten   time:   [6.1172 ns 6.1459 ns 6.1767 ns]
+set_e/generated     time:   [20.460 ns 20.528 ns 20.601 ns]
+set_e/handwritten   time:   [20.473 ns 20.534 ns 20.601 ns]
+
+set_f/generated     time:   [6.1466 ns 6.1769 ns 6.2127 ns]
+set_f/handwritten   time:   [6.1467 ns 6.1962 ns 6.2670 ns]
 ```
 
 ## License
