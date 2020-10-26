@@ -11,6 +11,7 @@ use quote::{
     format_ident,
     quote,
     quote_spanned,
+    ToTokens,
 };
 use syn::{
     self,
@@ -186,6 +187,8 @@ impl BitfieldStruct {
         let bytes_check = self.expand_optional_bytes_check(config);
         let repr_impls_and_checks = self.expand_repr_from_impls_and_checks(config);
 
+        let debug_impl = self.generate_debug_impl();
+
         quote_spanned!(span=>
             #struct_definition
             #check_filled
@@ -195,6 +198,7 @@ impl BitfieldStruct {
             #specifier_impl
             #bytes_check
             #repr_impls_and_checks
+            #debug_impl
         )
     }
 
@@ -248,6 +252,56 @@ impl BitfieldStruct {
                 }
             }
         ))
+    }
+
+    /// Get a list of fields, both in the form of a `String` as well as the corresponding faillible
+    /// getter method
+    fn get_field_strings_and_getters(&self) -> (Vec<String>, Vec<syn::Ident>) {
+        self.item_struct
+            .fields
+            .iter()
+            .enumerate()
+            .map(|(i, field)| {
+                let field_name = field
+                    .ident
+                    .as_ref()
+                    .map(syn::Ident::to_string)
+                    .unwrap_or_else(|| format!("get_{}", i));
+                let fallible_getter =
+                    quote::format_ident!("{}_or_err", field_name, span = field.span());
+
+                (field_name, fallible_getter)
+            })
+            .unzip()
+    }
+
+    /// Generates the core::fmt::Debug impl if `#[derive(Debug)]` is included.
+    pub fn generate_debug_impl(&self) -> Option<TokenStream2> {
+        if self.should_derive_debug() {
+            let span = self.item_struct.span();
+            let ident = &self.item_struct.ident;
+            let (field_strings, field_getters) = self.get_field_strings_and_getters();
+
+            Some(quote_spanned!(span=>
+                impl core::fmt::Debug for #ident {
+                    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+                        f.debug_struct(stringify!(#ident))
+                            #(
+                                .field(
+                                    #field_strings,
+                                    self.#field_getters()
+                                        .as_ref()
+                                        .map(|field| field as &dyn core::fmt::Debug)
+                                        .unwrap_or_else(|err| err as &dyn core::fmt::Debug)
+                                )
+                            )*
+                            .finish()
+                    }
+                }
+            ))
+        } else {
+            None
+        }
     }
 
     /// Generates the expression denoting the sum of all field bit specifier sizes.
@@ -356,6 +410,80 @@ impl BitfieldStruct {
                 bytes: [::core::primitive::u8; #next_divisible_by_8 / 8usize],
             }
         )
+    }
+
+    /// Get whether or not `derive(Debug)` is included in the attributes
+    fn should_derive_debug(&self) -> bool {
+        self.item_struct.attrs.iter().any(|attr| {
+            match attr.parse_meta() {
+                Ok(syn::Meta::List(meta_list)) => {
+                    let is_derive = meta_list
+                        .path
+                        .get_ident()
+                        .map(|ident| ident.to_string() == "derive")
+                        .unwrap_or(false);
+
+                    if is_derive {
+                        meta_list.nested.into_iter().any(|nested| {
+                            match nested {
+                                syn::NestedMeta::Meta(syn::Meta::Path(path)) => {
+                                    path.get_ident()
+                                        .map(|ident| ident.to_string() == "Debug")
+                                        .unwrap_or(false)
+                                }
+                                _ => false,
+                            }
+                        })
+                    } else {
+                        false
+                    }
+                }
+                _ => false,
+            }
+        })
+    }
+
+    /// Get the attributes with `Debug` filtered out of any present derives.
+    fn get_attrs_no_debug<'a>(&'a self) -> impl Iterator<Item = TokenStream2> + 'a {
+        self.item_struct.attrs.iter().map(|attr| {
+            match attr.parse_meta() {
+                Ok(syn::Meta::List(mut meta_list)) => {
+                    let is_derive = meta_list
+                        .path
+                        .get_ident()
+                        .map(|ident| ident.to_string() == "derive")
+                        .unwrap_or(false);
+
+                    if is_derive {
+                        meta_list.nested = meta_list
+                            .nested
+                            .into_iter()
+                            .filter(|nested| {
+                                match nested {
+                                    syn::NestedMeta::Meta(syn::Meta::Path(path)) => {
+                                        path.get_ident()
+                                            .map(|ident| ident.to_string() != "Debug")
+                                            .unwrap_or(true)
+                                    }
+                                    _ => true,
+                                }
+                            })
+                            .collect();
+
+                        let span = meta_list.span();
+                        quote_spanned! {span=>
+                            #[ #meta_list  ]
+                        }
+                    } else {
+                        attr.to_token_stream()
+                    }
+                }
+                _ => {
+                    eprintln!("{}", attr.to_token_stream().to_string());
+                    attr.to_token_stream()
+                }
+            }
+        })
     }
 
     /// Generates the constructor for the bitfield that initializes all bytes to zero.
