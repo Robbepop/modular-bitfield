@@ -1,4 +1,4 @@
-# 0.9.0 (WIP)
+# 0.9.0 (2020-10-26)
 
 - Add `#[bitfield(specifier = bool)]` parameter with which it now is possible to have bitfield structs automatically also
   implement the `modular_bitfield::Specifier` trait which makes it possible to have bitfields as fields of bitfields.

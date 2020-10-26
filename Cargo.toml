@@ -1,6 +1,6 @@
 [package]
 name = "modular-bitfield"
-version = "0.8.0"
+version = "0.9.0"
 edition = "2018"
 authors = ["Robin Freyler <robinfreyler@web.de>"]
 license = "MIT/Apache-2.0"
@@ -43,7 +43,7 @@ harness = false
 # path = "main.rs"
 
 [dependencies]
-modular-bitfield-impl = { path = "impl", version = "0.8" }
+modular-bitfield-impl = { path = "impl", version = "0.9" }
 
 [profile.bench]
 codegen-units = 1
