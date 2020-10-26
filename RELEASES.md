@@ -5,6 +5,7 @@
 - No longer generates an `unsafe fn from_bytes_unchecked`. Now generates a safe `fn from_bytes` that is basically identical.
   The difference is that we no longer consider bitfields containing invalid bit patterns as invalid since generated getters
   will protect their access anyways.
+- Update crate documentation and README.
 
 # 0.8.0 (2020-10-25)
 
