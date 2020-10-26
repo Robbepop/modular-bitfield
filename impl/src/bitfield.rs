@@ -7,6 +7,7 @@ use proc_macro2::TokenStream as TokenStream2;
 use quote::{
     format_ident,
     quote_spanned,
+    ToTokens,
 };
 use syn::{
     self,
@@ -121,6 +122,8 @@ impl BitfieldStruct {
         let byte_conversion_impls = self.expand_byte_conversion_impls();
         let getters_and_setters = self.expand_getters_and_setters();
 
+        let debug_impl = self.generate_debug_impl();
+
         quote_spanned!(span=>
             #struct_definition
             #check_multiple_of_8
@@ -128,6 +131,7 @@ impl BitfieldStruct {
             #byte_conversion_impls
             #getters_and_setters
             #specifier_impl
+            #debug_impl
         )
     }
 
@@ -178,6 +182,56 @@ impl BitfieldStruct {
                 }
             }
         ))
+    }
+
+    /// Get a list of fields, both in the form of a `String` as well as the corresponding faillible
+    /// getter method
+    fn get_field_strings_and_getters(&self) -> (Vec<String>, Vec<syn::Ident>) {
+        self.item_struct
+            .fields
+            .iter()
+            .enumerate()
+            .map(|(i, field)| {
+                let field_name = field
+                    .ident
+                    .as_ref()
+                    .map(syn::Ident::to_string)
+                    .unwrap_or_else(|| format!("get_{}", i));
+                let fallible_getter =
+                    quote::format_ident!("{}_or_err", field_name, span = field.span());
+
+                (field_name, fallible_getter)
+            })
+            .unzip()
+    }
+
+    /// Generates the core::fmt::Debug impl if `#[derive(Debug)]` is included.
+    pub fn generate_debug_impl(&self) -> Option<TokenStream2> {
+        if self.should_derive_debug() {
+            let span = self.item_struct.span();
+            let ident = &self.item_struct.ident;
+            let (field_strings, field_getters) = self.get_field_strings_and_getters();
+
+            Some(quote_spanned!(span=>
+                impl core::fmt::Debug for #ident {
+                    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+                        f.debug_struct(stringify!(#ident))
+                            #(
+                                .field(
+                                    #field_strings,
+                                    self.#field_getters()
+                                        .as_ref()
+                                        .map(|field| field as &dyn core::fmt::Debug)
+                                        .unwrap_or_else(|err| err as &dyn core::fmt::Debug)
+                                )
+                            )*
+                            .finish()
+                    }
+                }
+            ))
+        } else {
+            None
+        }
     }
 
     /// Generates the expression denoting the sum of all field bit specifier sizes.
@@ -271,7 +325,7 @@ impl BitfieldStruct {
     /// amount of bytes to compactly store the information of all its bit fields.
     fn generate_struct(&self) -> TokenStream2 {
         let span = self.item_struct.span();
-        let attrs = &self.item_struct.attrs;
+        let attrs = self.get_attrs_no_debug();
         let vis = &self.item_struct.vis;
         let ident = &self.item_struct.ident;
         let size = self.generate_bitfield_size();
@@ -279,12 +333,86 @@ impl BitfieldStruct {
         quote_spanned!(span=>
             #( #attrs )*
             #[repr(transparent)]
-            #[allow(clippy::identity_op)]
+            #[allow(clippy::identity_op, unused_attributes)]
             #vis struct #ident
             {
                 bytes: [::core::primitive::u8; #next_divisible_by_8 / 8usize],
             }
         )
+    }
+
+    /// Get whether or not `derive(Debug)` is included in the attributes
+    fn should_derive_debug(&self) -> bool {
+        self.item_struct.attrs.iter().any(|attr| {
+            match attr.parse_meta() {
+                Ok(syn::Meta::List(meta_list)) => {
+                    let is_derive = meta_list
+                        .path
+                        .get_ident()
+                        .map(|ident| ident.to_string() == "derive")
+                        .unwrap_or(false);
+
+                    if is_derive {
+                        meta_list.nested.into_iter().any(|nested| {
+                            match nested {
+                                syn::NestedMeta::Meta(syn::Meta::Path(path)) => {
+                                    path.get_ident()
+                                        .map(|ident| ident.to_string() == "Debug")
+                                        .unwrap_or(false)
+                                }
+                                _ => false,
+                            }
+                        })
+                    } else {
+                        false
+                    }
+                }
+                _ => false,
+            }
+        })
+    }
+
+    /// Get the attributes with `Debug` filtered out of any present derives.
+    fn get_attrs_no_debug<'a>(&'a self) -> impl Iterator<Item = TokenStream2> + 'a {
+        self.item_struct.attrs.iter().map(|attr| {
+            match attr.parse_meta() {
+                Ok(syn::Meta::List(mut meta_list)) => {
+                    let is_derive = meta_list
+                        .path
+                        .get_ident()
+                        .map(|ident| ident.to_string() == "derive")
+                        .unwrap_or(false);
+
+                    if is_derive {
+                        meta_list.nested = meta_list
+                            .nested
+                            .into_iter()
+                            .filter(|nested| {
+                                match nested {
+                                    syn::NestedMeta::Meta(syn::Meta::Path(path)) => {
+                                        path.get_ident()
+                                            .map(|ident| ident.to_string() != "Debug")
+                                            .unwrap_or(true)
+                                    }
+                                    _ => true,
+                                }
+                            })
+                            .collect();
+
+                        let span = meta_list.span();
+                        quote_spanned! {span=>
+                            #[ #meta_list  ]
+                        }
+                    } else {
+                        attr.to_token_stream()
+                    }
+                }
+                _ => {
+                    eprintln!("{}", attr.to_token_stream().to_string());
+                    attr.to_token_stream()
+                }
+            }
+        })
     }
 
     /// Generates the constructor for the bitfield that initializes all bytes to zero.
