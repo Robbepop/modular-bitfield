@@ -242,6 +242,37 @@
 //! assert_eq!(data.status_or_err(), Ok(Status::Green));
 //! ```
 //!
+//! ## Generated Implementations
+//!
+//! For the example `#[bitfield]` struct the following implementations are going to be generated:
+//!
+//! ```
+//! # use modular_bitfield::prelude::*;
+//! #
+//! #[bitfield]
+//! pub struct Example {
+//!     a: bool,
+//!     b: B7,
+//! }
+//! ```
+//!
+//! | Signature | Description |
+//! |:--|:--|
+//! | `fn new() -> Self` | Creates a new instance of the bitfield with all bits initialized to 0. |
+//! | `fn from_bytes([u8; 1]) -> Self` | Creates a new instance of the bitfield from the given raw bytes. |
+//! | `fn as_bytes(&self) -> &[u8; 1]` | Returns the underlying bytes of the bitfield. |
+//!
+//! And below the generated signatures for field `a`:
+//!
+//! | Signature | Description |
+//! |:--|:--|
+//! | `fn a() -> bool` | Returns the value of `a` or panics if invalid. |
+//! | `fn a_or_err() -> Result<bool, InvalidBitPattern<u8>>` | Returns the value of `a` of an error providing information about the invalid bits. |
+//! | `fn set_a(&mut self, new_value: bool)` | Sets `a` to the new value or panics if `new_value` contains invalid bits. |
+//! | `fn set_a_checked(&mut self, new_value: bool) -> Result<(), OutOfBounds>` | Sets `a` to the new value of returns an out of bounds error. |
+//! | `fn with_a(self, new_value: bool) -> Self` | Similar to `set_a` but useful for method chaining. |
+//! | `fn with_a_checked(self, new_value: bool) -> Result<Self, OutOfBounds>` | Similar to `set_a_checked` but useful for method chaining. |
+//!
 //! ## Generated Structure
 //!
 //! From David Tolnay's procedural macro workshop:
