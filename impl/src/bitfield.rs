@@ -449,6 +449,7 @@ impl BitfieldStruct {
 
             #[doc = #checked_getter_docs]
             #[inline]
+            #[allow(dead_code)]
             #vis fn #get_checked_ident(
                 &self,
             ) -> ::core::result::Result<
