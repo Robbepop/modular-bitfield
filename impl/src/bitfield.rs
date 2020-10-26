@@ -349,7 +349,7 @@ impl BitfieldStruct {
                     let is_derive = meta_list
                         .path
                         .get_ident()
-                        .map(|ident| ident.to_string() == "derive")
+                        .map(|ident| *ident == "derive")
                         .unwrap_or(false);
 
                     if is_derive {
@@ -357,7 +357,7 @@ impl BitfieldStruct {
                             match nested {
                                 syn::NestedMeta::Meta(syn::Meta::Path(path)) => {
                                     path.get_ident()
-                                        .map(|ident| ident.to_string() == "Debug")
+                                        .map(|ident| *ident == "Debug")
                                         .unwrap_or(false)
                                 }
                                 _ => false,
@@ -380,7 +380,7 @@ impl BitfieldStruct {
                     let is_derive = meta_list
                         .path
                         .get_ident()
-                        .map(|ident| ident.to_string() == "derive")
+                        .map(|ident| *ident == "derive")
                         .unwrap_or(false);
 
                     if is_derive {
@@ -391,7 +391,7 @@ impl BitfieldStruct {
                                 match nested {
                                     syn::NestedMeta::Meta(syn::Meta::Path(path)) => {
                                         path.get_ident()
-                                            .map(|ident| ident.to_string() != "Debug")
+                                            .map(|ident| *ident != "Debug")
                                             .unwrap_or(true)
                                     }
                                     _ => true,
