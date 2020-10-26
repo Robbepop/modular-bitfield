@@ -50,6 +50,7 @@ macro_rules! format_err {
 }
 
 pub trait CombineError {
+    /// Combines `self` with the given `another` error and returns back combined `self`.
     fn into_combine(self, another: syn::Error) -> Self;
 }
 
