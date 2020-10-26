@@ -111,7 +111,20 @@ We can conclude that the macro-generated code is as fast as hand-written code wo
 - `cargo bench` to run the benchmarks
 - `cargo test --benches` to run the benchmark tests
 
-We tested the following `struct`:
+[Click here to view all benchmark results.](https://gist.github.com/Robbepop/bcff4fe149e0e622b752f0eb07b31880)
+
+### Summary
+
+The `modular_bitfield` crate generates bitfields that are ...
+
+- just as efficient as the handwritten alternatives.
+- equally efficient or more efficient than the alternative [bitfield] crate.
+
+[bitfield]: https://crates.io/crates/bitfield
+
+### Showcase: Generated vs Handwritten
+
+We tested the following `#[bitfield]` `struct`:
 
 ```rust
 #[bitfield]
@@ -119,8 +132,9 @@ pub struct Generated {
     pub a: B9,  // Spans 2 bytes.
     pub b: B6,  // Within 2nd byte.
     pub c: B13, // Spans 3 bytes.
-    pub d: B4,  // Within 4rd byte.
-    pub e: B32, // Spans rest 4 bytes.
+    pub d: B1,  // Within 4rd byte.
+    pub e: B3,  // Within 4rd byte.
+    pub f: B32, // Spans rest 4 bytes.
 }
 ```
 
@@ -129,39 +143,45 @@ pub struct Generated {
 ### Getter Performance
 
 ```
-cmp_get_a/generated     time:   [3.0490 ns 3.0628 ns 3.0791 ns]
-cmp_get_a/handwritten   time:   [3.0640 ns 3.0782 ns 3.0928 ns]
+get_a/generated     time:   [3.0990 ns 3.1119 ns 3.1263 ns]
+get_a/handwritten   time:   [3.1072 ns 3.1189 ns 3.1318 ns]
 
-cmp_get_b/generated     time:   [3.0600 ns 3.0731 ns 3.0871 ns]
-cmp_get_b/handwritten   time:   [3.0457 ns 3.0592 ns 3.0744 ns]
+get_b/generated     time:   [3.0859 ns 3.0993 ns 3.1140 ns]
+get_b/handwritten   time:   [3.1062 ns 3.1154 ns 3.1244 ns]
 
-cmp_get_c/generated     time:   [3.0762 ns 3.1040 ns 3.1368 ns]
-cmp_get_c/handwritten   time:   [3.0638 ns 3.0782 ns 3.0934 ns]
+get_c/generated     time:   [3.0892 ns 3.1140 ns 3.1491 ns]
+get_c/handwritten   time:   [3.1031 ns 3.1144 ns 3.1266 ns]
 
-cmp_get_d/generated     time:   [3.0603 ns 3.0729 ns 3.0869 ns]
-cmp_get_d/handwritten   time:   [3.0833 ns 3.1358 ns 3.2064 ns]
+get_d/generated     time:   [3.0937 ns 3.1055 ns 3.1182 ns]
+get_d/handwritten   time:   [3.1109 ns 3.1258 ns 3.1422 ns]
 
-cmp_get_e/generated     time:   [3.0688 ns 3.0915 ns 3.1203 ns]
-cmp_get_e/handwritten   time:   [3.0634 ns 3.0753 ns 3.0877 ns]
+get_e/generated     time:   [3.1009 ns 3.1139 ns 3.1293 ns]
+get_e/handwritten   time:   [3.1217 ns 3.1366 ns 3.1534 ns]
+
+get_f/generated     time:   [3.1064 ns 3.1164 ns 3.1269 ns]
+get_f/handwritten   time:   [3.1067 ns 3.1221 ns 3.1404 ns]
 ```
 
 ### Setter Performance
 
 ```
-cmp_set_a/generated     time:   [15.643 ns 15.707 ns 15.775 ns]
-cmp_set_a/handwritten   time:   [15.593 ns 15.661 ns 15.736 ns]
+set_a/generated     time:   [15.784 ns 15.855 ns 15.932 ns]
+set_a/handwritten   time:   [15.841 ns 15.907 ns 15.980 ns]
 
-cmp_set_b/generated     time:   [20.334 ns 20.439 ns 20.550 ns]
-cmp_set_b/handwritten   time:   [20.262 ns 20.327 ns 20.397 ns]
+set_b/generated     time:   [20.496 ns 20.567 ns 20.643 ns]
+set_b/handwritten   time:   [20.319 ns 20.384 ns 20.454 ns]
 
-cmp_set_c/generated     time:   [19.634 ns 19.847 ns 20.111 ns]
-cmp_set_c/handwritten   time:   [19.544 ns 19.632 ns 19.729 ns]
+set_c/generated     time:   [19.155 ns 19.362 ns 19.592 ns]
+set_c/handwritten   time:   [19.265 ns 19.383 ns 19.523 ns]
 
-cmp_set_d/generated     time:   [20.316 ns 20.376 ns 20.437 ns]
-cmp_set_d/handwritten   time:   [20.291 ns 20.371 ns 20.457 ns]
+set_d/generated     time:   [12.325 ns 12.376 ns 12.429 ns]
+set_d/handwritten   time:   [12.416 ns 12.472 ns 12.541 ns]
 
-cmp_set_e/generated     time:   [6.1394 ns 6.1640 ns 6.1873 ns]
-cmp_set_e/handwritten   time:   [6.1172 ns 6.1459 ns 6.1767 ns]
+set_e/generated     time:   [20.460 ns 20.528 ns 20.601 ns]
+set_e/handwritten   time:   [20.473 ns 20.534 ns 20.601 ns]
+
+set_f/generated     time:   [6.1466 ns 6.1769 ns 6.2127 ns]
+set_f/handwritten   time:   [6.1467 ns 6.1962 ns 6.2670 ns]
 ```
 
 ## License
