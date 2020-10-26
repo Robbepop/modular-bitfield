@@ -1,13 +1,19 @@
-use modular_bitfield::prelude::*;
-
-#[bitfield]
-pub struct Generated {
-    pub a: B9,
-    pub b: B6,
-    pub c: B13,
-    pub d: B1,
-    pub e: B3,
-    pub f: B32,
-}
+// Useful for experimentation while developing the crate.
+//
+// Use
+//
+// ```
+// cargo expand --bin workshop
+// ```
+//
+// To view the expanded code.
+//
+// Or
+//
+// ```
+// cargo run --bin workshop
+// ```
+//
+// To run and test the assertions in its main function.
 
 fn main() {}
