@@ -5,15 +5,17 @@ use syn::spanned::Spanned;
 
 pub struct Config {
     pub specifier: bool,
+    pub bytes: Option<usize>,
 }
 
 #[derive(Default)]
 pub struct ConfigBuilder {
     specifier: Option<(bool, Span)>,
+    bytes: Option<(usize, Span)>,
 }
 
 impl ConfigBuilder {
-    /// Sets the specifier to the given value.
+    /// Sets the specifier #[bitfield] parameter to the given value.
     ///
     /// # Errors
     ///
@@ -33,10 +35,31 @@ impl ConfigBuilder {
         Ok(())
     }
 
+    /// Sets the bytes #[bitfield] parameter to the given value.
+    ///
+    /// # Errors
+    ///
+    /// If the specifier has already been set.
+    pub fn bytes(&mut self, value: usize, span: Span) -> Result<(), syn::Error> {
+        match self.bytes {
+            Some((bytes, previous)) => {
+                return Err(format_err!(
+                    span,
+                    "encountered duplicate bytes parameter: duplicate set to {:?}",
+                    bytes
+                )
+                .into_combine(format_err!(previous, "previous bytes parameter here")))
+            }
+            None => self.bytes = Some((value, span)),
+        }
+        Ok(())
+    }
+
     /// Converts the config builder into a config.
     pub fn into_config(self) -> Config {
         Config {
             specifier: self.specifier.map(|(value, _)| value).unwrap_or(false),
+            bytes: self.bytes.map(|(value, _)| value),
         }
     }
 }
@@ -75,16 +98,32 @@ impl TryFrom<AttributeArgs> for Config {
                         syn::Meta::NameValue(name_value) => {
                             if name_value.path.is_ident("specifier") {
                                 match name_value.lit {
-                                syn::Lit::Bool(lit_bool) => {
-                                    builder.specifier(lit_bool.value, lit_bool.span())?;
+                                    syn::Lit::Bool(lit_bool) => {
+                                        builder.specifier(lit_bool.value, lit_bool.span())?;
+                                    }
+                                    invalid => {
+                                        return Err(format_err!(
+                                            invalid,
+                                            "encountered invalid value argument for #[bitfield] specifier parameter",
+                                        ))
+                                    }
                                 }
-                                invalid => {
-                                    return Err(format_err!(
-                                        invalid,
-                                        "encountered invalid value argument for #[bitfield] specifier parameter",
-                                    ))
+                            } else if name_value.path.is_ident("bytes") {
+                                match name_value.lit {
+                                    syn::Lit::Int(lit_int) => {
+                                        let span = lit_int.span();
+                                        let value = lit_int.base10_parse::<usize>().map_err(|err| {
+                                            format_err!(span, "encountered malformatted integer value for bytes parameter: {}", err)
+                                        })?;
+                                        builder.bytes(value, span)?;
+                                    }
+                                    invalid => {
+                                        return Err(format_err!(
+                                            invalid,
+                                            "encountered invalid value argument for #[bitfield] bytes parameter",
+                                        ))
+                                    }
                                 }
-                            }
                             }
                         }
                         unsupported => return Err(unsupported_argument(unsupported)),
