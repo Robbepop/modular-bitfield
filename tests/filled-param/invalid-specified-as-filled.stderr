@@ -1,0 +1,10 @@
+error[E0277]: the trait bound `modular_bitfield::private::checks::SevenMod8: modular_bitfield::private::checks::TotalSizeIsMultipleOfEightBits` is not satisfied
+  --> $DIR/invalid-specified-as-filled.rs:5:1
+   |
+5  | pub struct UnfilledBitfield {
+   | ^^^ the trait `modular_bitfield::private::checks::TotalSizeIsMultipleOfEightBits` is not implemented for `modular_bitfield::private::checks::SevenMod8`
+   |
+  ::: $WORKSPACE/src/private/checks.rs
+   |
+   |     <Self::Size as RenameSizeType>::CheckType: TotalSizeIsMultipleOfEightBits,
+   |                                                ------------------------------ required by this bound in `modular_bitfield::private::checks::CheckTotalSizeMultipleOf8`
