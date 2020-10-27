@@ -154,6 +154,28 @@
 //! assert_eq!(data.status(), Status::Red);
 //! ```
 //!
+//! #### Example: Unfilled Bitfields
+//!
+//! Sometimes it might be useful to not be required to construct a bitfield that defines
+//! all bits and therefore is required to have a bit width divisible by 8. In this case
+//! you can use the `filled: bool` parameter of the `#[bitfield]` macro in order to toggle
+//! this for your respective bitfield:
+//!
+//! ```
+//! # use modular_bitfield::prelude::*;
+//! #
+//! #[bitfield(filled = false)]
+//! pub struct SomeBitsUndefined {
+//!     is_compact: bool,
+//!     is_secure: bool,
+//!     pre_status: B3,
+//! }
+//! ```
+//!
+//! In the above example `SomeBitsUndefined` only defines the first 5 bits and leaves the rest
+//! 3 bits of its entire 8 bits undefined. The consequences are that its generated `from_bytes`
+//! method is fallible since it must guard against those undefined bits.
+//!
 //! #### Example: Recursive Bitfields
 //!
 //! It is possible to use `#[bitfield]` structs as fields of `#[bitfield]` structs.
@@ -169,7 +191,7 @@
 //! #     Red, Green, Yellow, None,
 //! # }
 //! #
-//! #[bitfield(specifier = true)]
+//! #[bitfield(specifier = true, filled = false)]
 //! pub struct Header {
 //!     is_compact: bool,
 //!     is_secure: bool,
@@ -219,7 +241,7 @@
 //! #     Red, Green, Yellow,
 //! # }
 //! #
-//! # #[bitfield(specifier = true)]
+//! # #[bitfield(specifier = true, filled = false)]
 //! # pub struct Header {
 //! #     is_compact: bool,
 //! #     is_secure: bool,
