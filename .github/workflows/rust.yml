@@ -20,6 +20,7 @@ jobs:
       - uses: actions-rs/cargo@v1
         with:
           command: check
+          args: --workspace --verbose
 
   test:
     name: Test
@@ -34,6 +35,7 @@ jobs:
       - uses: actions-rs/cargo@v1
         with:
           command: test
+          args: --workspace --verbose
 
   fmt:
     name: Formatting
@@ -49,7 +51,7 @@ jobs:
       - uses: actions-rs/cargo@v1
         with:
           command: fmt
-          args: --all -- --check
+          args: --all -- --check --verbose
 
   clippy:
     name: Clippy
@@ -65,4 +67,4 @@ jobs:
       - uses: actions-rs/cargo@v1
         with:
           command: clippy
-          args: -- -D warnings
+          args: --workspace -- -D warnings

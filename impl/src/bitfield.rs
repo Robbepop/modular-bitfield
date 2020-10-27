@@ -120,6 +120,7 @@ impl BitfieldStruct {
 
         let byte_conversion_impls = self.expand_byte_conversion_impls();
         let getters_and_setters = self.expand_getters_and_setters();
+        let bytes_check = self.expand_optional_bytes_check(config);
 
         quote_spanned!(span=>
             #struct_definition
@@ -128,6 +129,7 @@ impl BitfieldStruct {
             #byte_conversion_impls
             #getters_and_setters
             #specifier_impl
+            #bytes_check
         )
     }
 
@@ -135,7 +137,7 @@ impl BitfieldStruct {
     ///
     /// Otherwise returns `None`.
     pub fn generate_specifier_impl(&self, config: &Config) -> Option<TokenStream2> {
-        if !config.specifier {
+        if !config.specifier_enabled() {
             return None
         }
         let span = self.item_struct.span();
@@ -241,7 +243,7 @@ impl BitfieldStruct {
     ///
     /// Won't generate a check if `#[bitfield(specifier = true)]` is set.
     fn generate_check_multiple_of_8(&self, config: &Config) -> Option<TokenStream2> {
-        if config.specifier {
+        if config.specifier_enabled() {
             return None
         }
         let span = self.item_struct.span();
@@ -305,6 +307,24 @@ impl BitfieldStruct {
                 }
             }
         )
+    }
+
+    /// Generates the compile-time assertion if the optional `byte` parameter has been set.
+    fn expand_optional_bytes_check(&self, config: &Config) -> Option<TokenStream2> {
+        let ident = &self.item_struct.ident;
+        config.bytes.as_ref().map(|config| {
+            let bytes = config.value;
+            quote_spanned!(config.span=>
+                const _: () = {
+                    struct ExpectedBytes { __bf_unused: [::core::primitive::u8; #bytes] };
+
+                    ::modular_bitfield::private::static_assertions::assert_eq_size!(
+                        ExpectedBytes,
+                        #ident
+                    );
+                };
+            )
+        })
     }
 
     /// Generates routines to allow conversion from and to bytes for the `#[bitfield]` struct.

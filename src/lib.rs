@@ -329,6 +329,8 @@ pub use modular_bitfield_impl::{
 #[doc(hidden)]
 pub mod private;
 
+extern crate static_assertions;
+
 pub mod error;
 use self::error::{
     InvalidBitPattern,
