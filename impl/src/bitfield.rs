@@ -113,7 +113,7 @@ impl BitfieldStruct {
     /// Expands the given `#[bitfield]` struct into an actual bitfield definition.
     pub fn expand(&self, config: &Config) -> TokenStream2 {
         let span = self.item_struct.span();
-        let check_multiple_of_8 = self.generate_check_multiple_of_8(config);
+        let check_filled = self.generate_check_for_filled(config);
         let struct_definition = self.generate_struct();
         let constructor_definition = self.generate_constructor();
         let specifier_impl = self.generate_specifier_impl(config);
@@ -124,7 +124,7 @@ impl BitfieldStruct {
 
         quote_spanned!(span=>
             #struct_definition
-            #check_multiple_of_8
+            #check_filled
             #constructor_definition
             #byte_conversion_impls
             #getters_and_setters
@@ -242,24 +242,26 @@ impl BitfieldStruct {
         )
     }
 
-    /// Generates the `CheckTotalSizeMultipleOf8` trait implementation to check for correct bitfield sizes.
+    /// Generate check for either of the following two cases:
     ///
-    /// Won't generate a check if `#[bitfield(filled = false)]` is set.
-    fn generate_check_multiple_of_8(&self, config: &Config) -> Option<TokenStream2> {
-        if !config.filled_enabled() {
-            return None
-        }
+    /// - `filled = true`: Check if the total number of required bits is a multiple of 8.
+    /// - `filled = false`: Check if the total number of required bits is NOT a multiple of 8.
+    fn generate_check_for_filled(&self, config: &Config) -> TokenStream2 {
         let span = self.item_struct.span();
         let ident = &self.item_struct.ident;
         let size = self.generate_bitfield_size();
-        Some(quote_spanned!(span=>
+        let check_ident = match config.filled_enabled() {
+            true => quote_spanned!(span => CheckTotalSizeMultipleOf8),
+            false => quote_spanned!(span => CheckTotalSizeIsNotMultipleOf8),
+        };
+        quote_spanned!(span=>
             #[allow(clippy::identity_op)]
             const _: () = {
-                impl ::modular_bitfield::private::checks::CheckTotalSizeMultipleOf8 for #ident {
+                impl ::modular_bitfield::private::checks::#check_ident for #ident {
                     type Size = ::modular_bitfield::private::checks::TotalSize<[(); #size % 8usize]>;
                 }
             };
-        ))
+        )
     }
 
     /// Returns a token stream representing the next greater value divisible by 8.

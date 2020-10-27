@@ -16,6 +16,10 @@ impl_sealed_for!(bool, u8, u16, u32, u64, u128);
 /// is a multiple of 8 to form complete bytes.
 pub trait TotalSizeIsMultipleOfEightBits: private::Sealed {}
 
+/// Helper trait used to check whether a bitfield struct does not
+/// fill its entire value space, e.g. has undefined bits.
+pub trait TotalSizeIsNotMultipleOfEightBits: private::Sealed {}
+
 /// Helper trait to improve compile error messages.
 pub trait RenameSizeType: private::Sealed {
     type CheckType;
@@ -50,11 +54,28 @@ impl_total_size_for!(
 
 impl TotalSizeIsMultipleOfEightBits for ZeroMod8 {}
 
+impl TotalSizeIsNotMultipleOfEightBits for OneMod8 {}
+impl TotalSizeIsNotMultipleOfEightBits for TwoMod8 {}
+impl TotalSizeIsNotMultipleOfEightBits for ThreeMod8 {}
+impl TotalSizeIsNotMultipleOfEightBits for FourMod8 {}
+impl TotalSizeIsNotMultipleOfEightBits for FiveMod8 {}
+impl TotalSizeIsNotMultipleOfEightBits for SixMod8 {}
+impl TotalSizeIsNotMultipleOfEightBits for SevenMod8 {}
+
 /// Public facing trait implemented by bitfield structs in order to let the compiler
 /// check if their sizes match a multiple of 8.
 pub trait CheckTotalSizeMultipleOf8
 where
     <Self::Size as RenameSizeType>::CheckType: TotalSizeIsMultipleOfEightBits,
+{
+    type Size: RenameSizeType;
+}
+
+/// Public facing trait implemented by bitfield structs in order to let the compiler
+/// check if their sizes does not match a multiple of 8.
+pub trait CheckTotalSizeIsNotMultipleOf8
+where
+    <Self::Size as RenameSizeType>::CheckType: TotalSizeIsNotMultipleOfEightBits
 {
     type Size: RenameSizeType;
 }
