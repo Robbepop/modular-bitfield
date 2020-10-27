@@ -78,6 +78,7 @@ impl Config {
     }
 }
 
+/// Raises an unsupported argument compile time error.
 fn unsupported_argument<T>(arg: T) -> syn::Error
 where
     T: Spanned,
@@ -85,6 +86,19 @@ where
     format_err!(arg, "encountered unsupported #[bitfield] attribute")
 }
 
+/// The parameters given to the `#[bitfield]` proc. macro.
+///
+/// # Example
+///
+/// ```rust
+/// # use modular_bitfield::prelude::*;
+/// #
+/// #[bitfield(specifier = true, bytes = 4, filled = true)]
+/// pub struct SignedInteger {
+///     sign: bool,
+///     value: B31,
+/// }
+/// ```
 pub struct AttributeArgs {
     args: syn::AttributeArgs,
 }
