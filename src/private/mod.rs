@@ -1,3 +1,4 @@
+mod array_bytes_conv;
 pub mod checks;
 mod impls;
 mod proc;
@@ -8,6 +9,7 @@ pub mod static_assertions {
     pub use static_assertions::*;
 }
 pub use self::{
+    array_bytes_conv::ArrayBytesConversion,
     proc::{
         read_specifier,
         write_specifier,

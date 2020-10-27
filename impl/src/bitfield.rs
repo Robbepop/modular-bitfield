@@ -113,18 +113,18 @@ impl BitfieldStruct {
     /// Expands the given `#[bitfield]` struct into an actual bitfield definition.
     pub fn expand(&self, config: &Config) -> TokenStream2 {
         let span = self.item_struct.span();
-        let check_multiple_of_8 = self.generate_check_multiple_of_8(config);
+        let check_filled = self.generate_check_for_filled(config);
         let struct_definition = self.generate_struct();
         let constructor_definition = self.generate_constructor();
         let specifier_impl = self.generate_specifier_impl(config);
 
-        let byte_conversion_impls = self.expand_byte_conversion_impls();
+        let byte_conversion_impls = self.expand_byte_conversion_impls(config);
         let getters_and_setters = self.expand_getters_and_setters();
         let bytes_check = self.expand_optional_bytes_check(config);
 
         quote_spanned!(span=>
             #struct_definition
-            #check_multiple_of_8
+            #check_filled
             #constructor_definition
             #byte_conversion_impls
             #getters_and_setters
@@ -156,14 +156,16 @@ impl BitfieldStruct {
             impl ::modular_bitfield::Specifier for #ident {
                 const BITS: usize = #bits;
 
-                type Bytes = <[(); if #next_divisible_by_8 > 128 { 128 } else #next_divisible_by_8] as ::modular_bitfield::private::SpecifierBytes>::Bytes;
+                type Bytes = <[(); if #bits > 128 { 128 } else #bits] as ::modular_bitfield::private::SpecifierBytes>::Bytes;
                 type InOut = Self;
 
                 #[inline]
                 fn into_bytes(
                     value: Self::InOut,
                 ) -> ::core::result::Result<Self::Bytes, ::modular_bitfield::error::OutOfBounds> {
-                    ::core::result::Result::Ok(<Self::Bytes>::from_le_bytes(value.bytes))
+                    ::core::result::Result::Ok(
+                        <[(); #next_divisible_by_8] as ::modular_bitfield::private::ArrayBytesConversion>::array_into_bytes(value.bytes)
+                    )
                 }
 
                 #[inline]
@@ -174,8 +176,9 @@ impl BitfieldStruct {
                     if bytes > ((0x01 << Self::BITS) - 1) {
                         return ::core::result::Result::Err(::modular_bitfield::error::InvalidBitPattern::new(bytes))
                     }
+                    let __bf_bytes = bytes.to_le_bytes();
                     ::core::result::Result::Ok(Self {
-                        bytes: bytes.to_le_bytes(),
+                        bytes: <[(); #next_divisible_by_8] as ::modular_bitfield::private::ArrayBytesConversion>::bytes_into_array(bytes)
                     })
                 }
             }
@@ -239,24 +242,26 @@ impl BitfieldStruct {
         )
     }
 
-    /// Generates the `CheckTotalSizeMultipleOf8` trait implementation to check for correct bitfield sizes.
+    /// Generate check for either of the following two cases:
     ///
-    /// Won't generate a check if `#[bitfield(specifier = true)]` is set.
-    fn generate_check_multiple_of_8(&self, config: &Config) -> Option<TokenStream2> {
-        if config.specifier_enabled() {
-            return None
-        }
+    /// - `filled = true`: Check if the total number of required bits is a multiple of 8.
+    /// - `filled = false`: Check if the total number of required bits is NOT a multiple of 8.
+    fn generate_check_for_filled(&self, config: &Config) -> TokenStream2 {
         let span = self.item_struct.span();
         let ident = &self.item_struct.ident;
         let size = self.generate_bitfield_size();
-        Some(quote_spanned!(span=>
+        let check_ident = match config.filled_enabled() {
+            true => quote_spanned!(span => CheckTotalSizeMultipleOf8),
+            false => quote_spanned!(span => CheckTotalSizeIsNotMultipleOf8),
+        };
+        quote_spanned!(span=>
             #[allow(clippy::identity_op)]
             const _: () = {
-                impl ::modular_bitfield::private::checks::CheckTotalSizeMultipleOf8 for #ident {
+                impl ::modular_bitfield::private::checks::#check_ident for #ident {
                     type Size = ::modular_bitfield::private::checks::TotalSize<[(); #size % 8usize]>;
                 }
             };
-        ))
+        )
     }
 
     /// Returns a token stream representing the next greater value divisible by 8.
@@ -328,11 +333,42 @@ impl BitfieldStruct {
     }
 
     /// Generates routines to allow conversion from and to bytes for the `#[bitfield]` struct.
-    fn expand_byte_conversion_impls(&self) -> TokenStream2 {
+    fn expand_byte_conversion_impls(&self, config: &Config) -> TokenStream2 {
         let span = self.item_struct.span();
         let ident = &self.item_struct.ident;
         let size = self.generate_bitfield_size();
         let next_divisible_by_8 = Self::next_divisible_by_8(&size);
+        let from_bytes = match config.filled_enabled() {
+            true => {
+                quote_spanned!(span=>
+                    /// Converts the given bytes directly into the bitfield struct.
+                    #[inline]
+                    #[allow(clippy::identity_op)]
+                    pub const fn from_bytes(bytes: [::core::primitive::u8; #next_divisible_by_8 / 8usize]) -> Self {
+                        Self { bytes }
+                    }
+                )
+            }
+            false => {
+                quote_spanned!(span=>
+                    /// Converts the given bytes directly into the bitfield struct.
+                    ///
+                    /// # Errors
+                    ///
+                    /// If the given bytes contain bits at positions that are undefined for `Self`.
+                    #[inline]
+                    #[allow(clippy::identity_op)]
+                    pub fn from_bytes(
+                        bytes: [::core::primitive::u8; #next_divisible_by_8 / 8usize]
+                    ) -> ::core::result::Result<Self, ::modular_bitfield::error::OutOfBounds> {
+                        if bytes[(#next_divisible_by_8 / 8usize) - 1] >= (0x01 << (8 - (#next_divisible_by_8 - #size))) {
+                            return ::core::result::Result::Err(::modular_bitfield::error::OutOfBounds)
+                        }
+                        ::core::result::Result::Ok(Self { bytes })
+                    }
+                )
+            }
+        };
         quote_spanned!(span=>
             impl #ident {
                 /// Returns the underlying bits.
@@ -347,12 +383,7 @@ impl BitfieldStruct {
                     &self.bytes
                 }
 
-                /// Converts the given bytes directly into the bitfield struct.
-                #[inline]
-                #[allow(clippy::identity_op)]
-                pub const fn from_bytes(bytes: [::core::primitive::u8; #next_divisible_by_8 / 8usize]) -> Self {
-                    Self { bytes }
-                }
+                #from_bytes
             }
         )
     }
