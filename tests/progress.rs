@@ -34,11 +34,13 @@ fn tests() {
     t.pass("tests/28-single-bit-enum.rs");
     t.pass("tests/29-struct-in-struct.rs");
     t.compile_fail("tests/30-out-of-bounds-specifier.rs");
-    t.pass("tests/31-bytes-param-on-bitfield.rs");
-    t.pass("tests/32-bytes-param-on-specifier-bitfield.rs");
-    t.compile_fail("tests/33-bytes-param-causing-error-1.rs");
-    t.compile_fail("tests/34-bytes-param-causing-error-2.rs");
-    t.compile_fail("tests/35-bytes-param-with-invalid-value-1.rs");
-    t.compile_fail("tests/36-bytes-param-with-invalid-value-2.rs");
-    t.compile_fail("tests/37-bytes-param-has-duplicates.rs");
+
+    // Tests for `bytes = N` #[bitfield] parameter.
+    t.pass("tests/bytes-param/valid-bitfield.rs");
+    t.pass("tests/bytes-param/valid-specifier-bitfield.rs");
+    t.compile_fail("tests/bytes-param/duplicate-parameters.rs");
+    t.compile_fail("tests/bytes-param/fewer-bytes-than-expected.rs");
+    t.compile_fail("tests/bytes-param/more-bytes-than-expected.rs");
+    t.compile_fail("tests/bytes-param/invalid-int-value.rs");
+    t.compile_fail("tests/bytes-param/invalid-type.rs");
 }
