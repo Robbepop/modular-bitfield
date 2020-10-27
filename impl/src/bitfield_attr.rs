@@ -203,9 +203,7 @@ impl TryFrom<AttributeArgs> for Config {
                         unsupported => return Err(unsupported_argument(unsupported)),
                     }
                 }
-                unsupported => {
-                    return Err(unsupported_argument(unsupported))
-                }
+                unsupported => return Err(unsupported_argument(unsupported)),
             }
         }
         Ok(builder)

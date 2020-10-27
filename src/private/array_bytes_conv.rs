@@ -34,7 +34,7 @@ macro_rules! impl_array_bytes_conversion_for_size {
             impl ArrayBytesConversion for [(); $size] {
                 type Array = [u8; $size / 8];
                 type Bytes = <Self as SpecifierBytes>::Bytes;
-            
+
                 #[inline]
                 fn bytes_into_array(bytes: Self::Bytes) -> Self::Array {
                     let array = bytes.to_le_bytes();
@@ -55,6 +55,4 @@ macro_rules! impl_array_bytes_conversion_for_size {
         )*
     };
 }
-impl_array_bytes_conversion_for_size!(
-    24, 40, 48, 56, 72, 80, 88, 96, 104, 112, 120
-);
+impl_array_bytes_conversion_for_size!(24, 40, 48, 56, 72, 80, 88, 96, 104, 112, 120);

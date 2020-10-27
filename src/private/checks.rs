@@ -75,7 +75,7 @@ where
 /// check if their sizes does not match a multiple of 8.
 pub trait CheckTotalSizeIsNotMultipleOf8
 where
-    <Self::Size as RenameSizeType>::CheckType: TotalSizeIsNotMultipleOfEightBits
+    <Self::Size as RenameSizeType>::CheckType: TotalSizeIsNotMultipleOfEightBits,
 {
     type Size: RenameSizeType;
 }
