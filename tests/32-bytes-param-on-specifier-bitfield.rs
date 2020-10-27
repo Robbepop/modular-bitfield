@@ -10,5 +10,5 @@ pub struct Header {
 }
 
 fn main() {
-    assert!(core::mem::size_of::<Base>(), 2)
+    assert_eq!(core::mem::size_of::<Header>(), 2)
 }

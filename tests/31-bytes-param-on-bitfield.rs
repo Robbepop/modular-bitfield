@@ -10,5 +10,5 @@ pub struct Base {
 }
 
 fn main() {
-    assert!(core::mem::size_of::<Base>(), 4)
+    assert_eq!(core::mem::size_of::<Base>(), 4)
 }
