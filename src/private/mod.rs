@@ -1,9 +1,9 @@
+mod array_bytes_conv;
 pub mod checks;
 mod impls;
 mod proc;
 mod push_pop;
 mod traits;
-mod array_bytes_conv;
 
 pub mod static_assertions {
     pub use static_assertions::*;
