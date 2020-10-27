@@ -48,3 +48,8 @@ static_assertions = "1.1"
 
 [profile.bench]
 codegen-units = 1
+
+[workspace]
+members = [
+    "impl"
+]
