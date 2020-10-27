@@ -138,6 +138,11 @@ impl TryFrom<AttributeArgs> for Config {
                                         ))
                                     }
                                 }
+                            } else {
+                                return Err(format_err!(
+                                    name_value,
+                                    "encountered unknown or unsupported #[bitfield] parameter",
+                                ))
                             }
                         }
                         unsupported => return Err(unsupported_argument(unsupported)),
