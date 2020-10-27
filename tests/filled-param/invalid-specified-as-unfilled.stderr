@@ -6,5 +6,5 @@ error[E0277]: the trait bound `modular_bitfield::private::checks::ZeroMod8: modu
    |
   ::: $WORKSPACE/src/private/checks.rs
    |
-   |     <Self::Size as RenameSizeType>::CheckType: TotalSizeIsNotMultipleOfEightBits
+   |     <Self::Size as RenameSizeType>::CheckType: TotalSizeIsNotMultipleOfEightBits,
    |                                                --------------------------------- required by this bound in `modular_bitfield::private::checks::CheckTotalSizeIsNotMultipleOf8`
