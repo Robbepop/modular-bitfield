@@ -7,6 +7,7 @@ use syn::spanned::Spanned;
 pub struct Config {
     pub specifier: Option<ConfigValue<bool>>,
     pub bytes: Option<ConfigValue<usize>>,
+    pub filled: Option<ConfigValue<bool>>,
 }
 
 pub struct ConfigValue<T> {
@@ -21,17 +22,25 @@ impl<T> ConfigValue<T> {
 }
 
 impl Config {
-    /// Returns `true` if the `specifier` parameter has been set to `true` and otherwise `false`.
+    /// Returns the value of the `specifier` parameter if provided and otherwise `false`.
     pub fn specifier_enabled(&self) -> bool {
         self.specifier
             .as_ref()
             .map(|config| config.value)
             .unwrap_or(false)
     }
+
+    /// Returns the value of the `filled` parameter if provided and otherwise `true`.
+    pub fn filled_enabled(&self) -> bool {
+        self.filled
+            .as_ref()
+            .map(|config| config.value)
+            .unwrap_or(true)
+    }
 }
 
 impl Config {
-    /// Sets the specifier #[bitfield] parameter to the given value.
+    /// Sets the `specifier: bool` #[bitfield] parameter to the given value.
     ///
     /// # Errors
     ///
@@ -41,12 +50,12 @@ impl Config {
             Some(previous) => {
                 return Err(format_err!(
                     span,
-                    "encountered duplicate specifier parameter: duplicate set to {:?}",
+                    "encountered duplicate `specifier` parameter: duplicate set to {:?}",
                     previous.value
                 )
                 .into_combine(format_err!(
                     previous.span,
-                    "previous specifier parameter here"
+                    "previous `specifier` parameter here"
                 )))
             }
             None => self.specifier = Some(ConfigValue::new(value, span)),
@@ -54,7 +63,7 @@ impl Config {
         Ok(())
     }
 
-    /// Sets the bytes #[bitfield] parameter to the given value.
+    /// Sets the `bytes: int` #[bitfield] parameter to the given value.
     ///
     /// # Errors
     ///
@@ -64,15 +73,38 @@ impl Config {
             Some(previous) => {
                 return Err(format_err!(
                     span,
-                    "encountered duplicate bytes parameter: duplicate set to {:?}",
+                    "encountered duplicate `bytes` parameter: duplicate set to {:?}",
                     previous.value
                 )
                 .into_combine(format_err!(
                     previous.span,
-                    "previous bytes parameter here"
+                    "previous `bytes` parameter here"
                 )))
             }
             None => self.bytes = Some(ConfigValue::new(value, span)),
+        }
+        Ok(())
+    }
+
+    /// Sets the `filled: bool` #[bitfield] parameter to the given value.
+    ///
+    /// # Errors
+    ///
+    /// If the specifier has already been set.
+    pub fn filled(&mut self, value: bool, span: Span) -> Result<(), syn::Error> {
+        match &self.filled {
+            Some(previous) => {
+                return Err(format_err!(
+                    span,
+                    "encountered duplicate `filled` parameter: duplicate set to {:?}",
+                    previous.value
+                )
+                .into_combine(format_err!(
+                    previous.span,
+                    "previous `filled` parameter here"
+                )))
+            }
+            None => self.filled = Some(ConfigValue::new(value, span)),
         }
         Ok(())
     }
@@ -132,7 +164,7 @@ impl TryFrom<AttributeArgs> for Config {
                                     invalid => {
                                         return Err(format_err!(
                                             invalid,
-                                            "encountered invalid value argument for #[bitfield] specifier parameter",
+                                            "encountered invalid value argument for #[bitfield] `specifier` parameter",
                                         ))
                                     }
                                 }
@@ -148,25 +180,31 @@ impl TryFrom<AttributeArgs> for Config {
                                     invalid => {
                                         return Err(format_err!(
                                             invalid,
-                                            "encountered invalid value argument for #[bitfield] bytes parameter",
+                                            "encountered invalid value argument for #[bitfield] `bytes` parameter",
+                                        ))
+                                    }
+                                }
+                            } else if name_value.path.is_ident("filled") {
+                                match &name_value.lit {
+                                    syn::Lit::Bool(lit_bool) => {
+                                        builder.filled(lit_bool.value, name_value.span())?;
+                                    }
+                                    invalid => {
+                                        return Err(format_err!(
+                                            invalid,
+                                            "encountered invalid value argument for #[bitfield] `filled` parameter",
                                         ))
                                     }
                                 }
                             } else {
-                                return Err(format_err!(
-                                    name_value,
-                                    "encountered unknown or unsupported #[bitfield] parameter",
-                                ))
+                                return Err(unsupported_argument(name_value))
                             }
                         }
                         unsupported => return Err(unsupported_argument(unsupported)),
                     }
                 }
                 unsupported => {
-                    return Err(format_err!(
-                        unsupported,
-                        "encountered unsupported #[bitfield] attribute"
-                    ))
+                    return Err(unsupported_argument(unsupported))
                 }
             }
         }
