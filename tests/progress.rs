@@ -53,4 +53,6 @@ fn tests() {
     t.compile_fail("tests/filled-param/invalid-bool-value.rs");
     t.compile_fail("tests/filled-param/invalid-specified-as-filled.rs");
     t.compile_fail("tests/filled-param/invalid-specified-as-unfilled.rs");
+
+    t.pass("tests/31-unfilled-from-bytes.rs");
 }
