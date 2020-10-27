@@ -40,4 +40,5 @@ fn tests() {
     t.compile_fail("tests/34-bytes-param-causing-error-2.rs");
     t.compile_fail("tests/35-bytes-param-with-invalid-value-1.rs");
     t.compile_fail("tests/36-bytes-param-with-invalid-value-2.rs");
+    t.compile_fail("tests/37-bytes-param-has-duplicates.rs");
 }
