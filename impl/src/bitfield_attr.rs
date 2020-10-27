@@ -97,9 +97,9 @@ impl TryFrom<AttributeArgs> for Config {
                     match meta {
                         syn::Meta::NameValue(name_value) => {
                             if name_value.path.is_ident("specifier") {
-                                match name_value.lit {
+                                match &name_value.lit {
                                     syn::Lit::Bool(lit_bool) => {
-                                        builder.specifier(lit_bool.value, lit_bool.span())?;
+                                        builder.specifier(lit_bool.value, name_value.span())?;
                                     }
                                     invalid => {
                                         return Err(format_err!(
@@ -109,13 +109,13 @@ impl TryFrom<AttributeArgs> for Config {
                                     }
                                 }
                             } else if name_value.path.is_ident("bytes") {
-                                match name_value.lit {
+                                match &name_value.lit {
                                     syn::Lit::Int(lit_int) => {
                                         let span = lit_int.span();
                                         let value = lit_int.base10_parse::<usize>().map_err(|err| {
                                             format_err!(span, "encountered malformatted integer value for bytes parameter: {}", err)
                                         })?;
-                                        builder.bytes(value, span)?;
+                                        builder.bytes(value, name_value.span())?;
                                     }
                                     invalid => {
                                         return Err(format_err!(
