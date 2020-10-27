@@ -23,7 +23,10 @@ impl<T> ConfigValue<T> {
 impl Config {
     /// Returns `true` if the `specifier` parameter has been set to `true` and otherwise `false`.
     pub fn specifier_enabled(&self) -> bool {
-        self.specifier.as_ref().map(|config| config.value).unwrap_or(false)
+        self.specifier
+            .as_ref()
+            .map(|config| config.value)
+            .unwrap_or(false)
     }
 }
 
@@ -41,7 +44,10 @@ impl Config {
                     "encountered duplicate specifier parameter: duplicate set to {:?}",
                     previous.value
                 )
-                .into_combine(format_err!(previous.span, "previous specifier parameter here")))
+                .into_combine(format_err!(
+                    previous.span,
+                    "previous specifier parameter here"
+                )))
             }
             None => self.specifier = Some(ConfigValue::new(value, span)),
         }
@@ -61,7 +67,10 @@ impl Config {
                     "encountered duplicate bytes parameter: duplicate set to {:?}",
                     previous.value
                 )
-                .into_combine(format_err!(previous.span, "previous bytes parameter here")))
+                .into_combine(format_err!(
+                    previous.span,
+                    "previous bytes parameter here"
+                )))
             }
             None => self.bytes = Some(ConfigValue::new(value, span)),
         }
