@@ -156,14 +156,16 @@ impl BitfieldStruct {
             impl ::modular_bitfield::Specifier for #ident {
                 const BITS: usize = #bits;
 
-                type Bytes = <[(); if #next_divisible_by_8 > 128 { 128 } else #next_divisible_by_8] as ::modular_bitfield::private::SpecifierBytes>::Bytes;
+                type Bytes = <[(); if #bits > 128 { 128 } else #bits] as ::modular_bitfield::private::SpecifierBytes>::Bytes;
                 type InOut = Self;
 
                 #[inline]
                 fn into_bytes(
                     value: Self::InOut,
                 ) -> ::core::result::Result<Self::Bytes, ::modular_bitfield::error::OutOfBounds> {
-                    ::core::result::Result::Ok(<Self::Bytes>::from_le_bytes(value.bytes))
+                    ::core::result::Result::Ok(
+                        <[(); #next_divisible_by_8] as ::modular_bitfield::private::ArrayBytesConversion>::array_into_bytes(value.bytes)
+                    )
                 }
 
                 #[inline]
@@ -174,8 +176,9 @@ impl BitfieldStruct {
                     if bytes > ((0x01 << Self::BITS) - 1) {
                         return ::core::result::Result::Err(::modular_bitfield::error::InvalidBitPattern::new(bytes))
                     }
+                    let __bf_bytes = bytes.to_le_bytes();
                     ::core::result::Result::Ok(Self {
-                        bytes: bytes.to_le_bytes(),
+                        bytes: <[(); #next_divisible_by_8] as ::modular_bitfield::private::ArrayBytesConversion>::bytes_into_array(bytes)
                     })
                 }
             }
