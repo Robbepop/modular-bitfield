@@ -1,7 +1,7 @@
 use modular_bitfield::prelude::*;
 
 // Is only 9 bits, so will be 2 bytes in size.
-#[bitfield(specifier = true, bytes = 2)]
+#[bitfield(specifier = true, bytes = 2, filled = false)]
 pub struct Header {
     a: B6,
     b: bool,

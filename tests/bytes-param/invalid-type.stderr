@@ -1,4 +1,4 @@
-error: encountered invalid value argument for #[bitfield] bytes parameter
+error: encountered invalid value argument for #[bitfield] `bytes` parameter
  --> $DIR/invalid-type.rs:4:20
   |
 4 | #[bitfield(bytes = true)]
