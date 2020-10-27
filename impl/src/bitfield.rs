@@ -244,9 +244,9 @@ impl BitfieldStruct {
 
     /// Generates the `CheckTotalSizeMultipleOf8` trait implementation to check for correct bitfield sizes.
     ///
-    /// Won't generate a check if `#[bitfield(specifier = true)]` is set.
+    /// Won't generate a check if `#[bitfield(filled = false)]` is set.
     fn generate_check_multiple_of_8(&self, config: &Config) -> Option<TokenStream2> {
-        if config.specifier_enabled() {
+        if !config.filled_enabled() {
             return None
         }
         let span = self.item_struct.span();
