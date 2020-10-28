@@ -1,6 +1,6 @@
-use crate::bitfield_attr::{
-    AttributeArgs,
-    Config,
+use crate::{
+    bitfield_attr::AttributeArgs,
+    config::Config,
 };
 use core::convert::TryFrom;
 use proc_macro2::TokenStream as TokenStream2;
