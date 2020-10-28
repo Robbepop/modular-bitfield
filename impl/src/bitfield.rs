@@ -350,7 +350,6 @@ impl BitfieldStruct {
         let next_divisible_by_8 = Self::next_divisible_by_8(&size);
         quote_spanned!(span=>
             #( #attrs )*
-            #[repr(transparent)]
             #[allow(clippy::identity_op)]
             #vis struct #ident
             {
