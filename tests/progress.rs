@@ -54,5 +54,18 @@ fn tests() {
     t.compile_fail("tests/filled-param/invalid-specified-as-filled.rs");
     t.compile_fail("tests/filled-param/invalid-specified-as-unfilled.rs");
 
+    // Tests for `#[repr(uN)]` and `#[cfg_attr(cond, repr(uN))]`:
+    t.pass("tests/repr/valid-use.rs");
+    t.pass("tests/repr/valid-cond-use.rs");
+    t.pass("tests/repr/complex-use.rs");
+    t.pass("tests/repr/multiple-valid-reprs-1.rs");
+    t.pass("tests/repr/multiple-valid-reprs-2.rs");
+    t.compile_fail("tests/repr/duplicate-repr-1.rs");
+    t.compile_fail("tests/repr/duplicate-repr-2.rs");
+    t.compile_fail("tests/repr/duplicate-repr-3.rs");
+    t.compile_fail("tests/repr/invalid-repr-1.rs");
+    t.compile_fail("tests/repr/invalid-repr-2.rs");
+    t.compile_fail("tests/repr/invalid-repr-width-1.rs");
+    t.compile_fail("tests/repr/invalid-repr-width-2.rs");
     t.pass("tests/31-unfilled-from-bytes.rs");
 }
