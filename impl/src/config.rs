@@ -1,10 +1,7 @@
 #![allow(dead_code)]
 
 use crate::errors::CombineError;
-use proc_macro2::{
-    Span,
-    TokenStream as TokenStream2,
-};
+use proc_macro2::Span;
 
 /// The configuration for the `#[bitfield]` macro.
 #[derive(Default)]
@@ -12,12 +9,12 @@ pub struct Config {
     pub specifier: Option<ConfigValue<bool>>,
     pub bytes: Option<ConfigValue<usize>>,
     pub filled: Option<ConfigValue<bool>>,
-    pub repr: Option<ConfigValue<Repr>>,
+    pub repr: Option<ConfigValue<ReprKind>>,
     pub retained_attributes: Vec<syn::Attribute>,
 }
 
 /// Kinds of `#[repr(uN)]` annotations for a `#[bitfield]` struct.
-#[derive(Debug, Copy, Clone)]
+#[derive(Copy, Clone)]
 pub enum ReprKind {
     /// Found a `#[repr(u8)]` annotation.
     U8,
@@ -31,44 +28,14 @@ pub enum ReprKind {
     U128,
 }
 
-/// A `#[repr(uN)]` annotations for a `#[bitfield]` struct.
-#[derive(Debug)]
-pub struct Repr {
-    /// The optional condition for the `#[repr(uN)]` annotation.
-    ///
-    /// # Note
-    ///
-    /// A condition can be found in annotations like these:
-    ///
-    /// ```
-    /// use modular_bitfield::prelude::*;
-    ///
-    /// #[bitfield]
-    /// #[cfg_attr(not(feature = "std"), repr(u32))]
-    /// pub struct SignedU32 {
-    ///     sign: bool,
-    ///     value: B31,
-    /// }
-    /// ```
-    condition: Option<TokenStream2>,
-    /// The kind of the `#[repr(uN)]` annotation.
-    kind: ReprKind,
-}
-
-impl Repr {
-    /// Creates an unconditional `#[repr(..)]` attribute.
-    pub fn unconditional(kind: ReprKind) -> Self {
-        Self {
-            condition: None,
-            kind,
-        }
-    }
-
-    /// Creates a conditional `#[cfg_attr(condition, repr(..))]` attribute.
-    pub fn conditional(condition: TokenStream2, kind: ReprKind) -> Self {
-        Self {
-            condition: Some(condition),
-            kind,
+impl core::fmt::Debug for ReprKind {
+    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+        match self {
+            Self::U8 => write!(f, "#[repr(u8)]"),
+            Self::U16 => write!(f, "#[repr(u16)]"),
+            Self::U32 => write!(f, "#[repr(u32)]"),
+            Self::U64 => write!(f, "#[repr(u64)]"),
+            Self::U128 => write!(f, "#[repr(u128)]"),
         }
     }
 }
@@ -181,7 +148,7 @@ impl Config {
     /// # Errors
     ///
     /// If a `#[repr(uN)]` attribute has already been found.
-    pub fn repr(&mut self, value: Repr, span: Span) -> Result<(), syn::Error> {
+    pub fn repr(&mut self, value: ReprKind, span: Span) -> Result<(), syn::Error> {
         match &self.repr {
             Some(previous) => {
                 return Err(format_err!(

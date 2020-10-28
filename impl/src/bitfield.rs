@@ -2,7 +2,6 @@ use crate::{
     bitfield_attr::AttributeArgs,
     config::{
         Config,
-        Repr,
         ReprKind,
     },
 };
@@ -119,10 +118,7 @@ impl BitfieldStruct {
     }
 
     /// Analyses and extracts the `#[repr(uN)]` annotation from the given struct.
-    fn extract_repr(
-        attributes: &[syn::Attribute],
-        config: &mut Config,
-    ) -> Result<()> {
+    fn extract_repr(attributes: &[syn::Attribute], config: &mut Config) -> Result<()> {
         for attr in attributes {
             if attr.path.is_ident("repr") {
                 let path = &attr.path;
@@ -147,14 +143,12 @@ impl BitfieldStruct {
                                 // If other repr such as `transparent` or `C` have been found we
                                 // are going to re-expand them into a new `#[repr(..)]` that is
                                 // ignored by the rest of this macro.
-                                retained_reprs.push(syn::NestedMeta::Meta(syn::Meta::Path(path)));
+                                retained_reprs
+                                    .push(syn::NestedMeta::Meta(syn::Meta::Path(path)));
                                 None
                             };
                             if let Some(repr_kind) = repr_kind {
-                                config.repr(
-                                    Repr::unconditional(repr_kind),
-                                    meta_span,
-                                )?;
+                                config.repr(repr_kind, meta_span)?;
                             }
                         }
                         unknown => retained_reprs.push(unknown),
