@@ -1,0 +1,5 @@
+error[E0552]: unrecognized representation hint
+ --> $DIR/invalid-repr-1.rs:4:8
+  |
+4 | #[repr(invalid)]
+  |        ^^^^^^^

@@ -1,0 +1,9 @@
+error[E0277]: the trait bound `[(); 32]: modular_bitfield::private::IsU16Compatible` is not satisfied
+ --> $DIR/invalid-repr-width-1.rs:4:8
+  |
+4 | #[repr(u16)] // Too few bits!
+  |        ^^^ the trait `modular_bitfield::private::IsU16Compatible` is not implemented for `[(); 32]`
+  |
+  = help: the following implementations were found:
+            <[(); 16] as modular_bitfield::private::IsU16Compatible>
+  = help: see issue #48214

@@ -34,8 +34,9 @@ fn tests() {
     t.pass("tests/28-single-bit-enum.rs");
     t.pass("tests/29-struct-in-struct.rs");
     t.compile_fail("tests/30-out-of-bounds-specifier.rs");
+    t.pass("tests/31-unfilled-from-bytes.rs");
 
-    // Tests for `bytes = N` #[bitfield] parameter.
+    // Tests for `bytes = N` #[bitfield] parameter:
     t.pass("tests/bytes-param/valid-bitfield.rs");
     t.pass("tests/bytes-param/valid-specifier-bitfield.rs");
     t.compile_fail("tests/bytes-param/duplicate-parameters.rs");
@@ -44,7 +45,7 @@ fn tests() {
     t.compile_fail("tests/bytes-param/invalid-int-value.rs");
     t.compile_fail("tests/bytes-param/invalid-type.rs");
 
-    // Tests for `filled: bool` #[bitfield] parameter.
+    // Tests for `filled: bool` #[bitfield] parameter:
     t.pass("tests/filled-param/valid-bitfield-1.rs");
     t.pass("tests/filled-param/valid-bitfield-2.rs");
     t.pass("tests/filled-param/valid-bitfield-specifier-1.rs");
@@ -54,5 +55,18 @@ fn tests() {
     t.compile_fail("tests/filled-param/invalid-specified-as-filled.rs");
     t.compile_fail("tests/filled-param/invalid-specified-as-unfilled.rs");
 
-    t.pass("tests/31-unfilled-from-bytes.rs");
+    // Tests for `#[repr(uN)]` and `#[cfg_attr(cond, repr(uN))]`:
+    t.pass("tests/repr/valid-use.rs");
+    t.pass("tests/repr/valid-cond-use.rs");
+    t.pass("tests/repr/complex-use.rs");
+    t.pass("tests/repr/multiple-valid-reprs-1.rs");
+    t.pass("tests/repr/multiple-valid-reprs-2.rs");
+    t.compile_fail("tests/repr/duplicate-repr-1.rs");
+    t.compile_fail("tests/repr/duplicate-repr-2.rs");
+    t.compile_fail("tests/repr/duplicate-repr-3.rs");
+    t.compile_fail("tests/repr/invalid-repr-1.rs");
+    t.compile_fail("tests/repr/invalid-repr-2.rs");
+    t.compile_fail("tests/repr/invalid-repr-width-1.rs");
+    t.compile_fail("tests/repr/invalid-repr-width-2.rs");
+    t.compile_fail("tests/repr/conflicting-ignored-reprs.rs");
 }

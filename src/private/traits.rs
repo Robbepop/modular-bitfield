@@ -26,3 +26,15 @@ pub trait SpecifierBytes: checks::private::Sealed {
     /// The base type that the specifier is operating on.
     type Bytes;
 }
+
+pub trait IsU8Compatible: checks::private::Sealed {}
+pub trait IsU16Compatible: checks::private::Sealed {}
+pub trait IsU32Compatible: checks::private::Sealed {}
+pub trait IsU64Compatible: checks::private::Sealed {}
+pub trait IsU128Compatible: checks::private::Sealed {}
+
+impl IsU8Compatible for [(); 8] {}
+impl IsU16Compatible for [(); 16] {}
+impl IsU32Compatible for [(); 32] {}
+impl IsU64Compatible for [(); 64] {}
+impl IsU128Compatible for [(); 128] {}
