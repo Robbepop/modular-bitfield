@@ -343,19 +343,19 @@
 #![no_std]
 #![forbid(unsafe_code)]
 
-pub use modular_bitfield_impl::bitfield;
-
-pub use modular_bitfield_impl::BitfieldSpecifier;
-
-#[doc(hidden)]
-pub mod private;
-
 extern crate static_assertions;
 
 pub mod error;
+#[doc(hidden)]
+pub mod private;
+
 use self::error::{
     InvalidBitPattern,
     OutOfBounds,
+};
+pub use modular_bitfield_impl::{
+    bitfield,
+    BitfieldSpecifier,
 };
 
 /// The prelude: `use modular_bitfield::prelude::*;`
