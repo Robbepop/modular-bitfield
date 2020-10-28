@@ -1,6 +1,6 @@
+use crate::config::Config;
 use core::convert::TryFrom;
 use syn::spanned::Spanned;
-use crate::config::Config;
 
 /// Raises an unsupported argument compile time error.
 fn unsupported_argument<T>(arg: T) -> syn::Error
@@ -8,7 +8,6 @@ where
     T: Spanned,
 {
     format_err!(arg, "encountered unsupported #[bitfield] attribute")
-
 }
 
 /// The parameters given to the `#[bitfield]` proc. macro.
