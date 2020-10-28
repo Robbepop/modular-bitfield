@@ -444,8 +444,8 @@ impl BitfieldStruct {
                 /// [here](https://docs.rs/modular-bitfield/#generated-structure).
                 #[inline]
                 #[allow(clippy::identity_op)]
-                pub const fn as_bytes(&self) -> &[::core::primitive::u8; #next_divisible_by_8 / 8usize] {
-                    &self.bytes
+                pub const fn into_bytes(self) -> [::core::primitive::u8; #next_divisible_by_8 / 8usize] {
+                    self.bytes
                 }
 
                 #from_bytes
