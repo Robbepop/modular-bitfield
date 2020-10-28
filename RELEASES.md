@@ -1,3 +1,22 @@
+# 0.10.0 (WIP)
+
+- Implement `#[bitfield(bytes = N)]` parameter to ensure at compile time that the bitfield struct
+  requires `N` bytes of memory.
+- Implement `#[bitfield(filled: bool)]` parameter to control whether the bitfield struct ensures that either
+  all bits are well defined (`filled = true`) or if there are going to be some bits intentionally undefined (`filled = false`).
+  The default is `filled = true`.
+- Implement `#[repr(uN)]` for `#[bitfield]` structs where `uN` is one of `u8`, `u16`, `u32`, `u64` or `u128` with which it is
+  possible to control whether a bitfield allow conversions between `uN` and the bitfield. Also it ensures at compile time that
+  the bitfield requires the exact same amount of bits. This is in conflict with `filled = false`.
+- Bitfield structs are no longer implicitly `#[repr(transparent)]`. If a user wants their bitfield struct to remain transparent
+  they have to add `#[repr(transparent)]` manually to their struct definition.
+- The default behaviour for `#[bitfield(specifier = bool)]` got changed so that it no longer by default allows for
+  unfilled (`filled = false`) or undefined bits. Instead users now have to additionally add `filled = false` if they
+  explicitly want this behaviour.
+- Renamed the generated `as_bytes` method for `#[bitfield]` structs to `into_bytes`. It now takes `self` instead of `&self`
+  and returns the byte array by value instead of reference. This change was necessary for working properly with the new
+  `#[repr(uN)]` feature. 
+
 # 0.9.0 (2020-10-26)
 
 - Add `#[bitfield(specifier = bool)]` parameter with which it now is possible to have bitfield structs automatically also
