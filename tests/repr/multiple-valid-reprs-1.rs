@@ -1,7 +1,7 @@
 use modular_bitfield::prelude::*;
 
 #[bitfield]
-#[cfg_attr(not(feature = "unknown"), repr(invalid))]
+#[repr(C, u32)] // The macro simply ignores `repr(C)`
 pub struct SignedInt {
     sign: bool,
     value: B31,

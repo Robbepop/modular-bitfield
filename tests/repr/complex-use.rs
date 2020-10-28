@@ -30,7 +30,7 @@ fn main() {
     rsp.set_s(true);
     rsp.set_irvalid(true);
     rsp.set_iregion(0xDD);
-    assert_eq!(rsp, TtResp::from(0xFFEEFFDD_u32));
+    assert_eq!(rsp, TtResp::from(0xDDFFEEFF_u32));
     assert_eq!(rsp.mregion(), u8::MAX);
     assert_eq!(rsp.sregion(), 0xEE);
     assert!(rsp.mrvalid());

@@ -1,0 +1,5 @@
+error[E0552]: unrecognized representation hint
+ --> $DIR/invalid-repr-2.rs:4:43
+  |
+4 | #[cfg_attr(not(feature = "unknown"), repr(invalid))]
+  |                                           ^^^^^^^

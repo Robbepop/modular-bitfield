@@ -67,5 +67,6 @@ fn tests() {
     t.compile_fail("tests/repr/invalid-repr-2.rs");
     t.compile_fail("tests/repr/invalid-repr-width-1.rs");
     t.compile_fail("tests/repr/invalid-repr-width-2.rs");
+    t.compile_fail("tests/repr/conflicting-ignored-reprs.rs");
     t.pass("tests/31-unfilled-from-bytes.rs");
 }
