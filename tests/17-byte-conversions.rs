@@ -25,7 +25,7 @@ fn main() {
     assert_eq!(bitfield_1.c(), 444);
     assert_eq!(bitfield_1.d(), 1337);
 
-    let bytes = bitfield_1.as_bytes().clone();
+    let bytes = bitfield_1.into_bytes().clone();
     assert_eq!(bytes, [231, 13, 57, 5]);
 
     let bitfield2 = MyFourBytes::from_bytes(bytes);
@@ -34,13 +34,4 @@ fn main() {
     assert_eq!(bitfield2.b(), 3);
     assert_eq!(bitfield2.c(), 444);
     assert_eq!(bitfield2.d(), 1337);
-
-    // let too_few_bytes = &bytes[0..2];
-    // let too_many_bytes = {
-    //     let mut bytes = bytes.to_vec();
-    //     bytes.push(0);
-    //     bytes
-    // };
-    // assert_eq!(MyFourBytes::try_from(too_few_bytes), Err(Error::InvalidBufferLen));
-    // assert_eq!(MyFourBytes::try_from(&too_many_bytes[..]), Err(Error::InvalidBufferLen));
 }
