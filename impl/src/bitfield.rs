@@ -67,9 +67,7 @@ impl syn::parse::Parse for BitsAttributeArgs {
 impl TryFrom<(&mut Config, syn::ItemStruct)> for BitfieldStruct {
     type Error = syn::Error;
 
-    fn try_from(
-        (config, item_struct): (&mut Config, syn::ItemStruct),
-    ) -> Result<Self> {
+    fn try_from((config, item_struct): (&mut Config, syn::ItemStruct)) -> Result<Self> {
         Self::ensure_has_fields(&item_struct)?;
         Self::ensure_no_generics(&item_struct)?;
         Self::ensure_no_bits_markers(&item_struct)?;
