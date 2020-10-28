@@ -22,5 +22,10 @@ pub use self::{
         PopBits,
         PushBits,
         SpecifierBytes,
+        IsU8Compatible,
+        IsU16Compatible,
+        IsU32Compatible,
+        IsU64Compatible,
+        IsU128Compatible,
     },
 };

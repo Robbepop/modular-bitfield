@@ -186,6 +186,7 @@ impl BitfieldStruct {
         let byte_conversion_impls = self.expand_byte_conversion_impls(config);
         let getters_and_setters = self.expand_getters_and_setters();
         let bytes_check = self.expand_optional_bytes_check(config);
+        let repr_impls_and_checks = self.expand_repr_from_impls_and_checks(config);
 
         quote_spanned!(span=>
             #struct_definition
@@ -195,6 +196,7 @@ impl BitfieldStruct {
             #getters_and_setters
             #specifier_impl
             #bytes_check
+            #repr_impls_and_checks
         )
     }
 
@@ -392,6 +394,48 @@ impl BitfieldStruct {
                         #ident
                     );
                 };
+            )
+        })
+    }
+
+    /// Generates `From` impls for a `#[repr(uN)]` annotated #[bitfield] struct.
+    fn expand_repr_from_impls_and_checks(&self, config: &Config) -> Option<TokenStream2> {
+        let ident = &self.item_struct.ident;
+        config.repr.as_ref().map(|repr| {
+            let kind = &repr.value;
+            let span = repr.span;
+            let prim = match kind {
+                ReprKind::U8 => quote! { ::core::primitive::u8 },
+                ReprKind::U16 => quote! { ::core::primitive::u16 },
+                ReprKind::U32 => quote! { ::core::primitive::u32 },
+                ReprKind::U64 => quote! { ::core::primitive::u64 },
+                ReprKind::U128 => quote! { ::core::primitive::u128 },
+            };
+            let actual_bits = self.generate_bitfield_size();
+            let trait_check_ident = match kind {
+                ReprKind::U8 => quote! { IsU8Compatible },
+                ReprKind::U16 => quote! { IsU16Compatible },
+                ReprKind::U32 => quote! { IsU32Compatible },
+                ReprKind::U64 => quote! { IsU64Compatible },
+                ReprKind::U128 => quote! { IsU128Compatible },
+            };
+            quote_spanned!(span=>
+                impl ::core::convert::From<#prim> for #ident
+                where
+                    [(); #actual_bits]: ::modular_bitfield::private::#trait_check_ident,
+                {
+                    fn from(__bf_prim: #prim) -> Self {
+                        Self { bytes: <#prim>::to_le_bytes(__bf_prim) }
+                    }
+                }
+
+                impl ::core::convert::From<#ident> for #prim
+                where
+                    [(); #actual_bits]: ::modular_bitfield::private::#trait_check_ident,{
+                    fn from(__bf_bitfield: #ident) -> Self {
+                        <Self>::from_le_bytes(__bf_bitfield.bytes)
+                    }
+                }
             )
         })
     }
