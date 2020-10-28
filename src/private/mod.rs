@@ -19,13 +19,13 @@ pub use self::{
         PushBuffer,
     },
     traits::{
-        PopBits,
-        PushBits,
-        SpecifierBytes,
-        IsU8Compatible,
+        IsU128Compatible,
         IsU16Compatible,
         IsU32Compatible,
         IsU64Compatible,
-        IsU128Compatible,
+        IsU8Compatible,
+        PopBits,
+        PushBits,
+        SpecifierBytes,
     },
 };
