@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use crate::errors::CombineError;
 use proc_macro2::{
     Span,
@@ -11,6 +13,7 @@ pub struct Config {
     pub bytes: Option<ConfigValue<usize>>,
     pub filled: Option<ConfigValue<bool>>,
     pub repr: Option<ConfigValue<Repr>>,
+    pub retained_attributes: Vec<syn::Attribute>,
 }
 
 /// Kinds of `#[repr(uN)]` annotations for a `#[bitfield]` struct.
@@ -47,9 +50,27 @@ pub struct Repr {
     ///     value: B31,
     /// }
     /// ```
-    conditional: Option<TokenStream2>,
+    condition: Option<TokenStream2>,
     /// The kind of the `#[repr(uN)]` annotation.
     kind: ReprKind,
+}
+
+impl Repr {
+    /// Creates an unconditional `#[repr(..)]` attribute.
+    pub fn unconditional(kind: ReprKind) -> Self {
+        Self {
+            condition: None,
+            kind,
+        }
+    }
+
+    /// Creates a conditional `#[cfg_attr(condition, repr(..))]` attribute.
+    pub fn conditional(condition: TokenStream2, kind: ReprKind) -> Self {
+        Self {
+            condition: Some(condition),
+            kind,
+        }
+    }
 }
 
 /// A configuration value and its originating span.
@@ -162,17 +183,24 @@ impl Config {
     /// If a `#[repr(uN)]` attribute has already been found.
     pub fn repr(&mut self, value: Repr, span: Span) -> Result<(), syn::Error> {
         match &self.repr {
-            Some(previous) => return Err(format_err!(
+            Some(previous) => {
+                return Err(format_err!(
                 span,
                 "encountered duplicate `#[repr(uN)]` attribute: duplicate set to {:?}",
                 previous.value
             )
-            .into_combine(format_err!(
-                previous.span,
-                "previous `#[repr(uN)]` parameter here"
-            ))),
+                .into_combine(format_err!(
+                    previous.span,
+                    "previous `#[repr(uN)]` parameter here"
+                )))
+            }
             None => self.repr = Some(ConfigValue::new(value, span)),
         }
         Ok(())
+    }
+
+    /// Pushes another retained attribute that the #[bitfield] macro is going to re-expand and ignore.
+    pub fn push_retained_attribute(&mut self, retained_attr: syn::Attribute) {
+        self.retained_attributes.push(retained_attr);
     }
 }
