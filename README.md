@@ -14,7 +14,7 @@
 [D2]: https://github.com/Aaronepower/tokei#badges
 
 - `no_std`: Supports embedded development without `std` library.
-- This crate uses 100% safe Rust code.
+- This crate uses and generates 100% safe Rust code.
 
 ## Description
 
