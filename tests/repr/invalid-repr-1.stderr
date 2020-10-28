@@ -1,0 +1,11 @@
+error[E0552]: unrecognized representation hint
+ --> $DIR/invalid-repr-1.rs:4:8
+  |
+4 | #[repr(invalid)]
+  |        ^^^^^^^
+
+error[E0692]: transparent struct cannot have other repr hints
+ --> $DIR/invalid-repr-1.rs:4:1
+  |
+4 | #[repr(invalid)]
+  | ^^^^^^^^^^^^^^^^
