@@ -9,7 +9,7 @@ pub struct SignedInt {
 
 fn main() {
     let i1 = SignedInt::new().with_sign(true).with_value(0x123);
-    let i2 = SignedInt::from(0x8000_0123);
+    let i2 = SignedInt::from(0x8000_0123_u32);
     assert_eq!(i1.sign(), i2.sign());
     assert_eq!(i1.value(), i2.value());
 }
