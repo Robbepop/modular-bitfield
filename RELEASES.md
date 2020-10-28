@@ -15,7 +15,8 @@
   explicitly want this behaviour.
 - Renamed the generated `as_bytes` method for `#[bitfield]` structs to `into_bytes`. It now takes `self` instead of `&self`
   and returns the byte array by value instead of reference. This change was necessary for working properly with the new
-  `#[repr(uN)]` feature. 
+  `#[repr(uN)]` feature.
+- Fixed a bug with `#[bitfield(specifier = true)]` bitfields that were not aligned to have a power-of-two bytes.
 
 # 0.9.0 (2020-10-26)
 
