@@ -1,11 +1,16 @@
 use crate::{
     bitfield_attr::AttributeArgs,
-    config::Config,
+    config::{
+        Config,
+        Repr,
+        ReprKind,
+    },
 };
 use core::convert::TryFrom;
 use proc_macro2::TokenStream as TokenStream2;
 use quote::{
     format_ident,
+    quote,
     quote_spanned,
 };
 use syn::{
@@ -35,8 +40,8 @@ fn analyse_and_expand_or_error(
 ) -> Result<TokenStream2> {
     let input = syn::parse::<syn::ItemStruct>(input.into())?;
     let attrs = syn::parse::<AttributeArgs>(args.into())?;
-    let config = Config::try_from(attrs)?;
-    let bitfield = BitfieldStruct::try_from(input)?;
+    let mut config = Config::try_from(attrs)?;
+    let bitfield = BitfieldStruct::try_from((&mut config, input))?;
     Ok(bitfield.expand(&config))
 }
 
@@ -60,13 +65,16 @@ impl syn::parse::Parse for BitsAttributeArgs {
     }
 }
 
-impl TryFrom<syn::ItemStruct> for BitfieldStruct {
+impl TryFrom<(&mut Config, syn::ItemStruct)> for BitfieldStruct {
     type Error = syn::Error;
 
-    fn try_from(item_struct: syn::ItemStruct) -> Result<Self> {
+    fn try_from(
+        (config, mut item_struct): (&mut Config, syn::ItemStruct),
+    ) -> Result<Self> {
         Self::ensure_has_fields(&item_struct)?;
         Self::ensure_no_generics(&item_struct)?;
         Self::ensure_no_bits_markers(&item_struct)?;
+        Self::extract_repr(&mut item_struct.attrs, config)?;
         Ok(Self { item_struct })
     }
 }
@@ -110,11 +118,74 @@ impl BitfieldStruct {
         Ok(())
     }
 
+    /// Analyses and extracts the `#[repr(uN)]` annotation from the given struct.
+    fn extract_repr(
+        attributes: &[syn::Attribute],
+        config: &mut Config,
+    ) -> Result<()> {
+        for attr in attributes {
+            if attr.path.is_ident("repr") {
+                let path = &attr.path;
+                let args = &attr.tokens;
+                let meta: syn::MetaList = syn::parse2::<_>(quote! { #path #args })?;
+                let mut retained_reprs = vec![];
+                for nested_meta in meta.nested {
+                    let meta_span = nested_meta.span();
+                    match nested_meta {
+                        syn::NestedMeta::Meta(syn::Meta::Path(path)) => {
+                            let repr_kind = if path.is_ident("u8") {
+                                Some(ReprKind::U8)
+                            } else if path.is_ident("u16") {
+                                Some(ReprKind::U16)
+                            } else if path.is_ident("u32") {
+                                Some(ReprKind::U32)
+                            } else if path.is_ident("u64") {
+                                Some(ReprKind::U64)
+                            } else if path.is_ident("u128") {
+                                Some(ReprKind::U128)
+                            } else {
+                                // If other repr such as `transparent` or `C` have been found we
+                                // are going to re-expand them into a new `#[repr(..)]` that is
+                                // ignored by the rest of this macro.
+                                retained_reprs.push(syn::NestedMeta::Meta(syn::Meta::Path(path)));
+                                None
+                            };
+                            if let Some(repr_kind) = repr_kind {
+                                config.repr(
+                                    Repr::unconditional(repr_kind),
+                                    meta_span,
+                                )?;
+                            }
+                        }
+                        unknown => retained_reprs.push(unknown),
+                    }
+                }
+                if !retained_reprs.is_empty() {
+                    // We only push back another re-generated `#[repr(..)]` if its contents
+                    // contained some non-bitfield representations and thus is not empty.
+                    let retained_reprs_tokens = quote! {
+                        ( #( #retained_reprs ),* )
+                    };
+                    config.push_retained_attribute(syn::Attribute {
+                        pound_token: attr.pound_token,
+                        style: attr.style,
+                        bracket_token: attr.bracket_token,
+                        path: attr.path.clone(),
+                        tokens: retained_reprs_tokens,
+                    });
+                }
+            } else {
+                config.push_retained_attribute(attr.clone());
+            }
+        }
+        Ok(())
+    }
+
     /// Expands the given `#[bitfield]` struct into an actual bitfield definition.
     pub fn expand(&self, config: &Config) -> TokenStream2 {
         let span = self.item_struct.span();
         let check_filled = self.generate_check_for_filled(config);
-        let struct_definition = self.generate_struct();
+        let struct_definition = self.generate_struct(config);
         let constructor_definition = self.generate_constructor();
         let specifier_impl = self.generate_specifier_impl(config);
 
@@ -276,9 +347,9 @@ impl BitfieldStruct {
     ///
     /// Internally it only contains a byte array equal to the minimum required
     /// amount of bytes to compactly store the information of all its bit fields.
-    fn generate_struct(&self) -> TokenStream2 {
+    fn generate_struct(&self, config: &Config) -> TokenStream2 {
         let span = self.item_struct.span();
-        let attrs = &self.item_struct.attrs;
+        let attrs = &config.retained_attributes;
         let vis = &self.item_struct.vis;
         let ident = &self.item_struct.ident;
         let size = self.generate_bitfield_size();
