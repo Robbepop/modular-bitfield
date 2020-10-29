@@ -306,9 +306,7 @@ impl BitfieldStruct {
 
     /// Generates the core::fmt::Debug impl if `#[derive(Debug)]` is included.
     pub fn generate_debug_impl(&self, config: &Config) -> Option<TokenStream2> {
-        if config.derive_debug.is_none() {
-            return None
-        }
+        config.derive_debug.as_ref()?;
         let span = self.item_struct.span();
         let ident = &self.item_struct.ident;
         let fields = self
