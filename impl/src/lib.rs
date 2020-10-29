@@ -21,6 +21,43 @@ pub fn define_specifiers(input: TokenStream) -> TokenStream {
     define_specifiers::generate(input.into()).into()
 }
 
+/// Applicable to structs to turn their fields into compact bitfields.
+///
+/// By default this generates the following API:
+///
+/// - **Constructors:**
+///
+///     1. `new()`: Initializes all bits to 0 even if 0 bits may be invalid.
+///        Note that invalid bit patterns are supported in that getters and setters will
+///        be protecting accesses.
+///
+/// - **Getters:**
+///
+///     For every field `f` we generate the following getters:
+///
+///     1. `f()`: Returns the value of `f` and might panic
+///        if the value contains an invalid bit pattern.
+///     2. `f_or_err()`: Returns the value of `f` or an error
+///        if the value contains an invalid bit pattern.
+///
+/// - **Setters:**
+///
+///     For every field `f` we generate the following setters:
+///
+///     1. `set_f(new_value)`: Sets the value of `f` to `new_value` and might panic
+///        if `new_value` is out of bounds for the bit width of `f`.
+///     2. `set_f_checked(new_value)`: Sets the value of `f` to `new` or returns an error
+///        if `new_value` if out of bounds for the bit width of `f`.
+///     3. `with_f(new_value)`: Similar to `set_f` but consumes and returns `Self`.
+///        Primarily useful for method chaining.
+///     4. `with_f_checked(new_value)`: Similar to `set_f_checked` but consumes and returns `Self`.
+///        Primarily useful for method chaining.
+///
+/// - **Conversions:**
+///
+///     - `from_bytes(bytes)`: Allows to constructor the bitfield type from a fixed array of bytes.
+///     - `into_bytes()`: Allows to convert the bitfield into its underlying byte representation.
+///
 /// Attribute applicable to structs that turns them into bitfield structs.
 ///
 /// Generates getters and setters for all fields in the struct.
