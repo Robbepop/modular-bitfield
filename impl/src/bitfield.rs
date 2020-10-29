@@ -521,6 +521,7 @@ impl BitfieldStruct {
                 where
                     [(); #actual_bits]: ::modular_bitfield::private::#trait_check_ident,
                 {
+                    #[inline]
                     fn from(__bf_prim: #prim) -> Self {
                         Self { bytes: <#prim>::to_le_bytes(__bf_prim) }
                     }
@@ -528,7 +529,9 @@ impl BitfieldStruct {
 
                 impl ::core::convert::From<#ident> for #prim
                 where
-                    [(); #actual_bits]: ::modular_bitfield::private::#trait_check_ident,{
+                    [(); #actual_bits]: ::modular_bitfield::private::#trait_check_ident,
+                {
+                    #[inline]
                     fn from(__bf_bitfield: #ident) -> Self {
                         <Self>::from_le_bytes(__bf_bitfield.bytes)
                     }
