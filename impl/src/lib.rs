@@ -103,10 +103,10 @@ pub fn define_specifiers(input: TokenStream) -> TokenStream {
 /// ## Parameter: `specifier: bool`
 ///
 /// If `specifier` is `true` the `#[bitfield]` macro will additionally generate an implementation
-/// for the [`Specifier`](modular_bitfield::Specifier) trait. This is limited to bitfield types
+/// for the `Specifier` trait. This is limited to bitfield types
 /// that have a total bit width of 128 bit or fewer. This is ensured at compile time.
 ///
-/// Implementing the [`Specifier`](modular_bitfield::Specifier) trait allows for the type to be
+/// Implementing the `Specifier` trait allows for the type to be
 /// used as a field within another `#[bitfield]` annotated type.
 ///
 /// ### Example
