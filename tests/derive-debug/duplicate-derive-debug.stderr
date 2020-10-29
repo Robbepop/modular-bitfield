@@ -1,0 +1,11 @@
+error: encountered duplicate `#[derive(Debug)]` attribute: duplicate set to true
+ --> $DIR/duplicate-derive-debug.rs:5:10
+  |
+5 | #[derive(Debug)]
+  |          ^^^^^
+
+error: previous `#[derive(Debug)]` parameter here
+ --> $DIR/duplicate-derive-debug.rs:4:10
+  |
+4 | #[derive(Debug)]
+  |          ^^^^^
