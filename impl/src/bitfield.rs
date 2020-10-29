@@ -11,7 +11,6 @@ use quote::{
     format_ident,
     quote,
     quote_spanned,
-    ToTokens,
 };
 use syn::{
     self,
@@ -72,7 +71,7 @@ impl TryFrom<(&mut Config, syn::ItemStruct)> for BitfieldStruct {
         Self::ensure_has_fields(&item_struct)?;
         Self::ensure_no_generics(&item_struct)?;
         Self::ensure_no_bits_markers(&item_struct)?;
-        Self::extract_repr(&item_struct.attrs, config)?;
+        Self::extract_attributes(&item_struct.attrs, config)?;
         Ok(Self { item_struct })
     }
 }
@@ -116,57 +115,109 @@ impl BitfieldStruct {
         Ok(())
     }
 
-    /// Analyses and extracts the `#[repr(uN)]` annotation from the given struct.
-    fn extract_repr(attributes: &[syn::Attribute], config: &mut Config) -> Result<()> {
-        for attr in attributes {
-            if attr.path.is_ident("repr") {
-                let path = &attr.path;
-                let args = &attr.tokens;
-                let meta: syn::MetaList = syn::parse2::<_>(quote! { #path #args })?;
-                let mut retained_reprs = vec![];
-                for nested_meta in meta.nested {
-                    let meta_span = nested_meta.span();
-                    match nested_meta {
-                        syn::NestedMeta::Meta(syn::Meta::Path(path)) => {
-                            let repr_kind = if path.is_ident("u8") {
-                                Some(ReprKind::U8)
-                            } else if path.is_ident("u16") {
-                                Some(ReprKind::U16)
-                            } else if path.is_ident("u32") {
-                                Some(ReprKind::U32)
-                            } else if path.is_ident("u64") {
-                                Some(ReprKind::U64)
-                            } else if path.is_ident("u128") {
-                                Some(ReprKind::U128)
-                            } else {
-                                // If other repr such as `transparent` or `C` have been found we
-                                // are going to re-expand them into a new `#[repr(..)]` that is
-                                // ignored by the rest of this macro.
-                                retained_reprs
-                                    .push(syn::NestedMeta::Meta(syn::Meta::Path(path)));
-                                None
-                            };
-                            if let Some(repr_kind) = repr_kind {
-                                config.repr(repr_kind, meta_span)?;
-                            }
-                        }
-                        unknown => retained_reprs.push(unknown),
+    /// Extracts the `#[repr(uN)]` annotations from the given `#[bitfield]` struct.
+    fn extract_repr_attribute(attr: &syn::Attribute, config: &mut Config) -> Result<()> {
+        let path = &attr.path;
+        let args = &attr.tokens;
+        let meta: syn::MetaList = syn::parse2::<_>(quote! { #path #args })?;
+        let mut retained_reprs = vec![];
+        for nested_meta in meta.nested {
+            let meta_span = nested_meta.span();
+            match nested_meta {
+                syn::NestedMeta::Meta(syn::Meta::Path(path)) => {
+                    let repr_kind = if path.is_ident("u8") {
+                        Some(ReprKind::U8)
+                    } else if path.is_ident("u16") {
+                        Some(ReprKind::U16)
+                    } else if path.is_ident("u32") {
+                        Some(ReprKind::U32)
+                    } else if path.is_ident("u64") {
+                        Some(ReprKind::U64)
+                    } else if path.is_ident("u128") {
+                        Some(ReprKind::U128)
+                    } else {
+                        // If other repr such as `transparent` or `C` have been found we
+                        // are going to re-expand them into a new `#[repr(..)]` that is
+                        // ignored by the rest of this macro.
+                        retained_reprs.push(syn::NestedMeta::Meta(syn::Meta::Path(path)));
+                        None
+                    };
+                    if let Some(repr_kind) = repr_kind {
+                        config.repr(repr_kind, meta_span)?;
                     }
                 }
-                if !retained_reprs.is_empty() {
-                    // We only push back another re-generated `#[repr(..)]` if its contents
-                    // contained some non-bitfield representations and thus is not empty.
-                    let retained_reprs_tokens = quote! {
-                        ( #( #retained_reprs ),* )
+                unknown => retained_reprs.push(unknown),
+            }
+        }
+        if !retained_reprs.is_empty() {
+            // We only push back another re-generated `#[repr(..)]` if its contents
+            // contained some non-bitfield representations and thus is not empty.
+            let retained_reprs_tokens = quote! {
+                ( #( #retained_reprs ),* )
+            };
+            config.push_retained_attribute(syn::Attribute {
+                pound_token: attr.pound_token,
+                style: attr.style,
+                bracket_token: attr.bracket_token,
+                path: attr.path.clone(),
+                tokens: retained_reprs_tokens,
+            });
+        }
+        Ok(())
+    }
+
+    /// Extracts the `#[derive(Debug)]` annotations from the given `#[bitfield]` struct.
+    fn extract_derive_debug_attribute(
+        attr: &syn::Attribute,
+        config: &mut Config,
+    ) -> Result<()> {
+        let path = &attr.path;
+        let args = &attr.tokens;
+        let meta: syn::MetaList = syn::parse2::<_>(quote! { #path #args })?;
+        let mut retained_derives = vec![];
+        for nested_meta in meta.nested {
+            let meta_span = nested_meta.span();
+            match nested_meta {
+                syn::NestedMeta::Meta(syn::Meta::Path(path)) => {
+                    if path.is_ident("Debug") {
+                        config.derive_debug(true, meta_span)?;
+                    } else {
+                        // Other derives are going to be re-expanded them into a new
+                        // `#[derive(..)]` that is ignored by the rest of this macro.
+                        retained_derives
+                            .push(syn::NestedMeta::Meta(syn::Meta::Path(path)));
                     };
-                    config.push_retained_attribute(syn::Attribute {
-                        pound_token: attr.pound_token,
-                        style: attr.style,
-                        bracket_token: attr.bracket_token,
-                        path: attr.path.clone(),
-                        tokens: retained_reprs_tokens,
-                    });
                 }
+                unknown => retained_derives.push(unknown),
+            }
+        }
+        if !retained_derives.is_empty() {
+            // We only push back another re-generated `#[derive(..)]` if its contents
+            // contain some remaining derives and thus is not empty.
+            let retained_derives_tokens = quote! {
+                ( #( #retained_derives ),* )
+            };
+            config.push_retained_attribute(syn::Attribute {
+                pound_token: attr.pound_token,
+                style: attr.style,
+                bracket_token: attr.bracket_token,
+                path: attr.path.clone(),
+                tokens: retained_derives_tokens,
+            });
+        }
+        Ok(())
+    }
+
+    /// Analyses and extracts the `#[repr(uN)]` or other annotations from the given struct.
+    fn extract_attributes(
+        attributes: &[syn::Attribute],
+        config: &mut Config,
+    ) -> Result<()> {
+        for attr in attributes {
+            if attr.path.is_ident("repr") {
+                Self::extract_repr_attribute(attr, config)?;
+            } else if attr.path.is_ident("derive") {
+                Self::extract_derive_debug_attribute(attr, config)?;
             } else {
                 config.push_retained_attribute(attr.clone());
             }
@@ -186,8 +237,7 @@ impl BitfieldStruct {
         let getters_and_setters = self.expand_getters_and_setters();
         let bytes_check = self.expand_optional_bytes_check(config);
         let repr_impls_and_checks = self.expand_repr_from_impls_and_checks(config);
-
-        let debug_impl = self.generate_debug_impl();
+        let debug_impl = self.generate_debug_impl(config);
 
         quote_spanned!(span=>
             #struct_definition
@@ -254,54 +304,49 @@ impl BitfieldStruct {
         ))
     }
 
-    /// Get a list of fields, both in the form of a `String` as well as the corresponding faillible
-    /// getter method
-    fn get_field_strings_and_getters(&self) -> (Vec<String>, Vec<syn::Ident>) {
-        self.item_struct
+    /// Generates the core::fmt::Debug impl if `#[derive(Debug)]` is included.
+    pub fn generate_debug_impl(&self, config: &Config) -> Option<TokenStream2> {
+        if config.derive_debug.is_none() {
+            return None
+        }
+        let span = self.item_struct.span();
+        let ident = &self.item_struct.ident;
+        let fields = self
+            .item_struct
             .fields
             .iter()
             .enumerate()
-            .map(|(i, field)| {
+            .map(|(n, field)| {
+                let field_span = field.span();
                 let field_name = field
                     .ident
                     .as_ref()
                     .map(syn::Ident::to_string)
-                    .unwrap_or_else(|| format!("get_{}", i));
-                let fallible_getter =
-                    quote::format_ident!("{}_or_err", field_name, span = field.span());
-
-                (field_name, fallible_getter)
-            })
-            .unzip()
-    }
-
-    /// Generates the core::fmt::Debug impl if `#[derive(Debug)]` is included.
-    pub fn generate_debug_impl(&self) -> Option<TokenStream2> {
-        if self.should_derive_debug() {
-            let span = self.item_struct.span();
-            let ident = &self.item_struct.ident;
-            let (field_strings, field_getters) = self.get_field_strings_and_getters();
-
-            Some(quote_spanned!(span=>
-                impl ::core::fmt::Debug for #ident {
-                    fn fmt(&self, __bf_f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
-                        __bf_f.debug_struct(::core::stringify!(#ident))
-                            #(
-                                .field(
-                                    #field_strings,
-                                    self.#field_getters()
-                                        .as_ref()
-                                        .map(|__bf_field| __bf_field as &dyn ::core::fmt::Debug)
-                                        .unwrap_or_else(|__bf_err| __bf_err as &dyn ::core::fmt::Debug)
-                                )
-                            )*
-                            .finish()
-                    }
+                    .unwrap_or_else(|| format!("{}", n));
+                let field_getter = field
+                    .ident
+                    .as_ref()
+                    .map(|ident| format_ident!("{}_or_err", ident))
+                    .unwrap_or_else(|| format_ident!("get_{}_or_err", n));
+                quote_spanned!(field_span=>
+                    .field(
+                        #field_name,
+                        self.#field_getter()
+                            .as_ref()
+                            .map(|__bf_field| __bf_field as &dyn ::core::fmt::Debug)
+                            .unwrap_or_else(|__bf_err| __bf_err as &dyn ::core::fmt::Debug)
+                    )
+                )
+            });
+        Some(quote_spanned!(span=>
+            impl ::core::fmt::Debug for #ident {
+                fn fmt(&self, __bf_f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
+                    __bf_f.debug_struct(::core::stringify!(#ident))
+                        #( #fields )*
+                        .finish()
                 }
-            ))
-        } else {
-            None
-        }
+            }
+        ))
     }
 
     /// Generates the expression denoting the sum of all field bit specifier sizes.
@@ -410,74 +455,6 @@ impl BitfieldStruct {
                 bytes: [::core::primitive::u8; #next_divisible_by_8 / 8usize],
             }
         )
-    }
-
-    /// Get whether or not `derive(Debug)` is included in the attributes
-    fn should_derive_debug(&self) -> bool {
-        self.item_struct.attrs.iter().any(|attr| {
-            match attr.parse_meta() {
-                Ok(syn::Meta::List(meta_list)) => {
-                    let is_derive = meta_list
-                        .path
-                        .get_ident()
-                        .map(|ident| *ident == "derive")
-                        .unwrap_or(false);
-
-                    if is_derive {
-                        meta_list.nested.into_iter().any(|nested| {
-                            match nested {
-                                syn::NestedMeta::Meta(syn::Meta::Path(path)) => {
-                                    path.get_ident()
-                                        .map(|ident| *ident == "Debug")
-                                        .unwrap_or(false)
-                                }
-                                _ => false,
-                            }
-                        })
-                    } else {
-                        false
-                    }
-                }
-                _ => false,
-            }
-        })
-    }
-
-    /// Get the attributes with `Debug` filtered out of any present derives.
-    fn get_attrs_no_debug<'a>(&'a self) -> impl Iterator<Item = TokenStream2> + 'a {
-        self.item_struct.attrs.iter().map(|attr| {
-            match attr.parse_meta() {
-                Ok(syn::Meta::List(mut meta_list)) => {
-                    let is_derive = meta_list.path.is_ident("derive");
-
-                    if is_derive {
-                        meta_list.nested = meta_list
-                            .nested
-                            .into_iter()
-                            .filter(|nested| {
-                                match nested {
-                                    syn::NestedMeta::Meta(syn::Meta::Path(path)) => {
-                                        path.is_ident("Debug")
-                                    }
-                                    _ => true,
-                                }
-                            })
-                            .collect();
-
-                        let span = meta_list.span();
-                        quote_spanned! {span=>
-                            #[ #meta_list  ]
-                        }
-                    } else {
-                        attr.to_token_stream()
-                    }
-                }
-                _ => {
-                    eprintln!("{}", attr.to_token_stream().to_string());
-                    attr.to_token_stream()
-                }
-            }
-        })
     }
 
     /// Generates the constructor for the bitfield that initializes all bytes to zero.
