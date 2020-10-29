@@ -1,5 +1,8 @@
 # 0.10.0 (WIP)
 
+- (Thanks @jam1garner): The `#[bitfield]` macro now looks for `#[derive(Debug)]` annotations and if found will implement
+  one that formats the struct with its fields as a user would expect them. Previously having a `#[derive(Debug)]`
+  annotation on a `#[bitfield]` struct would simply print the contents of the generated internal byte array.
 - Implement `#[bitfield(bytes = N)]` parameter to ensure at compile time that the bitfield struct
   requires `N` bytes of memory.
 - Implement `#[bitfield(filled: bool)]` parameter to control whether the bitfield struct ensures that either
