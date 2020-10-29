@@ -23,6 +23,8 @@ pub fn define_specifiers(input: TokenStream) -> TokenStream {
 
 /// Applicable to structs to turn their fields into compact bitfields.
 ///
+/// # Generated API
+///
 /// By default this generates the following API:
 ///
 /// - **Constructors:**
@@ -57,6 +59,166 @@ pub fn define_specifiers(input: TokenStream) -> TokenStream {
 ///
 ///     - `from_bytes(bytes)`: Allows to constructor the bitfield type from a fixed array of bytes.
 ///     - `into_bytes()`: Allows to convert the bitfield into its underlying byte representation.
+///
+/// # Parameters
+///
+/// The following parameters for the `#[bitfield]` macro are supported:
+///
+/// ## Parameter: `bytes = N`
+///
+/// This ensures at compilation time that the resulting `#[bitfield]` struct consists of
+/// exactly `N` bytes. Yield a compilation error if this does not hold true.
+///
+/// ### Example
+///
+/// ```
+/// # use modular_bitfield::prelude::*;
+/// #[bitfield(bytes = 2)]
+/// pub struct SingedInt {
+///     sign: bool, //  1 bit
+///     value: B15, // 15 bits
+/// }
+/// ```
+///
+/// ## Parameter: `filled: bool`
+///
+/// If `filled` is `true` ensures that the `#[bitfield]` struct defines all bits and
+/// therefore has a bitwidth that is divisible by 8. If `filled` is `false` ensures the
+/// exact opposite.
+///
+/// The default value is: `true`
+///
+/// ### Example
+///
+/// ```
+/// # use modular_bitfield::prelude::*;
+/// #[bitfield(filled = false)]
+/// pub struct Package {
+///     is_received: bool, // 1 bit
+///     is_alive: bool,    // 1 bit
+///     status: B2,        // 2 bits
+/// }
+/// ```
+///
+/// ## Parameter: `specifier: bool`
+///
+/// If `specifier` is `true` the `#[bitfield]` macro will additionally generate an implementation
+/// for the [`Specifier`](modular_bitfield::Specifier) trait. This is limited to bitfield types
+/// that have a total bit width of 128 bit or fewer. This is ensured at compile time.
+///
+/// Implementing the [`Specifier`](modular_bitfield::Specifier) trait allows for the type to be
+/// used as a field within another `#[bitfield]` annotated type.
+///
+/// ### Example
+///
+/// ```
+/// # use modular_bitfield::prelude::*;
+/// #[bitfield(specifier = true, filled = false)]
+/// pub struct Header {
+///     is_received: bool, // 1 bit
+///     is_alive: bool,    // 1 bit
+///     status: B2,        // 2 bits
+/// }
+/// ```
+///
+/// Now the above `Header` bitfield type can be used in yet another `#[bitfield]` annotated type:
+///
+/// ```
+/// # use modular_bitfield::prelude::*;
+/// # #[bitfield(specifier = true, filled = false)]
+/// # pub struct Header {
+/// #     is_received: bool, // 1 bit
+/// #     is_alive: bool,    // 1 bit
+/// #     status: B2,        // 2 bits
+/// # }
+/// #[bitfield]
+/// pub struct Base {
+///     header: Header, //  4 bits
+///     content: B28,   // 28 bits
+/// }
+/// ```
+///
+/// ## Field Parameter: `#[bits = N]`
+///
+/// To ensure at compile time that a field of a `#[bitfield]` struct has a bit width of exactly
+/// `N` a user may add `#[bits = N]` to the field in question.
+///
+/// ### Example
+///
+/// ```
+/// # use modular_bitfield::prelude::*;
+/// # #[bitfield(specifier = true, filled = false)]
+/// # pub struct Header {
+/// #     is_received: bool, // 1 bit
+/// #     is_alive: bool,    // 1 bit
+/// #     status: B2,        // 2 bits
+/// # }
+/// #[bitfield]
+/// pub struct Base {
+///     #[bits = 4]
+///     header: Header, //  4 bits
+///     content: B28,   // 28 bits
+/// }
+/// ```
+///
+/// # Features
+///
+/// ## Supports `#[repr(uN)]`
+///
+/// It is possible to additionally annotate a `#[bitfield]` annotated struct with `#[repr(uN)]`
+/// where `uN` is one of `u8`, `u16`, `u32`, `u64` or `u128` in order to make it conveniently
+/// interchangeable with such an unsigned integer value.
+///
+/// As an effect to the user this implements `From` implementations between the chosen primitive
+/// and the bitfield as well as ensuring at compile time that the bit width of the bitfield struct
+/// matches the bit width of the primitive.
+///
+/// ### Example
+///
+/// ```
+/// # use modular_bitfield::prelude::*;
+/// #[bitfield]
+/// #[repr(u16)]
+/// pub struct SignedU16 {
+///     sign: bool,     //  1 bit
+///     abs_value: B15, // 15 bits
+/// }
+///
+/// let sint = SignedU16::from(0b0111_0001);
+/// assert_eq!(sint.sign(), true);
+/// assert_eq!(sint.abs_value(), 0b0011_1000);
+/// assert_eq!(u16::from(sint), 0b0111_0001_u16);
+/// ```
+///
+/// ## Support: `#[derive(Debug)]`
+///
+/// If a `#[derive(Debug)]` is found by the `#[bitfield]` a naturally formatting implementation
+/// is going to be generated that clearly displays all the fields and their values as the user
+/// would expect.
+/// Also invalid bit patterns for fields are clearly displayed under this implementation.
+///
+/// ### Example
+///
+/// ```
+/// # use modular_bitfield::prelude::*;
+/// #[bitfield]
+/// #[derive(Debug)]
+/// pub struct Package {
+///     is_received: bool, // 1 bit
+///     is_alive: bool,    // 1 bit
+///     status: B6,        // 6 bits
+/// }
+///
+/// let package = Package::new()
+///     .with_is_received(false)
+///     .with_is_alive(true)
+///     .with_status(3);
+/// println!("{:?}", package);
+/// assert_eq!(
+///     format!("{:?}", package),
+///     "Package { is_received: false, is_alive: true, status: 3 }",
+/// );
+/// ```
 ///
 /// Attribute applicable to structs that turns them into bitfield structs.
 ///
