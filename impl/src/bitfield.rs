@@ -213,16 +213,16 @@ impl BitfieldStruct {
             let (field_strings, field_getters) = self.get_field_strings_and_getters();
 
             Some(quote_spanned!(span=>
-                impl core::fmt::Debug for #ident {
-                    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-                        f.debug_struct(stringify!(#ident))
+                impl ::core::fmt::Debug for #ident {
+                    fn fmt(&self, __bf_f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
+                        __bf_f.debug_struct(::core::stringify!(#ident))
                             #(
                                 .field(
                                     #field_strings,
                                     self.#field_getters()
                                         .as_ref()
-                                        .map(|field| field as &dyn core::fmt::Debug)
-                                        .unwrap_or_else(|err| err as &dyn core::fmt::Debug)
+                                        .map(|__bf_field| __bf_field as &dyn ::core::fmt::Debug)
+                                        .unwrap_or_else(|__bf_err| __bf_err as &dyn ::core::fmt::Debug)
                                 )
                             )*
                             .finish()
