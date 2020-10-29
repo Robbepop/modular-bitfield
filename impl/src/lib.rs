@@ -219,58 +219,6 @@ pub fn define_specifiers(input: TokenStream) -> TokenStream {
 ///     "Package { is_received: false, is_alive: true, status: 3 }",
 /// );
 /// ```
-///
-/// Attribute applicable to structs that turns them into bitfield structs.
-///
-/// Generates getters and setters for all fields in the struct.
-/// Can be used modularily in combination with enums that derive from `BitfieldSpecifier`
-/// via `#[derive(BitfieldSpecifier)].
-///
-/// Also generates a simple constructor `new` that initializes all bits to `0`.
-///
-/// It is possible to attach `#[bits = N]` attribute to struct fields to assert that
-/// they are of size N bits.
-///
-/// Fields are accessed by a method of the same name, except in the case of tuple structs,
-/// which use `get_n()` style methods, where `n` is the index of the field to access.
-/// Likewise, fields can be set with `set_name()` style methods for normal structs,
-/// and `set_n()` style methods for tuple structs.
-///
-/// ## Example
-///
-/// ```
-/// use modular_bitfield::prelude::*;
-///
-/// #[bitfield]
-/// struct Example {
-///     a: B1,      // Uses 1 bit
-///     #[bits = 7] // Optional, just asserts that B7 uses exactly 7 bits.
-///     b: B7,      // Uses 7 bits
-///     c: B24,     // Uses 24 bits
-/// }
-///
-/// #[bitfield]
-/// struct TupleExample(B1, B7);
-///
-/// let mut example = Example::new();
-/// assert_eq!(example.a(), 0);
-/// assert_eq!(example.b(), 0);
-/// assert_eq!(example.c(), 0);
-/// example.set_a(1);
-/// example.set_b(0b0100_0000);
-/// example.set_c(1337);
-/// assert_eq!(example.a(), 1);
-/// assert_eq!(example.b(), 0b0100_0000);
-/// assert_eq!(example.c(), 1337);
-///
-/// let mut tuple = TupleExample::new();
-/// assert_eq!(tuple.get_0(), 0);
-/// assert_eq!(tuple.get_1(), 0);
-/// tuple.set_0(1);
-/// tuple.set_1(0b0100_0000);
-/// assert_eq!(tuple.get_0(), 1);
-/// assert_eq!(tuple.get_1(), 0b0100_0000);
-/// ```
 #[proc_macro_attribute]
 pub fn bitfield(args: TokenStream, input: TokenStream) -> TokenStream {
     bitfield::analyse_and_expand(args.into(), input.into()).into()
