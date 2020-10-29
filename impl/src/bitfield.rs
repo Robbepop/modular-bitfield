@@ -377,11 +377,7 @@ impl BitfieldStruct {
         self.item_struct.attrs.iter().map(|attr| {
             match attr.parse_meta() {
                 Ok(syn::Meta::List(mut meta_list)) => {
-                    let is_derive = meta_list
-                        .path
-                        .get_ident()
-                        .map(|ident| *ident == "derive")
-                        .unwrap_or(false);
+                    let is_derive = meta_list.path.is_ident("derive");
 
                     if is_derive {
                         meta_list.nested = meta_list
