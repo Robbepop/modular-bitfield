@@ -75,6 +75,7 @@ fn tests() {
     t.pass("tests/derive-debug/valid-use-2.rs");
     t.pass("tests/derive-debug/valid-use-specifier.rs");
     t.pass("tests/derive-debug/print-invalid-bits.rs");
+    t.pass("tests/derive-debug/respects-other-derives.rs");
     t.compile_fail("tests/derive-debug/duplicate-derive-debug.rs");
     t.compile_fail("tests/derive-debug/duplicate-derive-debug-2.rs");
 }
