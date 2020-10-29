@@ -1,9 +1,8 @@
 use modular_bitfield::prelude::*;
 
 #[derive(BitfieldSpecifier, Debug)]
-#[bits = 2]
 pub enum Status {
-    Green, Yellow, Red
+    Green, Yellow, Red, None
 }
 
 #[bitfield]
