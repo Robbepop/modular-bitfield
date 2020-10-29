@@ -1,4 +1,4 @@
-# 0.10.0 (WIP)
+# 0.10.0 (2020-10-29)
 
 - (Thanks @jam1garner): The `#[bitfield]` macro now looks for `#[derive(Debug)]` annotations and if found will implement
   one that formats the struct with its fields as a user would expect them. Previously having a `#[derive(Debug)]`
