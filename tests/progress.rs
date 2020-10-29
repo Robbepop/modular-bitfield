@@ -72,4 +72,5 @@ fn tests() {
 
     // Tests for `#[derive(Debug)]`:
     t.pass("tests/derive-debug/valid-use.rs");
+    t.pass("tests/derive-debug/valid-use-2.rs");
 }
