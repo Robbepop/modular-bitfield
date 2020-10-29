@@ -457,9 +457,7 @@ impl BitfieldStruct {
                             .filter(|nested| {
                                 match nested {
                                     syn::NestedMeta::Meta(syn::Meta::Path(path)) => {
-                                        path.get_ident()
-                                            .map(|ident| *ident != "Debug")
-                                            .unwrap_or(true)
+                                        path.is_ident("Debug")
                                     }
                                     _ => true,
                                 }
