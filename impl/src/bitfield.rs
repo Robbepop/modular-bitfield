@@ -338,7 +338,7 @@ impl BitfieldStruct {
             });
         Some(quote_spanned!(span=>
             impl ::core::fmt::Debug for #ident {
-                fn fmt(&self, __bf_f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
+                fn fmt(&self, __bf_f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
                     __bf_f.debug_struct(::core::stringify!(#ident))
                         #( #fields )*
                         .finish()
