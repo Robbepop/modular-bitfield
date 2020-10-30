@@ -35,6 +35,7 @@ fn tests() {
     t.pass("tests/29-struct-in-struct.rs");
     t.compile_fail("tests/30-out-of-bounds-specifier.rs");
     t.pass("tests/31-unfilled-from-bytes.rs");
+    t.pass("tests/regressions/deny_elided_lifetime.rs");
 
     // Tests for `bytes = N` #[bitfield] parameter:
     t.pass("tests/bytes-param/valid-bitfield.rs");
