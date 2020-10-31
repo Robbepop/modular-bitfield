@@ -111,7 +111,8 @@ pub fn define_specifiers(input: TokenStream) -> TokenStream {
 ///
 /// ```
 /// # use modular_bitfield::prelude::*;
-/// #[bitfield(specifier = true, filled = false)]
+/// #[bitfield(filled = false)]
+/// #[derive(BitfieldSpecifier)]
 /// pub struct Header {
 ///     is_received: bool, // 1 bit
 ///     is_alive: bool,    // 1 bit
@@ -123,7 +124,8 @@ pub fn define_specifiers(input: TokenStream) -> TokenStream {
 ///
 /// ```
 /// # use modular_bitfield::prelude::*;
-/// # #[bitfield(specifier = true, filled = false)]
+/// # #[bitfield(filled = false)]
+/// # #[derive(BitfieldSpecifier)]
 /// # pub struct Header {
 /// #     is_received: bool, // 1 bit
 /// #     is_alive: bool,    // 1 bit
@@ -145,7 +147,8 @@ pub fn define_specifiers(input: TokenStream) -> TokenStream {
 ///
 /// ```
 /// # use modular_bitfield::prelude::*;
-/// # #[bitfield(specifier = true, filled = false)]
+/// # #[bitfield(filled = false)]
+/// # #[derive(BitfieldSpecifier)]
 /// # pub struct Header {
 /// #     is_received: bool, // 1 bit
 /// #     is_alive: bool,    // 1 bit

@@ -191,7 +191,8 @@
 //! #     Red, Green, Yellow, None,
 //! # }
 //! #
-//! #[bitfield(specifier = true, filled = false)]
+//! #[bitfield(filled = false)]
+//! #[derive(BitfieldSpecifier)]
 //! pub struct Header {
 //!     is_compact: bool,
 //!     is_secure: bool,
@@ -241,7 +242,8 @@
 //! #     Red, Green, Yellow,
 //! # }
 //! #
-//! # #[bitfield(specifier = true, filled = false)]
+//! # #[bitfield(filled = false)]
+//! # #[derive(BitfieldSpecifier)]
 //! # pub struct Header {
 //! #     is_compact: bool,
 //! #     is_secure: bool,

@@ -19,7 +19,8 @@ where
 /// ```rust
 /// # use modular_bitfield::prelude::*;
 /// #
-/// #[bitfield(specifier = true, bytes = 4, filled = true)]
+/// #[bitfield(bytes = 4, filled = true)]
+/// #[derive(BitfieldSpecifier)]
 /// pub struct SignedInteger {
 ///     sign: bool,
 ///     value: B31,
