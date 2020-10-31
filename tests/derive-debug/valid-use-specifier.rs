@@ -1,6 +1,7 @@
 use modular_bitfield::prelude::*;
 
-#[bitfield(specifier = true, filled = false)] // Requires just 4 bits!
+#[bitfield(filled = false)] // Requires just 4 bits!
+#[derive(BitfieldSpecifier)]
 #[derive(Debug)]
 pub struct Header {
     status: B2,
