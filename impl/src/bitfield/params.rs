@@ -50,23 +50,6 @@ impl IntoIterator for ParamArgs {
 }
 
 impl Config {
-    /// Feeds a `specifier: bool` parameter to the `#[bitfield]` configuration.
-    fn feed_specifier_param(&mut self, name_value: syn::MetaNameValue) -> Result<()> {
-        assert!(name_value.path.is_ident("specifier"));
-        match &name_value.lit {
-            syn::Lit::Bool(lit_bool) => {
-                self.specifier(lit_bool.value, name_value.span())?;
-            }
-            invalid => {
-                return Err(format_err!(
-                    invalid,
-                    "encountered invalid value argument for #[bitfield] `specifier` parameter",
-                ))
-            }
-        }
-        Ok(())
-    }
-
     /// Feeds a `bytes: int` parameter to the `#[bitfield]` configuration.
     fn feed_bytes_param(&mut self, name_value: syn::MetaNameValue) -> Result<()> {
         assert!(name_value.path.is_ident("bytes"));
@@ -119,9 +102,7 @@ impl Config {
                 syn::NestedMeta::Meta(meta) => {
                     match meta {
                         syn::Meta::NameValue(name_value) => {
-                            if name_value.path.is_ident("specifier") {
-                                self.feed_specifier_param(name_value)?;
-                            } else if name_value.path.is_ident("bytes") {
+                            if name_value.path.is_ident("bytes") {
                                 self.feed_bytes_param(name_value)?;
                             } else if name_value.path.is_ident("filled") {
                                 self.feed_filled_param(name_value)?;

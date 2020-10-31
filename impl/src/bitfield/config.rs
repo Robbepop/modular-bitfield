@@ -16,6 +16,7 @@ pub struct Config {
     pub filled: Option<ConfigValue<bool>>,
     pub repr: Option<ConfigValue<ReprKind>>,
     pub derive_debug: Option<ConfigValue<()>>,
+    pub derive_specifier: Option<ConfigValue<()>>,
     pub retained_attributes: Vec<syn::Attribute>,
     pub field_configs: HashMap<usize, ConfigValue<FieldConfig>>,
 }
@@ -192,6 +193,28 @@ impl Config {
                 )))
             }
             None => self.derive_debug = Some(ConfigValue::new((), span)),
+        }
+        Ok(())
+    }
+
+    /// Registers the `#[derive(BitfieldSpecifier)]` attribute for the #[bitfield] macro.
+    ///
+    /// # Errors
+    ///
+    /// If a `#[derive(BitfieldSpecifier)]` attribute has already been found.
+    pub fn derive_specifier(&mut self, span: Span) -> Result<(), syn::Error> {
+        match &self.derive_specifier {
+            Some(previous) => {
+                return Err(format_err!(
+                    span,
+                    "encountered duplicate `#[derive(BitfieldSpecifier)]` attribute",
+                )
+                .into_combine(format_err!(
+                    previous.span,
+                    "previous `#[derive(BitfieldSpecifier)]` parameter here"
+                )))
+            }
+            None => self.derive_specifier = Some(ConfigValue::new((), span)),
         }
         Ok(())
     }

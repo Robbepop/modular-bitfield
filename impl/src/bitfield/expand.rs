@@ -51,9 +51,7 @@ impl BitfieldStruct {
     ///
     /// Otherwise returns `None`.
     pub fn generate_specifier_impl(&self, config: &Config) -> Option<TokenStream2> {
-        if !config.specifier_enabled() {
-            return None
-        }
+        config.derive_specifier.as_ref()?;
         let span = self.item_struct.span();
         let ident = &self.item_struct.ident;
         let bits = self.generate_bitfield_size();
