@@ -1,0 +1,5 @@
+error: cannot find attribute `whoat_bits` in this scope
+ --> $DIR/invalid_bits_field_attr.rs:8:7
+  |
+8 |     #[whoat_bits = 31] // Should error!
+  |       ^^^^^^^^^^

@@ -36,6 +36,7 @@ fn tests() {
     t.compile_fail("tests/30-out-of-bounds-specifier.rs");
     t.pass("tests/31-unfilled-from-bytes.rs");
     t.pass("tests/regressions/deny_elided_lifetime.rs");
+    t.compile_fail("tests/regressions/invalid_bits_field_attr.rs");
 
     // Tests for `bytes = N` #[bitfield] parameter:
     t.pass("tests/bytes-param/valid-bitfield.rs");
