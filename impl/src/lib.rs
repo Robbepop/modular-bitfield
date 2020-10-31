@@ -98,46 +98,6 @@ pub fn define_specifiers(input: TokenStream) -> TokenStream {
 /// }
 /// ```
 ///
-/// ## Parameter: `specifier: bool`
-///
-/// If `specifier` is `true` the `#[bitfield]` macro will additionally generate an implementation
-/// for the `Specifier` trait. This is limited to bitfield types
-/// that have a total bit width of 128 bit or fewer. This is ensured at compile time.
-///
-/// Implementing the `Specifier` trait allows for the type to be
-/// used as a field within another `#[bitfield]` annotated type.
-///
-/// ### Example
-///
-/// ```
-/// # use modular_bitfield::prelude::*;
-/// #[bitfield(filled = false)]
-/// #[derive(BitfieldSpecifier)]
-/// pub struct Header {
-///     is_received: bool, // 1 bit
-///     is_alive: bool,    // 1 bit
-///     status: B2,        // 2 bits
-/// }
-/// ```
-///
-/// Now the above `Header` bitfield type can be used in yet another `#[bitfield]` annotated type:
-///
-/// ```
-/// # use modular_bitfield::prelude::*;
-/// # #[bitfield(filled = false)]
-/// # #[derive(BitfieldSpecifier)]
-/// # pub struct Header {
-/// #     is_received: bool, // 1 bit
-/// #     is_alive: bool,    // 1 bit
-/// #     status: B2,        // 2 bits
-/// # }
-/// #[bitfield]
-/// pub struct Base {
-///     header: Header, //  4 bits
-///     content: B28,   // 28 bits
-/// }
-/// ```
-///
 /// ## Field Parameter: `#[bits = N]`
 ///
 /// To ensure at compile time that a field of a `#[bitfield]` struct has a bit width of exactly
@@ -205,31 +165,44 @@ pub fn define_specifiers(input: TokenStream) -> TokenStream {
 ///
 /// # Features
 ///
-/// ## Supports `#[repr(uN)]`
+/// ## Support: `#[derive(BitfieldSpecifier)]`
 ///
-/// It is possible to additionally annotate a `#[bitfield]` annotated struct with `#[repr(uN)]`
-/// where `uN` is one of `u8`, `u16`, `u32`, `u64` or `u128` in order to make it conveniently
-/// interchangeable with such an unsigned integer value.
+/// If a `#[bitfield]` struct is annotated with a `#[derive(BitfieldSpecifier)]` attribute
+/// an implementation of the `Specifier` trait will be generated for it. This has the effect
+/// that the bitfield struct itself can be used as the type of a field of another bitfield type.
 ///
-/// As an effect to the user this implements `From` implementations between the chosen primitive
-/// and the bitfield as well as ensuring at compile time that the bit width of the bitfield struct
-/// matches the bit width of the primitive.
+/// This feature is limited to bitfield types that have a total bit width of 128 bit or fewer.
+/// This restriction is ensured at compile time.
 ///
 /// ### Example
 ///
 /// ```
 /// # use modular_bitfield::prelude::*;
-/// #[bitfield]
-/// #[repr(u16)]
-/// pub struct SignedU16 {
-///     sign: bool,     //  1 bit
-///     abs_value: B15, // 15 bits
+/// #[bitfield(filled = false)]
+/// #[derive(BitfieldSpecifier)]
+/// pub struct Header {
+///     is_received: bool, // 1 bit
+///     is_alive: bool,    // 1 bit
+///     status: B2,        // 2 bits
 /// }
+/// ```
 ///
-/// let sint = SignedU16::from(0b0111_0001);
-/// assert_eq!(sint.sign(), true);
-/// assert_eq!(sint.abs_value(), 0b0011_1000);
-/// assert_eq!(u16::from(sint), 0b0111_0001_u16);
+/// Now the above `Header` bitfield type can be used in yet another `#[bitfield]` annotated type:
+///
+/// ```
+/// # use modular_bitfield::prelude::*;
+/// # #[bitfield(filled = false)]
+/// # #[derive(BitfieldSpecifier)]
+/// # pub struct Header {
+/// #     is_received: bool, // 1 bit
+/// #     is_alive: bool,    // 1 bit
+/// #     status: B2,        // 2 bits
+/// # }
+/// #[bitfield]
+/// pub struct Base {
+///     header: Header, //  4 bits
+///     content: B28,   // 28 bits
+/// }
 /// ```
 ///
 /// ## Support: `#[derive(Debug)]`
@@ -261,6 +234,34 @@ pub fn define_specifiers(input: TokenStream) -> TokenStream {
 ///     "Package { is_received: false, is_alive: true, status: 3 }",
 /// );
 /// ```
+///
+/// ## Support: `#[repr(uN)]`
+///
+/// It is possible to additionally annotate a `#[bitfield]` annotated struct with `#[repr(uN)]`
+/// where `uN` is one of `u8`, `u16`, `u32`, `u64` or `u128` in order to make it conveniently
+/// interchangeable with such an unsigned integer value.
+///
+/// As an effect to the user this implements `From` implementations between the chosen primitive
+/// and the bitfield as well as ensuring at compile time that the bit width of the bitfield struct
+/// matches the bit width of the primitive.
+///
+/// ### Example
+///
+/// ```
+/// # use modular_bitfield::prelude::*;
+/// #[bitfield]
+/// #[repr(u16)]
+/// pub struct SignedU16 {
+///     sign: bool,     //  1 bit
+///     abs_value: B15, // 15 bits
+/// }
+///
+/// let sint = SignedU16::from(0b0111_0001);
+/// assert_eq!(sint.sign(), true);
+/// assert_eq!(sint.abs_value(), 0b0011_1000);
+/// assert_eq!(u16::from(sint), 0b0111_0001_u16);
+/// ```
+///
 #[proc_macro_attribute]
 pub fn bitfield(args: TokenStream, input: TokenStream) -> TokenStream {
     bitfield::analyse_and_expand(args.into(), input.into()).into()
