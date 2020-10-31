@@ -47,7 +47,8 @@ impl BitfieldStruct {
         )
     }
 
-    /// Expands to the `Specifier` impl for the `#[bitfield]` struct if `specifier = true`.
+    /// Expands to the `Specifier` impl for the `#[bitfield]` struct if the
+    /// `#[derive(BitfieldSpecifier)]` attribute is applied to it as well.
     ///
     /// Otherwise returns `None`.
     pub fn generate_specifier_impl(&self, config: &Config) -> Option<TokenStream2> {

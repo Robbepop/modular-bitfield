@@ -180,8 +180,8 @@
 //!
 //! It is possible to use `#[bitfield]` structs as fields of `#[bitfield]` structs.
 //! This is generally useful if there are some common fields for multiple bitfields
-//! and is achieved by adding `specifier = true` to the parameters of the `#[bitfield]`
-//! attribute:
+//! and is achieved by adding the `#[derive(BitfieldSpecifier)]` attribute to the struct
+//! annotated with `#[bitfield]`:
 //!
 //! ```
 //! # use modular_bitfield::prelude::*;
