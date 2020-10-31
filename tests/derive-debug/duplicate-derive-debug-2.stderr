@@ -1,4 +1,4 @@
-error: encountered duplicate `#[derive(Debug)]` attribute: duplicate set to true
+error: encountered duplicate `#[derive(Debug)]` attribute
  --> $DIR/duplicate-derive-debug-2.rs:4:17
   |
 4 | #[derive(Debug, Debug)]
