@@ -61,7 +61,7 @@ impl BitfieldStruct {
             #[allow(clippy::identity_op)]
             const _: () = {
                 impl ::modular_bitfield::private::checks::CheckSpecifierHasAtMost128Bits for #ident {
-                    type CheckType = [(); (#bits <= 128) as usize];
+                    type CheckType = [(); (#bits <= 128) as ::core::primitive::usize];
                 }
             };
 
@@ -77,7 +77,9 @@ impl BitfieldStruct {
                     value: Self::InOut,
                 ) -> ::core::result::Result<Self::Bytes, ::modular_bitfield::error::OutOfBounds> {
                     ::core::result::Result::Ok(
-                        <[(); #next_divisible_by_8] as ::modular_bitfield::private::ArrayBytesConversion>::array_into_bytes(value.bytes)
+                        <[(); #next_divisible_by_8] as ::modular_bitfield::private::ArrayBytesConversion>::array_into_bytes(
+                            value.bytes
+                        )
                     )
                 }
 
@@ -86,7 +88,9 @@ impl BitfieldStruct {
                     bytes: Self::Bytes,
                 ) -> ::core::result::Result<Self::InOut, ::modular_bitfield::error::InvalidBitPattern<Self::Bytes>>
                 {
-                    let __bf_max_value: Self::Bytes = (0x01 as Self::Bytes).checked_shl(Self::BITS as u32).unwrap_or(<Self::Bytes>::MAX);
+                    let __bf_max_value: Self::Bytes = (0x01 as Self::Bytes)
+                        .checked_shl(Self::BITS as ::core::primitive::u32)
+                        .unwrap_or(<Self::Bytes>::MAX);
                     if bytes > __bf_max_value {
                         return ::core::result::Result::Err(::modular_bitfield::error::InvalidBitPattern::new(bytes))
                     }
