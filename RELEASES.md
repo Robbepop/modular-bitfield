@@ -1,3 +1,15 @@
+# 0.11.0 (WIP)
+
+- It is now possible to flag fields of `#[bitfield]` structs with `#[skip(..)]` in order to skip code generation for them.
+  There are possibilities to skip code generation of only setters using `#[skip(setters)]`, only getters `#[skip(getters)]`
+  or both. Having no arguments (e.g. just `#[skip]`) defaults to skipping both setters and getters.
+  A neat trick is to specify double wildcards as identifiers for skipped fields to avoid having the need to come up with
+  an identifier for them: For example: `#[skip]: __: B10`
+- Attributes applied to `#[bitfield]` fields are now properly propagated to their generated getters and setters.
+  Note thought that it might be confusing that an attribute applied to a struct field is actually applied to a function
+  through macro expansion.
+- Fixed several bugs and significantly improved error reporting for `#[bits = N]` field attributes for `#[bitfield]` fields.
+
 # 0.10.0 (2020-10-29)
 
 - (Thanks @jam1garner): The `#[bitfield]` macro now looks for `#[derive(Debug)]` annotations and if found will implement
