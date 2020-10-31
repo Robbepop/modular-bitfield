@@ -94,4 +94,12 @@ fn tests() {
     t.compile_fail("tests/skip/duplicate-specifier.rs");
     t.compile_fail("tests/skip/use-skipped-getter.rs");
     t.compile_fail("tests/skip/use-skipped-setter.rs");
+
+    // Tests for `#[derive(BitfieldSpecifier)] using `#[bitfield]`:
+    t.pass("tests/derive-specifier/valid-use.rs");
+    t.pass("tests/derive-specifier/struct-in-struct.rs");
+    t.pass("tests/derive-specifier/unfilled-from-bytes.rs");
+    t.compile_fail("tests/derive-specifier/out-of-bounds.rs");
+    t.compile_fail("tests/derive-specifier/duplicate-derive-1.rs");
+    t.compile_fail("tests/derive-specifier/duplicate-derive-2.rs");
 }

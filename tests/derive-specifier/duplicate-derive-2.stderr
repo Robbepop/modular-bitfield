@@ -1,0 +1,11 @@
+error: encountered duplicate `#[derive(BitfieldSpecifier)]` attribute
+ --> $DIR/duplicate-derive-2.rs:4:39
+  |
+4 | #[derive(BitfieldSpecifier)] #[derive(BitfieldSpecifier)]
+  |                                       ^^^^^^^^^^^^^^^^^
+
+error: previous `#[derive(BitfieldSpecifier)]` parameter here
+ --> $DIR/duplicate-derive-2.rs:4:10
+  |
+4 | #[derive(BitfieldSpecifier)] #[derive(BitfieldSpecifier)]
+  |          ^^^^^^^^^^^^^^^^^
