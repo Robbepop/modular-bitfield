@@ -10,6 +10,7 @@ mod bitfield_attr;
 mod bitfield_specifier;
 mod config;
 mod define_specifiers;
+mod field_config;
 
 use proc_macro::TokenStream;
 
