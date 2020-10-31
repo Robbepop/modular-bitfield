@@ -27,11 +27,14 @@ fn tests() {
     t.compile_fail("tests/20-access-test.rs");
     t.pass("tests/21-raw-identifiers.rs");
     t.pass("tests/22-with-setter.rs");
-    t.pass("tests/23-no-implicit-prelude.rs");
     t.pass("tests/24-primitives-as-specifiers.rs");
     t.compile_fail("tests/26-invalid-struct-specifier.rs");
     t.compile_fail("tests/27-invalid-union-specifier.rs");
     t.pass("tests/28-single-bit-enum.rs");
+
+    // Tests for regressions found in published versions:
+    t.pass("tests/regressions/no-implicit-prelude.rs");
+    t.pass("tests/regressions/no-implicit-prelude-2.rs");
     t.pass("tests/regressions/regression-issue-8.rs");
     t.pass("tests/regressions/deny_elided_lifetime.rs");
     t.compile_fail("tests/regressions/invalid_bits_field_attr.rs");
