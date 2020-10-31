@@ -1,9 +1,7 @@
 #![allow(dead_code)]
 
-use crate::{
-    errors::CombineError,
-    field_config::FieldConfig,
-};
+use super::field_config::FieldConfig;
+use crate::errors::CombineError;
 use proc_macro2::Span;
 use std::collections::{
     hash_map::Entry,

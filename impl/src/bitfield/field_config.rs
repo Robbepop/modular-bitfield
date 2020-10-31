@@ -1,7 +1,5 @@
-use crate::{
-    config::ConfigValue,
-    errors::CombineError,
-};
+use super::config::ConfigValue;
+use crate::errors::CombineError;
 use proc_macro2::Span;
 
 #[derive(Default, Clone)]

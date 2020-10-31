@@ -6,11 +6,8 @@ extern crate proc_macro;
 #[macro_use]
 mod errors;
 mod bitfield;
-mod bitfield_attr;
 mod bitfield_specifier;
-mod config;
 mod define_specifiers;
-mod field_config;
 
 use proc_macro::TokenStream;
 

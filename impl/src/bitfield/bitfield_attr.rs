@@ -1,4 +1,4 @@
-use crate::config::Config;
+use super::config::Config;
 use core::convert::TryFrom;
 use syn::spanned::Spanned;
 
