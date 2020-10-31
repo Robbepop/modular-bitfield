@@ -261,7 +261,6 @@ pub fn define_specifiers(input: TokenStream) -> TokenStream {
 /// assert_eq!(sint.abs_value(), 0b0011_1000);
 /// assert_eq!(u16::from(sint), 0b0111_0001_u16);
 /// ```
-///
 #[proc_macro_attribute]
 pub fn bitfield(args: TokenStream, input: TokenStream) -> TokenStream {
     bitfield::analyse_and_expand(args.into(), input.into()).into()
