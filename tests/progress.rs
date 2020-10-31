@@ -36,6 +36,7 @@ fn tests() {
     t.compile_fail("tests/30-out-of-bounds-specifier.rs");
     t.pass("tests/31-unfilled-from-bytes.rs");
     t.pass("tests/regressions/deny_elided_lifetime.rs");
+    t.compile_fail("tests/regressions/invalid_bits_field_attr.rs");
 
     // Tests for `bytes = N` #[bitfield] parameter:
     t.pass("tests/bytes-param/valid-bitfield.rs");
@@ -79,4 +80,18 @@ fn tests() {
     t.pass("tests/derive-debug/respects-other-derives.rs");
     t.compile_fail("tests/derive-debug/duplicate-derive-debug.rs");
     t.compile_fail("tests/derive-debug/duplicate-derive-debug-2.rs");
+
+    // Tests for `#[skip(..)]`:
+    t.pass("tests/skip/skip-default.rs");
+    t.pass("tests/skip/skip-getters-and-setters.rs");
+    t.pass("tests/skip/skip-with-debug.rs");
+    t.pass("tests/skip/double_wildcards-1.rs");
+    t.pass("tests/skip/double_wildcards-2.rs");
+    t.pass("tests/skip/skip-getters.rs");
+    t.pass("tests/skip/skip-setters.rs");
+    t.compile_fail("tests/skip/invalid-specifier.rs");
+    t.compile_fail("tests/skip/duplicate-attr.rs");
+    t.compile_fail("tests/skip/duplicate-specifier.rs");
+    t.compile_fail("tests/skip/use-skipped-getter.rs");
+    t.compile_fail("tests/skip/use-skipped-setter.rs");
 }

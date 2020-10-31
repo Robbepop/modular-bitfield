@@ -10,6 +10,7 @@ mod bitfield_attr;
 mod bitfield_specifier;
 mod config;
 mod define_specifiers;
+mod field_config;
 
 use proc_macro::TokenStream;
 
@@ -158,6 +159,47 @@ pub fn define_specifiers(input: TokenStream) -> TokenStream {
 ///     #[bits = 4]
 ///     header: Header, //  4 bits
 ///     content: B28,   // 28 bits
+/// }
+/// ```
+///
+/// ## Field Parameter: `#[skip(..)]`
+///
+/// It is possible to skip the entire code generation for getters or setters with the `#[skip]`
+/// field attribute.
+/// This is useful if a field just needs to be read or written exclusively. Skipping both
+/// setters and getters is useful if you want to have undefined blocks within your bitfields.
+///
+/// ### Example
+///
+/// ```
+/// # use modular_bitfield::prelude::*;
+/// #[bitfield]
+/// pub struct Sparse {
+///     #[skip(getters)]
+///     no_getters: B4,
+///     #[skip(setters)]
+///     no_setters: B4,
+///     #[skip]
+///     skipped_entirely: B4,
+///     #[skip(getters, setters)]
+///     skipped_entirely_2: B4,
+/// }
+/// ```
+///
+/// ### Trick: Wildcards
+///
+/// If you are completely uninterested in a field of a bitfield, for example when specifying
+/// some undefined bits in your bitfield you can use double wildcards as their names:
+///
+/// ```
+/// # use modular_bitfield::prelude::*;
+/// #[bitfield]
+/// pub struct Sparse {
+///     #[skip] __: B10,
+///     a: bool,
+///     #[skip] __: B10,
+///     b: bool,
+///     #[skip] __: B10,
 /// }
 /// ```
 ///
