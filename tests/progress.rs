@@ -28,10 +28,10 @@ fn tests() {
     t.pass("tests/22-with-setter.rs");
     t.pass("tests/23-no-implicit-prelude.rs");
     t.pass("tests/24-primitives-as-specifiers.rs");
-    t.pass("tests/25-regression-issue-8.rs");
     t.compile_fail("tests/26-invalid-struct-specifier.rs");
     t.compile_fail("tests/27-invalid-union-specifier.rs");
     t.pass("tests/28-single-bit-enum.rs");
+    t.pass("tests/regressions/regression-issue-8.rs");
     t.pass("tests/29-struct-in-struct.rs");
     t.compile_fail("tests/30-out-of-bounds-specifier.rs");
     t.pass("tests/31-unfilled-from-bytes.rs");
