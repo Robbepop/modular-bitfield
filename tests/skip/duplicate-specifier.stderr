@@ -1,0 +1,11 @@
+error: encountered duplicate #[skip(getters)]
+ --> $DIR/duplicate-specifier.rs:5:7
+  |
+5 |     #[skip(getters, getters)]
+  |       ^^^^
+
+error: previous found here
+ --> $DIR/duplicate-specifier.rs:5:7
+  |
+5 |     #[skip(getters, getters)]
+  |       ^^^^

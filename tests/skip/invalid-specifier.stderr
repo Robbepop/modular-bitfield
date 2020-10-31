@@ -1,0 +1,5 @@
+error: encountered unknown or unsupported #[skip(..)] specifier
+ --> $DIR/invalid-specifier.rs:5:12
+  |
+5 |     #[skip(invalid_specifier)]
+  |            ^^^^^^^^^^^^^^^^^
