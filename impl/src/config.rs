@@ -1,7 +1,14 @@
 #![allow(dead_code)]
 
-use crate::errors::CombineError;
+use crate::{
+    errors::CombineError,
+    field_config::FieldConfig,
+};
 use proc_macro2::Span;
+use std::collections::{
+    hash_map::Entry,
+    HashMap,
+};
 
 /// The configuration for the `#[bitfield]` macro.
 #[derive(Default)]
@@ -12,6 +19,7 @@ pub struct Config {
     pub repr: Option<ConfigValue<ReprKind>>,
     pub derive_debug: Option<ConfigValue<bool>>,
     pub retained_attributes: Vec<syn::Attribute>,
+    pub field_configs: HashMap<usize, ConfigValue<FieldConfig>>,
 }
 
 /// Kinds of `#[repr(uN)]` annotations for a `#[bitfield]` struct.
@@ -42,6 +50,7 @@ impl core::fmt::Debug for ReprKind {
 }
 
 /// A configuration value and its originating span.
+#[derive(Clone)]
 pub struct ConfigValue<T> {
     /// The actual value of the config.
     pub value: T,
@@ -193,5 +202,34 @@ impl Config {
     /// Pushes another retained attribute that the #[bitfield] macro is going to re-expand and ignore.
     pub fn push_retained_attribute(&mut self, retained_attr: syn::Attribute) {
         self.retained_attributes.push(retained_attr);
+    }
+
+    /// Sets the field configuration and retained attributes for the given field.
+    ///
+    /// By convention we use the fields name to identify the field if existing.
+    /// Otherwise we turn the fields discriminant into an appropriate string.
+    ///
+    /// # Errors
+    ///
+    /// If duplicate field configurations have been found for a field.
+    pub fn field_config(
+        &mut self,
+        index: usize,
+        span: Span,
+        config: FieldConfig,
+    ) -> Result<(), syn::Error> {
+        match self.field_configs.entry(index) {
+            Entry::Occupied(occupied) => {
+                return Err(format_err!(span, "encountered duplicate config for field")
+                    .into_combine(format_err!(
+                        occupied.get().span,
+                        "previous config here"
+                    )))
+            }
+            Entry::Vacant(vacant) => {
+                vacant.insert(ConfigValue::new(config, span));
+            }
+        }
+        Ok(())
     }
 }
