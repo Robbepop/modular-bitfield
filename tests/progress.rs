@@ -4,6 +4,7 @@ mod panic_tests;
 #[test]
 fn tests() {
     let t = trybuild::TestCases::new();
+
     t.pass("tests/01-specifier-types.rs");
     t.pass("tests/02-storage.rs");
     t.pass("tests/03-accessors.rs");
@@ -28,13 +29,10 @@ fn tests() {
     t.pass("tests/22-with-setter.rs");
     t.pass("tests/23-no-implicit-prelude.rs");
     t.pass("tests/24-primitives-as-specifiers.rs");
-    t.pass("tests/25-regression-issue-8.rs");
     t.compile_fail("tests/26-invalid-struct-specifier.rs");
     t.compile_fail("tests/27-invalid-union-specifier.rs");
     t.pass("tests/28-single-bit-enum.rs");
-    t.pass("tests/29-struct-in-struct.rs");
-    t.compile_fail("tests/30-out-of-bounds-specifier.rs");
-    t.pass("tests/31-unfilled-from-bytes.rs");
+    t.pass("tests/regressions/regression-issue-8.rs");
     t.pass("tests/regressions/deny_elided_lifetime.rs");
     t.compile_fail("tests/regressions/invalid_bits_field_attr.rs");
 
@@ -94,4 +92,12 @@ fn tests() {
     t.compile_fail("tests/skip/duplicate-specifier.rs");
     t.compile_fail("tests/skip/use-skipped-getter.rs");
     t.compile_fail("tests/skip/use-skipped-setter.rs");
+
+    // Tests for `#[derive(BitfieldSpecifier)] using `#[bitfield]`:
+    t.pass("tests/derive-specifier/valid-use.rs");
+    t.pass("tests/derive-specifier/struct-in-struct.rs");
+    t.pass("tests/derive-specifier/unfilled-from-bytes.rs");
+    t.compile_fail("tests/derive-specifier/out-of-bounds.rs");
+    t.compile_fail("tests/derive-specifier/duplicate-derive-1.rs");
+    t.compile_fail("tests/derive-specifier/duplicate-derive-2.rs");
 }

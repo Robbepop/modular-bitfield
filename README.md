@@ -138,11 +138,12 @@ assert_eq!(data.status(), Status::Red);
 
 It is possible to use `#[bitfield]` structs as fields of `#[bitfield]` structs.
 This is generally useful if there are some common fields for multiple bitfields
-and is achieved by adding `specifier = true` to the parameters of the `#[bitfield]`
-attribute:
+and is achieved by adding `#[derive(BitfieldSpecifier)]` to the attributes of the
+`#[bitfield]` annotated struct:
 
 ```rust
-#[bitfield(specifier = true)]
+#[bitfield]
+#[derive(BitfieldSpecifier)]
 pub struct Header {
     is_compact: bool,
     is_secure: bool,

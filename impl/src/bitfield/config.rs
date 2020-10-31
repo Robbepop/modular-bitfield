@@ -1,9 +1,7 @@
 #![allow(dead_code)]
 
-use crate::{
-    errors::CombineError,
-    field_config::FieldConfig,
-};
+use super::field_config::FieldConfig;
+use crate::errors::CombineError;
 use proc_macro2::Span;
 use std::collections::{
     hash_map::Entry,
@@ -17,7 +15,8 @@ pub struct Config {
     pub bytes: Option<ConfigValue<usize>>,
     pub filled: Option<ConfigValue<bool>>,
     pub repr: Option<ConfigValue<ReprKind>>,
-    pub derive_debug: Option<ConfigValue<bool>>,
+    pub derive_debug: Option<ConfigValue<()>>,
+    pub derive_specifier: Option<ConfigValue<()>>,
     pub retained_attributes: Vec<syn::Attribute>,
     pub field_configs: HashMap<usize, ConfigValue<FieldConfig>>,
 }
@@ -84,29 +83,6 @@ impl Config {
 }
 
 impl Config {
-    /// Sets the `specifier: bool` #[bitfield] parameter to the given value.
-    ///
-    /// # Errors
-    ///
-    /// If the specifier has already been set.
-    pub fn specifier(&mut self, value: bool, span: Span) -> Result<(), syn::Error> {
-        match &self.specifier {
-            Some(previous) => {
-                return Err(format_err!(
-                    span,
-                    "encountered duplicate `specifier` parameter: duplicate set to {:?}",
-                    previous.value
-                )
-                .into_combine(format_err!(
-                    previous.span,
-                    "previous `specifier` parameter here"
-                )))
-            }
-            None => self.specifier = Some(ConfigValue::new(value, span)),
-        }
-        Ok(())
-    }
-
     /// Sets the `bytes: int` #[bitfield] parameter to the given value.
     ///
     /// # Errors
@@ -181,20 +157,41 @@ impl Config {
     /// # Errors
     ///
     /// If a `#[derive(Debug)]` attribute has already been found.
-    pub fn derive_debug(&mut self, value: bool, span: Span) -> Result<(), syn::Error> {
+    pub fn derive_debug(&mut self, span: Span) -> Result<(), syn::Error> {
         match &self.derive_debug {
             Some(previous) => {
                 return Err(format_err!(
-                span,
-                "encountered duplicate `#[derive(Debug)]` attribute: duplicate set to {:?}",
-                previous.value
-            )
+                    span,
+                    "encountered duplicate `#[derive(Debug)]` attribute",
+                )
                 .into_combine(format_err!(
                     previous.span,
                     "previous `#[derive(Debug)]` parameter here"
                 )))
             }
-            None => self.derive_debug = Some(ConfigValue::new(value, span)),
+            None => self.derive_debug = Some(ConfigValue::new((), span)),
+        }
+        Ok(())
+    }
+
+    /// Registers the `#[derive(BitfieldSpecifier)]` attribute for the #[bitfield] macro.
+    ///
+    /// # Errors
+    ///
+    /// If a `#[derive(BitfieldSpecifier)]` attribute has already been found.
+    pub fn derive_specifier(&mut self, span: Span) -> Result<(), syn::Error> {
+        match &self.derive_specifier {
+            Some(previous) => {
+                return Err(format_err!(
+                    span,
+                    "encountered duplicate `#[derive(BitfieldSpecifier)]` attribute",
+                )
+                .into_combine(format_err!(
+                    previous.span,
+                    "previous `#[derive(BitfieldSpecifier)]` parameter here"
+                )))
+            }
+            None => self.derive_specifier = Some(ConfigValue::new((), span)),
         }
         Ok(())
     }

@@ -1,8 +1,8 @@
 use modular_bitfield::prelude::*;
 use modular_bitfield::error::OutOfBounds;
 
-#[bitfield(specifier = true, filled = false)]
-#[derive(Debug, PartialEq, Eq, Copy, Clone)]
+#[bitfield(filled = false)]
+#[derive(BitfieldSpecifier, Debug, PartialEq, Eq, Copy, Clone)]
 pub struct Unfilled {
     a: B2,
 }

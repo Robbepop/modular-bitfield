@@ -1,7 +1,7 @@
 use modular_bitfield::prelude::*;
 
 #[bitfield]
-#[derive(Debug)] #[derive(Debug)]
+#[derive(BitfieldSpecifier, BitfieldSpecifier)]
 pub struct SignedInt {
     sign: bool,
     value: B31,

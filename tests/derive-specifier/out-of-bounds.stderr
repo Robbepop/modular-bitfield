@@ -1,8 +1,8 @@
 error[E0277]: the trait bound `modular_bitfield::private::checks::False: modular_bitfield::private::checks::SpecifierHasAtMost128Bits` is not satisfied
-   --> $DIR/30-out-of-bounds-specifier.rs:4:1
+   --> $DIR/out-of-bounds.rs:4:1
     |
-4   | #[derive(Debug, PartialEq, Eq, Copy, Clone)]
-    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ the trait `modular_bitfield::private::checks::SpecifierHasAtMost128Bits` is not implemented for `modular_bitfield::private::checks::False`
+4   | #[derive(BitfieldSpecifier, Debug)]
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ the trait `modular_bitfield::private::checks::SpecifierHasAtMost128Bits` is not implemented for `modular_bitfield::private::checks::False`
     |
    ::: $WORKSPACE/src/private/checks.rs
     |
