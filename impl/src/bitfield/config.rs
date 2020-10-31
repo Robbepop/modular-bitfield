@@ -83,29 +83,6 @@ impl Config {
 }
 
 impl Config {
-    /// Sets the `specifier: bool` #[bitfield] parameter to the given value.
-    ///
-    /// # Errors
-    ///
-    /// If the specifier has already been set.
-    pub fn specifier(&mut self, value: bool, span: Span) -> Result<(), syn::Error> {
-        match &self.specifier {
-            Some(previous) => {
-                return Err(format_err!(
-                    span,
-                    "encountered duplicate `specifier` parameter: duplicate set to {:?}",
-                    previous.value
-                )
-                .into_combine(format_err!(
-                    previous.span,
-                    "previous `specifier` parameter here"
-                )))
-            }
-            None => self.specifier = Some(ConfigValue::new(value, span)),
-        }
-        Ok(())
-    }
-
     /// Sets the `bytes: int` #[bitfield] parameter to the given value.
     ///
     /// # Errors
