@@ -452,11 +452,6 @@ impl BitfieldStruct {
                     bytes: Self::Bytes,
                 ) -> ::core::result::Result<Self::InOut, ::modular_bitfield::error::InvalidBitPattern<Self::Bytes>>
                 {
-                    // let __bf_max_value = if Self::BITS.is_power_of_two() && Self::BITS % 8 == 0 {
-                    //     <Self::Bytes>::MAX
-                    // } else {
-                    //     (0x01 << (Self::BITS % Self::BITS.next_power_of_two())) - 1
-                    // };
                     let __bf_max_value: Self::Bytes = (0x01 as Self::Bytes).checked_shl(Self::BITS as u32).unwrap_or(<Self::Bytes>::MAX);
                     if bytes > __bf_max_value {
                         return ::core::result::Result::Err(::modular_bitfield::error::InvalidBitPattern::new(bytes))
