@@ -15,7 +15,7 @@ pub struct Config {
     pub bytes: Option<ConfigValue<usize>>,
     pub filled: Option<ConfigValue<bool>>,
     pub repr: Option<ConfigValue<ReprKind>>,
-    pub derive_debug: Option<ConfigValue<bool>>,
+    pub derive_debug: Option<ConfigValue<()>>,
     pub retained_attributes: Vec<syn::Attribute>,
     pub field_configs: HashMap<usize, ConfigValue<FieldConfig>>,
 }
@@ -179,20 +179,19 @@ impl Config {
     /// # Errors
     ///
     /// If a `#[derive(Debug)]` attribute has already been found.
-    pub fn derive_debug(&mut self, value: bool, span: Span) -> Result<(), syn::Error> {
+    pub fn derive_debug(&mut self, span: Span) -> Result<(), syn::Error> {
         match &self.derive_debug {
             Some(previous) => {
                 return Err(format_err!(
-                span,
-                "encountered duplicate `#[derive(Debug)]` attribute: duplicate set to {:?}",
-                previous.value
-            )
+                    span,
+                    "encountered duplicate `#[derive(Debug)]` attribute",
+                )
                 .into_combine(format_err!(
                     previous.span,
                     "previous `#[derive(Debug)]` parameter here"
                 )))
             }
-            None => self.derive_debug = Some(ConfigValue::new(value, span)),
+            None => self.derive_debug = Some(ConfigValue::new((), span)),
         }
         Ok(())
     }

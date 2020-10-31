@@ -119,7 +119,7 @@ impl BitfieldStruct {
             match nested_meta {
                 syn::NestedMeta::Meta(syn::Meta::Path(path)) => {
                     if path.is_ident("Debug") {
-                        config.derive_debug(true, meta_span)?;
+                        config.derive_debug(meta_span)?;
                     } else {
                         // Other derives are going to be re-expanded them into a new
                         // `#[derive(..)]` that is ignored by the rest of this macro.
