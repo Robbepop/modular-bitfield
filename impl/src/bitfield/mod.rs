@@ -1,12 +1,12 @@
 mod analyse;
-mod bitfield_attr;
+mod params;
 mod config;
 mod expand;
 mod field_config;
 mod field_info;
 
 use self::{
-    bitfield_attr::AttributeArgs,
+    params::ParamArgs,
     config::Config,
 };
 use core::convert::TryFrom;
@@ -34,8 +34,9 @@ fn analyse_and_expand_or_error(
     input: TokenStream2,
 ) -> Result<TokenStream2> {
     let input = syn::parse::<syn::ItemStruct>(input.into())?;
-    let attrs = syn::parse::<AttributeArgs>(args.into())?;
-    let mut config = Config::try_from(attrs)?;
+    let params = syn::parse::<ParamArgs>(args.into())?;
+    let mut config = Config::default();
+    config.feed_params(params)?;
     let bitfield = BitfieldStruct::try_from((&mut config, input))?;
     Ok(bitfield.expand(&config))
 }
