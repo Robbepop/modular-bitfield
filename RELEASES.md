@@ -1,5 +1,7 @@
 # 0.11.0 (WIP)
 
+- Replace `#[bitfield(specifier = true)]` syntax with `#[bitfield] #[derive(BitfieldSpecifier)]`.
+  Semantics of the new syntax is the same as the old.
 - It is now possible to flag fields of `#[bitfield]` structs with `#[skip(..)]` in order to skip code generation for them.
   There are possibilities to skip code generation of only setters using `#[skip(setters)]`, only getters `#[skip(getters)]`
   or both. Having no arguments (e.g. just `#[skip]`) defaults to skipping both setters and getters.
