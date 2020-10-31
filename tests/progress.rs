@@ -4,6 +4,7 @@ mod panic_tests;
 #[test]
 fn tests() {
     let t = trybuild::TestCases::new();
+
     t.pass("tests/01-specifier-types.rs");
     t.pass("tests/02-storage.rs");
     t.pass("tests/03-accessors.rs");
