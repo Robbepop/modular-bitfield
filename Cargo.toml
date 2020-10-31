@@ -38,9 +38,9 @@ name = "cmp_bitfield_crate"
 path = "benches/cmp_bitfield_crate.rs"
 harness = false
 
-# [[bin]]
-# name = "workshop"
-# path = "main.rs"
+[[bin]]
+name = "playground"
+path = "main.rs"
 
 [dependencies]
 modular-bitfield-impl = { path = "impl", version = "0.10" }
