@@ -3,8 +3,8 @@ use super::{
         Config,
         ReprKind,
     },
-    BitfieldStruct,
     field_info::FieldInfo,
+    BitfieldStruct,
 };
 use proc_macro2::TokenStream as TokenStream2;
 use quote::{

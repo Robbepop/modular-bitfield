@@ -1,13 +1,13 @@
 mod analyse;
-mod params;
 mod config;
 mod expand;
 mod field_config;
 mod field_info;
+mod params;
 
 use self::{
-    params::ParamArgs,
     config::Config,
+    params::ParamArgs,
 };
 use core::convert::TryFrom;
 use proc_macro2::TokenStream as TokenStream2;

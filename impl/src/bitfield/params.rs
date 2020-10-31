@@ -65,10 +65,12 @@ impl Config {
                 })?;
                 self.bytes(value, name_value.span())?;
             }
-            invalid => return Err(format_err!(
+            invalid => {
+                return Err(format_err!(
                 invalid,
                 "encountered invalid value argument for #[bitfield] `bytes` parameter",
-            )),
+            ))
+            }
         }
         Ok(())
     }
@@ -80,10 +82,12 @@ impl Config {
             syn::Lit::Bool(lit_bool) => {
                 self.filled(lit_bool.value, name_value.span())?;
             }
-            invalid => return Err(format_err!(
+            invalid => {
+                return Err(format_err!(
                 invalid,
                 "encountered invalid value argument for #[bitfield] `filled` parameter",
-            )),
+            ))
+            }
         }
         Ok(())
     }
