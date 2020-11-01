@@ -75,6 +75,31 @@ impl Config {
         Ok(())
     }
 
+    /// Feeds a `bytes: int` parameter to the `#[bitfield]` configuration.
+    fn feed_bits_param(&mut self, name_value: syn::MetaNameValue) -> Result<()> {
+        assert!(name_value.path.is_ident("bits"));
+        match &name_value.lit {
+            syn::Lit::Int(lit_int) => {
+                let span = lit_int.span();
+                let value = lit_int.base10_parse::<usize>().map_err(|err| {
+                    format_err!(
+                        span,
+                        "encountered malformatted integer value for `bits` parameter: {}",
+                        err
+                    )
+                })?;
+                self.bits(value, name_value.span())?;
+            }
+            invalid => {
+                return Err(format_err!(
+                invalid,
+                "encountered invalid value argument for #[bitfield] `bits` parameter",
+            ))
+            }
+        }
+        Ok(())
+    }
+
     /// Feeds a `filled: bool` parameter to the `#[bitfield]` configuration.
     fn feed_filled_param(&mut self, name_value: syn::MetaNameValue) -> Result<()> {
         assert!(name_value.path.is_ident("filled"));
@@ -108,6 +133,8 @@ impl Config {
                         syn::Meta::NameValue(name_value) => {
                             if name_value.path.is_ident("bytes") {
                                 self.feed_bytes_param(name_value)?;
+                            } else if name_value.path.is_ident("bits") {
+                                self.feed_bits_param(name_value)?;
                             } else if name_value.path.is_ident("filled") {
                                 self.feed_filled_param(name_value)?;
                             } else {

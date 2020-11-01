@@ -13,6 +13,7 @@ use std::collections::{
 pub struct Config {
     pub specifier: Option<ConfigValue<bool>>,
     pub bytes: Option<ConfigValue<usize>>,
+    pub bits: Option<ConfigValue<usize>>,
     pub filled: Option<ConfigValue<bool>>,
     pub repr: Option<ConfigValue<ReprKind>>,
     pub derive_debug: Option<ConfigValue<()>>,
@@ -102,6 +103,29 @@ impl Config {
                 )))
             }
             None => self.bytes = Some(ConfigValue::new(value, span)),
+        }
+        Ok(())
+    }
+
+    /// Sets the `bits: int` #[bitfield] parameter to the given value.
+    ///
+    /// # Errors
+    ///
+    /// If the specifier has already been set.
+    pub fn bits(&mut self, value: usize, span: Span) -> Result<(), syn::Error> {
+        match &self.bits {
+            Some(previous) => {
+                return Err(format_err!(
+                    span,
+                    "encountered duplicate `bits` parameter: duplicate set to {:?}",
+                    previous.value
+                )
+                .into_combine(format_err!(
+                    previous.span,
+                    "previous `bits` parameter here"
+                )))
+            }
+            None => self.bits = Some(ConfigValue::new(value, span)),
         }
         Ok(())
     }
