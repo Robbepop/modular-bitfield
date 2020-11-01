@@ -1,9 +1,9 @@
 use super::config::Config;
+use proc_macro2::Span;
 use syn::{
     parse::Result,
     spanned::Spanned,
 };
-use proc_macro2::Span;
 
 /// Raises an unsupported argument compile time error.
 fn unsupported_argument<T>(arg: T) -> syn::Error
@@ -52,7 +52,11 @@ impl IntoIterator for ParamArgs {
 
 impl Config {
     /// Feeds a parameter that takes an integer value to the `#[bitfield]` configuration.
-    fn feed_int_param<F>(name_value: syn::MetaNameValue, name: &str, on_success: F) -> Result<()>
+    fn feed_int_param<F>(
+        name_value: syn::MetaNameValue,
+        name: &str,
+        on_success: F,
+    ) -> Result<()>
     where
         F: FnOnce(usize, Span) -> Result<()>,
     {
@@ -72,10 +76,10 @@ impl Config {
             }
             invalid => {
                 return Err(format_err!(
-                invalid,
-                "encountered invalid value argument for #[bitfield] `{}` parameter",
-                name
-            ))
+                    invalid,
+                    "encountered invalid value argument for #[bitfield] `{}` parameter",
+                    name
+                ))
             }
         }
         Ok(())
@@ -83,16 +87,12 @@ impl Config {
 
     /// Feeds a `bytes: int` parameter to the `#[bitfield]` configuration.
     fn feed_bytes_param(&mut self, name_value: syn::MetaNameValue) -> Result<()> {
-        Self::feed_int_param(name_value, "bytes", |value, span| {
-            self.bytes(value, span)
-        })
+        Self::feed_int_param(name_value, "bytes", |value, span| self.bytes(value, span))
     }
 
     /// Feeds a `bytes: int` parameter to the `#[bitfield]` configuration.
     fn feed_bits_param(&mut self, name_value: syn::MetaNameValue) -> Result<()> {
-        Self::feed_int_param(name_value, "bits", |value, span| {
-            self.bits(value, span)
-        })
+        Self::feed_int_param(name_value, "bits", |value, span| self.bits(value, span))
     }
 
     /// Feeds a `filled: bool` parameter to the `#[bitfield]` configuration.
