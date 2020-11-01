@@ -93,16 +93,18 @@ impl Config {
                         bits.value,
                         repr.value,
                     )
-                    .into_combine(format_err!(
-                        bits.span,
-                        "conflicting `bits = {}` here",
-                        bits.value,
-                    )
-                    .into_combine(format_err!(
-                        repr.span,
-                        "conflicting {:?} here",
-                        repr.value
-                    ))))
+                    .into_combine(
+                        format_err!(
+                            bits.span,
+                            "conflicting `bits = {}` here",
+                            bits.value,
+                        )
+                        .into_combine(format_err!(
+                            repr.span,
+                            "conflicting {:?} here",
+                            repr.value
+                        )),
+                    ))
                 }
             }
             _ => (),
