@@ -10,10 +10,6 @@ fn tests() {
     t.pass("tests/03-accessors.rs");
     t.compile_fail("tests/04-multiple-of-8bits.rs");
     t.pass("tests/05-accessor-signatures.rs");
-    t.pass("tests/06-enums.rs");
-    t.pass("tests/07-optional-discriminant.rs");
-    t.compile_fail("tests/08-non-power-of-two.rs");
-    t.compile_fail("tests/09-variant-out-of-range.rs");
     t.pass("tests/10-bits-attribute.rs");
     t.compile_fail("tests/11-bits-attribute-wrong.rs");
     t.pass("tests/12-accessors-edge.rs");
@@ -31,6 +27,12 @@ fn tests() {
     t.compile_fail("tests/26-invalid-struct-specifier.rs");
     t.compile_fail("tests/27-invalid-union-specifier.rs");
     t.pass("tests/28-single-bit-enum.rs");
+
+    // Tests specific to the `#[derive(BitfieldSpecifier)]` proc. macro:
+    t.pass("tests/derive-bitfield-specifier/06-enums.rs");
+    t.pass("tests/derive-bitfield-specifier/07-optional-discriminant.rs");
+    t.compile_fail("tests/derive-bitfield-specifier/08-non-power-of-two.rs");
+    t.compile_fail("tests/derive-bitfield-specifier/09-variant-out-of-range.rs");
 
     // Tests for regressions found in published versions:
     t.pass("tests/regressions/no-implicit-prelude.rs");
