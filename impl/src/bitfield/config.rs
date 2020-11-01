@@ -8,6 +8,7 @@ use std::collections::{
     hash_map::Entry,
     HashMap,
 };
+use syn::parse::Result;
 
 /// The configuration for the `#[bitfield]` macro.
 #[derive(Default)]
@@ -73,9 +74,7 @@ impl Config {
             .map(|config| config.value)
             .unwrap_or(true)
     }
-}
 
-impl Config {
     /// Returns an error showing both the duplicate as well as the previous parameters.
     fn raise_duplicate_error<T>(
         name: &str,
@@ -107,7 +106,7 @@ impl Config {
     /// # Errors
     ///
     /// If the specifier has already been set.
-    pub fn bytes(&mut self, value: usize, span: Span) -> Result<(), syn::Error> {
+    pub fn bytes(&mut self, value: usize, span: Span) -> Result<()> {
         match &self.bytes {
             Some(previous) => {
                 return Err(Self::raise_duplicate_error("bytes", span, previous))
@@ -122,7 +121,7 @@ impl Config {
     /// # Errors
     ///
     /// If the specifier has already been set.
-    pub fn bits(&mut self, value: usize, span: Span) -> Result<(), syn::Error> {
+    pub fn bits(&mut self, value: usize, span: Span) -> Result<()> {
         match &self.bits {
             Some(previous) => {
                 return Err(Self::raise_duplicate_error("bits", span, previous))
@@ -137,7 +136,7 @@ impl Config {
     /// # Errors
     ///
     /// If the specifier has already been set.
-    pub fn filled(&mut self, value: bool, span: Span) -> Result<(), syn::Error> {
+    pub fn filled(&mut self, value: bool, span: Span) -> Result<()> {
         match &self.filled {
             Some(previous) => {
                 return Err(Self::raise_duplicate_error("filled", span, previous))
@@ -152,7 +151,7 @@ impl Config {
     /// # Errors
     ///
     /// If a `#[repr(uN)]` attribute has already been found.
-    pub fn repr(&mut self, value: ReprKind, span: Span) -> Result<(), syn::Error> {
+    pub fn repr(&mut self, value: ReprKind, span: Span) -> Result<()> {
         match &self.repr {
             Some(previous) => {
                 return Err(Self::raise_duplicate_error("#[repr(uN)]", span, previous))
@@ -167,7 +166,7 @@ impl Config {
     /// # Errors
     ///
     /// If a `#[derive(Debug)]` attribute has already been found.
-    pub fn derive_debug(&mut self, span: Span) -> Result<(), syn::Error> {
+    pub fn derive_debug(&mut self, span: Span) -> Result<()> {
         match &self.derive_debug {
             Some(previous) => {
                 return Err(Self::raise_duplicate_error(
@@ -186,7 +185,7 @@ impl Config {
     /// # Errors
     ///
     /// If a `#[derive(BitfieldSpecifier)]` attribute has already been found.
-    pub fn derive_specifier(&mut self, span: Span) -> Result<(), syn::Error> {
+    pub fn derive_specifier(&mut self, span: Span) -> Result<()> {
         match &self.derive_specifier {
             Some(previous) => {
                 return Err(Self::raise_duplicate_error(
@@ -218,7 +217,7 @@ impl Config {
         index: usize,
         span: Span,
         config: FieldConfig,
-    ) -> Result<(), syn::Error> {
+    ) -> Result<()> {
         match self.field_configs.entry(index) {
             Entry::Occupied(occupied) => {
                 return Err(format_err!(span, "encountered duplicate config for field")
