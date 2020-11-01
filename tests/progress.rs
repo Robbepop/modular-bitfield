@@ -111,6 +111,7 @@ fn tests() {
     t.pass("tests/bits-param/valid-use-4.rs");
     t.pass("tests/bits-param/bits-non-filled.rs");
     t.compile_fail("tests/bits-param/conflicting-params.rs");
+    t.compile_fail("tests/bits-param/conflicting-repr.rs");
     t.compile_fail("tests/bits-param/duplicate-param-1.rs");
     t.compile_fail("tests/bits-param/duplicate-param-2.rs");
     t.compile_fail("tests/bits-param/invalid-param-value.rs");
