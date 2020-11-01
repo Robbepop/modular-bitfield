@@ -103,4 +103,16 @@ fn tests() {
     t.compile_fail("tests/derive-specifier/out-of-bounds.rs");
     t.compile_fail("tests/derive-specifier/duplicate-derive-1.rs");
     t.compile_fail("tests/derive-specifier/duplicate-derive-2.rs");
+
+    // Tests for `#[bitfield(bits = N)]`:
+    t.pass("tests/bits-param/valid-use-1.rs");
+    t.pass("tests/bits-param/valid-use-2.rs");
+    t.pass("tests/bits-param/valid-use-3.rs");
+    t.pass("tests/bits-param/valid-use-4.rs");
+    t.pass("tests/bits-param/bits-non-filled.rs");
+    t.compile_fail("tests/bits-param/conflicting-params.rs");
+    t.compile_fail("tests/bits-param/duplicate-param-1.rs");
+    t.compile_fail("tests/bits-param/duplicate-param-2.rs");
+    t.compile_fail("tests/bits-param/invalid-param-value.rs");
+    t.compile_fail("tests/bits-param/missing-param-value.rs");
 }
