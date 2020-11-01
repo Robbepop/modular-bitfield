@@ -65,6 +65,7 @@ impl BitfieldStruct {
                 }
             };
 
+            #[automatically_derived]
             #[allow(clippy::identity_op)]
             impl ::modular_bitfield::Specifier for #ident {
                 const BITS: usize = #bits;
@@ -136,6 +137,7 @@ impl BitfieldStruct {
             ))
         });
         Some(quote_spanned!(span=>
+            #[automatically_derived]
             impl ::core::fmt::Debug for #ident {
                 fn fmt(&self, __bf_f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
                     __bf_f.debug_struct(::core::stringify!(#ident))
