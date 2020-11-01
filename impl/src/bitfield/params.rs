@@ -59,7 +59,7 @@ impl Config {
                 let value = lit_int.base10_parse::<usize>().map_err(|err| {
                     format_err!(
                         span,
-                        "encountered malformatted integer value for bytes parameter: {}",
+                        "encountered malformatted integer value for `bytes` parameter: {}",
                         err
                     )
                 })?;
