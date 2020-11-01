@@ -12,7 +12,6 @@ use std::collections::{
 /// The configuration for the `#[bitfield]` macro.
 #[derive(Default)]
 pub struct Config {
-    pub specifier: Option<ConfigValue<bool>>,
     pub bytes: Option<ConfigValue<usize>>,
     pub bits: Option<ConfigValue<usize>>,
     pub filled: Option<ConfigValue<bool>>,
@@ -67,14 +66,6 @@ impl<T> ConfigValue<T> {
 }
 
 impl Config {
-    /// Returns the value of the `specifier` parameter if provided and otherwise `false`.
-    pub fn specifier_enabled(&self) -> bool {
-        self.specifier
-            .as_ref()
-            .map(|config| config.value)
-            .unwrap_or(false)
-    }
-
     /// Returns the value of the `filled` parameter if provided and otherwise `true`.
     pub fn filled_enabled(&self) -> bool {
         self.filled
