@@ -38,15 +38,22 @@ pub enum ReprKind {
     U128,
 }
 
+impl ReprKind {
+    /// Returns the amount of bits required to have for the bitfield to satisfy the `#[repr(uN)]`.
+    pub fn bits(self) -> usize {
+        match self {
+            Self::U8 => 8,
+            Self::U16 => 16,
+            Self::U32 => 32,
+            Self::U64 => 64,
+            Self::U128 => 128,
+        }
+    }
+}
+
 impl core::fmt::Debug for ReprKind {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-        match self {
-            Self::U8 => write!(f, "#[repr(u8)]"),
-            Self::U16 => write!(f, "#[repr(u16)]"),
-            Self::U32 => write!(f, "#[repr(u32)]"),
-            Self::U64 => write!(f, "#[repr(u64)]"),
-            Self::U128 => write!(f, "#[repr(u128)]"),
-        }
+        write!(f, "#[repr(u{})]", self.bits())
     }
 }
 
