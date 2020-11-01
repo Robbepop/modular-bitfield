@@ -82,6 +82,34 @@ impl Config {
             .unwrap_or(true)
     }
 
+    /// Ensures that there are no conflicting configuration parameters.
+    pub fn ensure_no_conflicts(&self) -> Result<()> {
+        match (self.bits.as_ref(), self.repr.as_ref()) {
+            (Some(bits), Some(repr)) => {
+                if bits.value != repr.value.bits() {
+                    return Err(format_err!(
+                        Span::call_site(),
+                        "encountered conflicting `bits = {}` and {:?} parameters",
+                        bits.value,
+                        repr.value,
+                    )
+                    .into_combine(format_err!(
+                        bits.span,
+                        "conflicting `bits = {}` here",
+                        bits.value,
+                    )
+                    .into_combine(format_err!(
+                        repr.span,
+                        "conflicting {:?} here",
+                        repr.value
+                    ))))
+                }
+            }
+            _ => (),
+        }
+        Ok(())
+    }
+
     /// Returns an error showing both the duplicate as well as the previous parameters.
     fn raise_duplicate_error<T>(
         name: &str,
