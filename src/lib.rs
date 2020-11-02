@@ -284,7 +284,7 @@
 //! |:--|:--|
 //! | `fn new() -> Self` | Creates a new instance of the bitfield with all bits initialized to 0. |
 //! | `fn from_bytes([u8; 1]) -> Self` | Creates a new instance of the bitfield from the given raw bytes. |
-//! | `fn as_bytes(&self) -> &[u8; 1]` | Returns the underlying bytes of the bitfield. |
+//! | `fn into_bytes(self) -> [u8; 1]` | Returns the underlying bytes of the bitfield. |
 //!
 //! And below the generated signatures for field `a`:
 //!
