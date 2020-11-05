@@ -12,9 +12,8 @@
   through macro expansion.
 - Fixed several bugs and significantly improved error reporting for `#[bits = N]` field attributes for `#[bitfield]` fields.
 - Minor fixes and improvements to code generation:
-  - `#[derive(Debug)]` now produces code that the Rust 2015 edition will accept.
+  - The automatically implemented `#[derive(Debug)]` now produces code that the Rust 2015 edition will accept.
   - Some minor macro hygiene improvements.
-  - Derive implementations are now marked as `#[automatically_derived]`.
 
 # 0.10.0 (2020-10-29)
 
