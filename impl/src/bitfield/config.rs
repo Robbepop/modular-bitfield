@@ -123,11 +123,13 @@ impl Config {
                         "encountered conflicting `bits = {}` and `bytes = {}` parameters",
                         bits.value,
                         bytes.value,
-                    ).into_combine(format_err!(
+                    )
+                    .into_combine(format_err!(
                         bits.span,
                         "conflicting `bits = {}` here",
                         bits.value
-                    )).into_combine(format_err!(
+                    ))
+                    .into_combine(format_err!(
                         bytes.span,
                         "conflicting `bytes = {}` here",
                         bytes.value,
@@ -147,11 +149,13 @@ impl Config {
                     "encountered conflicting `{:?}` and `filled = {}` parameters",
                     repr.value,
                     filled.value,
-                ).into_combine(format_err!(
+                )
+                .into_combine(format_err!(
                     repr.span,
                     "conflicting `{:?}` here",
                     repr.value
-                )).into_combine(format_err!(
+                ))
+                .into_combine(format_err!(
                     filled.span,
                     "conflicting `filled = {}` here",
                     filled.value,
