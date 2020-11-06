@@ -678,11 +678,8 @@ impl BitfieldStruct {
         let FieldInfo {
             index: _,
             field,
-            config,
+            ..
         } = &info;
-        if config.skip_getters_and_setters() {
-            return None
-        }
         let span = field.span();
         let ty = &field.ty;
         let getters = self.expand_getters_for_field(offset, &info);

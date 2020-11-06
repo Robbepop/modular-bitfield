@@ -45,11 +45,6 @@ impl SkipWhich {
     pub fn skip_setters(self) -> bool {
         matches!(self, Self::All | Self::Setters)
     }
-
-    /// Returns `true` if code generation of getters and setters should be skipped.
-    pub fn skip_getters_and_setters(self) -> bool {
-        matches!(self, Self::All)
-    }
 }
 
 impl FieldConfig {
@@ -124,15 +119,6 @@ impl FieldConfig {
             .as_ref()
             .map(|config| config.value)
             .map(SkipWhich::skip_getters)
-            .unwrap_or(false)
-    }
-
-    /// Returns `true` if the config demands that code generation for getters should be skipped.
-    pub fn skip_getters_and_setters(&self) -> bool {
-        self.skip
-            .as_ref()
-            .map(|config| config.value)
-            .map(SkipWhich::skip_getters_and_setters)
             .unwrap_or(false)
     }
 }

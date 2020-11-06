@@ -39,6 +39,7 @@ fn tests() {
     t.pass("tests/regressions/no-implicit-prelude-2.rs");
     t.pass("tests/regressions/regression-issue-8.rs");
     t.pass("tests/regressions/deny_elided_lifetime.rs");
+    t.pass("tests/regressions/regression-v0.11.rs");
     t.compile_fail("tests/regressions/invalid_bits_field_attr.rs");
 
     // Tests for `bytes = N` #[bitfield] parameter:
