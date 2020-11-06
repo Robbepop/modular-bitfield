@@ -1,5 +1,7 @@
 # 0.11.0 (WIP)
 
+- Add `bits: int` parameter to the `#[bitfield]` macro which allows to precisely control the resulting bit width
+  of the generated bitfield struct. Use it like: `#[bitfield(bits = 5)]`.
 - Replace `#[bitfield(specifier = true)]` syntax with `#[bitfield] #[derive(BitfieldSpecifier)]`.
   Semantics of the new syntax is the same as the old.
 - It is now possible to flag fields of `#[bitfield]` structs with `#[skip(..)]` in order to skip code generation for them.
