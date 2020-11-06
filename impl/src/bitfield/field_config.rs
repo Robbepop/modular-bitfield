@@ -82,22 +82,55 @@ impl FieldConfig {
     /// # Syntax
     ///
     /// - `#[skip]` defaults to `SkipWhich::All`.
-    /// - `#[skip(all)]` is the same as `#[skip]`.
     /// - `#[skip(getters)]` is `SkipWhich::Getters`.
     /// - `#[skip(setters)]` is `SkipWhich::Setters`.
-    /// - `#[skip(getters, setters)]` is the same as `#[skip(all)]`.
+    /// - `#[skip(getters, setters)]` is the same as `#[skip]`.
+    /// - `#[skip(getters)] #[skip(setters)]` is the same as `#[skip]`.
     ///
     /// # Errors
     ///
-    /// If previously already registered a `#[bits = M]`.
+    /// If previously already registered a `#[skip]` that overlaps with the previous.
+    /// E.g. when skipping getters or setters twice. Note that skipping getters followed
+    /// by skipping setters is fine.
     pub fn skip(&mut self, which: SkipWhich, span: Span) -> Result<(), syn::Error> {
         match self.skip {
             Some(ref previous) => {
-                return Err(format_err!(
-                    span,
-                    "encountered duplicate `#[bits = N]` attribute for field"
-                )
-                .into_combine(format_err!(previous.span, "duplicate `#[bits = M]` here")))
+                match which {
+                    SkipWhich::All => {
+                        return Err(format_err!(
+                            span,
+                            "encountered duplicate `#[skip]` attribute for field"
+                        )
+                        .into_combine(format_err!(
+                            previous.span,
+                            "duplicate `#[skip]` here"
+                        )))
+                    }
+                    SkipWhich::Getters => {
+                        if previous.value == SkipWhich::Getters || previous.value == SkipWhich::All {
+                            return Err(format_err!(
+                                span,
+                                "encountered duplicate `#[skip(getters)]` attribute for field"
+                            )
+                            .into_combine(format_err!(
+                                previous.span,
+                                "duplicate `#[skip(getters)]` here"
+                            )))
+                        }
+                    }
+                    SkipWhich::Setters => {
+                        if previous.value == SkipWhich::Setters || previous.value == SkipWhich::All {
+                            return Err(format_err!(
+                                span,
+                                "encountered duplicate `#[skip(setters)]` attribute for field"
+                            )
+                            .into_combine(format_err!(
+                                previous.span,
+                                "duplicate `#[skip(setters)]` here"
+                            )))
+                        }
+                    }
+                }
             }
             None => self.skip = Some(ConfigValue { value: which, span }),
         }
