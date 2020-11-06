@@ -107,7 +107,9 @@ impl FieldConfig {
                         )))
                     }
                     SkipWhich::Getters => {
-                        if previous.value == SkipWhich::Getters || previous.value == SkipWhich::All {
+                        if previous.value == SkipWhich::Getters
+                            || previous.value == SkipWhich::All
+                        {
                             return Err(format_err!(
                                 span,
                                 "encountered duplicate `#[skip(getters)]` attribute for field"
@@ -119,7 +121,9 @@ impl FieldConfig {
                         }
                     }
                     SkipWhich::Setters => {
-                        if previous.value == SkipWhich::Setters || previous.value == SkipWhich::All {
+                        if previous.value == SkipWhich::Setters
+                            || previous.value == SkipWhich::All
+                        {
                             return Err(format_err!(
                                 span,
                                 "encountered duplicate `#[skip(setters)]` attribute for field"

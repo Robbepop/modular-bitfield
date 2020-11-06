@@ -676,9 +676,7 @@ impl BitfieldStruct {
         info: FieldInfo<'_>,
     ) -> Option<TokenStream2> {
         let FieldInfo {
-            index: _,
-            field,
-            ..
+            index: _, field, ..
         } = &info;
         let span = field.span();
         let ty = &field.ty;
