@@ -1,6 +1,6 @@
 [package]
 name = "modular-bitfield"
-version = "0.10.0"
+version = "0.11.0"
 edition = "2018"
 authors = ["Robin Freyler <robinfreyler@web.de>"]
 license = "MIT/Apache-2.0"
@@ -43,7 +43,7 @@ name = "playground"
 path = "playground.rs"
 
 [dependencies]
-modular-bitfield-impl = { path = "impl", version = "0.10" }
+modular-bitfield-impl = { path = "impl", version = "0.11" }
 static_assertions = "1.1"
 
 [profile.bench]
