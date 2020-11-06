@@ -1,4 +1,4 @@
-# 0.11.0 (WIP)
+# 0.11.0 (2020-11-06)
 
 - Add `bits: int` parameter to the `#[bitfield]` macro which allows to precisely control the resulting bit width
   of the generated bitfield struct. Use it like: `#[bitfield(bits = 5)]`.
