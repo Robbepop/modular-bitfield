@@ -83,85 +83,74 @@ impl Config {
     }
 
     fn ensure_no_bits_and_repr_conflict(&self) -> Result<()> {
-        match (self.bits.as_ref(), self.repr.as_ref()) {
-            (Some(bits), Some(repr)) => {
-                if bits.value != repr.value.bits() {
-                    return Err(format_err!(
-                        Span::call_site(),
-                        "encountered conflicting `bits = {}` and {:?} parameters",
-                        bits.value,
-                        repr.value,
-                    )
-                    .into_combine(
-                        format_err!(
-                            bits.span,
-                            "conflicting `bits = {}` here",
-                            bits.value,
-                        )
+        if let (Some(bits), Some(repr)) = (self.bits.as_ref(), self.repr.as_ref()) {
+            if bits.value != repr.value.bits() {
+                return Err(format_err!(
+                    Span::call_site(),
+                    "encountered conflicting `bits = {}` and {:?} parameters",
+                    bits.value,
+                    repr.value,
+                )
+                .into_combine(
+                    format_err!(bits.span, "conflicting `bits = {}` here", bits.value,)
                         .into_combine(format_err!(
                             repr.span,
                             "conflicting {:?} here",
                             repr.value
                         )),
-                    ))
-                }
+                ))
             }
-            _ => (),
         }
         Ok(())
     }
 
     fn ensure_no_bits_and_bytes_conflict(&self) -> Result<()> {
-        match (self.bits.as_ref(), self.bytes.as_ref()) {
-            (Some(bits), Some(bytes)) => {
-                fn next_div_by_8(value: usize) -> usize {
-                    ((value.saturating_sub(1) / 8) + 1) * 8
-                }
-                if next_div_by_8(bits.value) / 8 != bytes.value {
-                    return Err(format_err!(
-                        Span::call_site(),
-                        "encountered conflicting `bits = {}` and `bytes = {}` parameters",
-                        bits.value,
-                        bytes.value,
-                    )
-                    .into_combine(format_err!(
-                        bits.span,
-                        "conflicting `bits = {}` here",
-                        bits.value
-                    ))
-                    .into_combine(format_err!(
-                        bytes.span,
-                        "conflicting `bytes = {}` here",
-                        bytes.value,
-                    )))
-                }
+        if let (Some(bits), Some(bytes)) = (self.bits.as_ref(), self.bytes.as_ref()) {
+            fn next_div_by_8(value: usize) -> usize {
+                ((value.saturating_sub(1) / 8) + 1) * 8
             }
-            _ => (),
+            if next_div_by_8(bits.value) / 8 != bytes.value {
+                return Err(format_err!(
+                    Span::call_site(),
+                    "encountered conflicting `bits = {}` and `bytes = {}` parameters",
+                    bits.value,
+                    bytes.value,
+                )
+                .into_combine(format_err!(
+                    bits.span,
+                    "conflicting `bits = {}` here",
+                    bits.value
+                ))
+                .into_combine(format_err!(
+                    bytes.span,
+                    "conflicting `bytes = {}` here",
+                    bytes.value,
+                )))
+            }
         }
         Ok(())
     }
 
     pub fn ensure_no_repr_and_filled_conflict(&self) -> Result<()> {
-        match (self.repr.as_ref(), self.filled.as_ref()) {
-            (Some(repr), Some(filled @ ConfigValue { value: false, .. })) => {
-                return Err(format_err!(
-                    Span::call_site(),
-                    "encountered conflicting `{:?}` and `filled = {}` parameters",
-                    repr.value,
-                    filled.value,
-                )
-                .into_combine(format_err!(
-                    repr.span,
-                    "conflicting `{:?}` here",
-                    repr.value
-                ))
-                .into_combine(format_err!(
-                    filled.span,
-                    "conflicting `filled = {}` here",
-                    filled.value,
-                )))
-            }
-            _ => (),
+        if let (Some(repr), Some(filled @ ConfigValue { value: false, .. })) =
+            (self.repr.as_ref(), self.filled.as_ref())
+        {
+            return Err(format_err!(
+                Span::call_site(),
+                "encountered conflicting `{:?}` and `filled = {}` parameters",
+                repr.value,
+                filled.value,
+            )
+            .into_combine(format_err!(
+                repr.span,
+                "conflicting `{:?}` here",
+                repr.value
+            ))
+            .into_combine(format_err!(
+                filled.span,
+                "conflicting `filled = {}` here",
+                filled.value,
+            )))
         }
         Ok(())
     }
