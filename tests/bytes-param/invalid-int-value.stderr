@@ -1,4 +1,4 @@
-error: encountered malformatted integer value for bytes parameter: invalid digit found in string
+error: encountered malformatted integer value for `bytes` parameter: invalid digit found in string
  --> $DIR/invalid-int-value.rs:4:20
   |
 4 | #[bitfield(bytes = -1)]

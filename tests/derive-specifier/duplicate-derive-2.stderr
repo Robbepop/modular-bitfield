@@ -1,4 +1,4 @@
-error: encountered duplicate `#[derive(BitfieldSpecifier)]` attribute
+error: encountered duplicate `#[derive(BitfieldSpecifier)]` parameter
  --> $DIR/duplicate-derive-2.rs:4:39
   |
 4 | #[derive(BitfieldSpecifier)] #[derive(BitfieldSpecifier)]

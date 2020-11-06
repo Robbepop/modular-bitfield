@@ -134,7 +134,6 @@ fn generate_enum(input: syn::ItemEnum) -> syn::Result<TokenStream2> {
     Ok(quote_spanned!(span=>
         #( #check_discriminants )*
 
-        #[automatically_derived]
         impl ::modular_bitfield::Specifier for #enum_ident {
             const BITS: usize = #bits;
             type Bytes = <[(); #bits] as ::modular_bitfield::private::SpecifierBytes>::Bytes;

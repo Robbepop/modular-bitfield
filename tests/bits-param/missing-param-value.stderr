@@ -1,0 +1,5 @@
+error: encountered unsupported #[bitfield] attribute
+ --> $DIR/missing-param-value.rs:3:12
+  |
+3 | #[bitfield(bits)]
+  |            ^^^^

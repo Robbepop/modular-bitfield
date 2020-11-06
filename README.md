@@ -200,7 +200,10 @@ We can conclude that the macro-generated code is as fast as hand-written code wo
 - `cargo bench` to run the benchmarks
 - `cargo test --benches` to run the benchmark tests
 
-[Click here to view all benchmark results.](https://gist.github.com/Robbepop/bcff4fe149e0e622b752f0eb07b31880)
+[Click here to view all benchmark results.][benchmark-results]
+
+[benchmark-code]: https://github.com/Robbepop/modular-bitfield/blob/master/benches/handwritten.rs
+[benchmark-results]: https://gist.github.com/Robbepop/bcff4fe149e0e622b752f0eb07b31880
 
 ### Summary
 
@@ -283,4 +286,3 @@ for inclusion in this codebase by you, as defined in the Apache-2.0 license,
 shall be dual licensed as above, without any additional terms or conditions.
 
 [procedural-macro-workshop]: https://github.com/dtolnay/proc-macro-workshop/blob/master/README.md
-[benchmark-code]: ./benches/get_and_set.rs

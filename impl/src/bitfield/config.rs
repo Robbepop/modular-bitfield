@@ -2,17 +2,19 @@
 
 use super::field_config::FieldConfig;
 use crate::errors::CombineError;
+use core::any::TypeId;
 use proc_macro2::Span;
 use std::collections::{
     hash_map::Entry,
     HashMap,
 };
+use syn::parse::Result;
 
 /// The configuration for the `#[bitfield]` macro.
 #[derive(Default)]
 pub struct Config {
-    pub specifier: Option<ConfigValue<bool>>,
     pub bytes: Option<ConfigValue<usize>>,
+    pub bits: Option<ConfigValue<usize>>,
     pub filled: Option<ConfigValue<bool>>,
     pub repr: Option<ConfigValue<ReprKind>>,
     pub derive_debug: Option<ConfigValue<()>>,
@@ -36,15 +38,22 @@ pub enum ReprKind {
     U128,
 }
 
+impl ReprKind {
+    /// Returns the amount of bits required to have for the bitfield to satisfy the `#[repr(uN)]`.
+    pub fn bits(self) -> usize {
+        match self {
+            Self::U8 => 8,
+            Self::U16 => 16,
+            Self::U32 => 32,
+            Self::U64 => 64,
+            Self::U128 => 128,
+        }
+    }
+}
+
 impl core::fmt::Debug for ReprKind {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-        match self {
-            Self::U8 => write!(f, "#[repr(u8)]"),
-            Self::U16 => write!(f, "#[repr(u16)]"),
-            Self::U32 => write!(f, "#[repr(u32)]"),
-            Self::U64 => write!(f, "#[repr(u64)]"),
-            Self::U128 => write!(f, "#[repr(u128)]"),
-        }
+        write!(f, "#[repr(u{})]", self.bits())
     }
 }
 
@@ -65,14 +74,6 @@ impl<T> ConfigValue<T> {
 }
 
 impl Config {
-    /// Returns the value of the `specifier` parameter if provided and otherwise `false`.
-    pub fn specifier_enabled(&self) -> bool {
-        self.specifier
-            .as_ref()
-            .map(|config| config.value)
-            .unwrap_or(false)
-    }
-
     /// Returns the value of the `filled` parameter if provided and otherwise `true`.
     pub fn filled_enabled(&self) -> bool {
         self.filled
@@ -80,28 +81,140 @@ impl Config {
             .map(|config| config.value)
             .unwrap_or(true)
     }
-}
 
-impl Config {
+    fn ensure_no_bits_and_repr_conflict(&self) -> Result<()> {
+        if let (Some(bits), Some(repr)) = (self.bits.as_ref(), self.repr.as_ref()) {
+            if bits.value != repr.value.bits() {
+                return Err(format_err!(
+                    Span::call_site(),
+                    "encountered conflicting `bits = {}` and {:?} parameters",
+                    bits.value,
+                    repr.value,
+                )
+                .into_combine(
+                    format_err!(bits.span, "conflicting `bits = {}` here", bits.value,)
+                        .into_combine(format_err!(
+                            repr.span,
+                            "conflicting {:?} here",
+                            repr.value
+                        )),
+                ))
+            }
+        }
+        Ok(())
+    }
+
+    fn ensure_no_bits_and_bytes_conflict(&self) -> Result<()> {
+        if let (Some(bits), Some(bytes)) = (self.bits.as_ref(), self.bytes.as_ref()) {
+            fn next_div_by_8(value: usize) -> usize {
+                ((value.saturating_sub(1) / 8) + 1) * 8
+            }
+            if next_div_by_8(bits.value) / 8 != bytes.value {
+                return Err(format_err!(
+                    Span::call_site(),
+                    "encountered conflicting `bits = {}` and `bytes = {}` parameters",
+                    bits.value,
+                    bytes.value,
+                )
+                .into_combine(format_err!(
+                    bits.span,
+                    "conflicting `bits = {}` here",
+                    bits.value
+                ))
+                .into_combine(format_err!(
+                    bytes.span,
+                    "conflicting `bytes = {}` here",
+                    bytes.value,
+                )))
+            }
+        }
+        Ok(())
+    }
+
+    pub fn ensure_no_repr_and_filled_conflict(&self) -> Result<()> {
+        if let (Some(repr), Some(filled @ ConfigValue { value: false, .. })) =
+            (self.repr.as_ref(), self.filled.as_ref())
+        {
+            return Err(format_err!(
+                Span::call_site(),
+                "encountered conflicting `{:?}` and `filled = {}` parameters",
+                repr.value,
+                filled.value,
+            )
+            .into_combine(format_err!(
+                repr.span,
+                "conflicting `{:?}` here",
+                repr.value
+            ))
+            .into_combine(format_err!(
+                filled.span,
+                "conflicting `filled = {}` here",
+                filled.value,
+            )))
+        }
+        Ok(())
+    }
+
+    /// Ensures that there are no conflicting configuration parameters.
+    pub fn ensure_no_conflicts(&self) -> Result<()> {
+        self.ensure_no_bits_and_repr_conflict()?;
+        self.ensure_no_bits_and_bytes_conflict()?;
+        self.ensure_no_repr_and_filled_conflict()?;
+        Ok(())
+    }
+
+    /// Returns an error showing both the duplicate as well as the previous parameters.
+    fn raise_duplicate_error<T>(
+        name: &str,
+        span: Span,
+        previous: &ConfigValue<T>,
+    ) -> syn::Error
+    where
+        T: core::fmt::Debug + 'static,
+    {
+        if TypeId::of::<T>() == TypeId::of::<()>() {
+            format_err!(span, "encountered duplicate `{}` parameter", name,)
+        } else {
+            format_err!(
+                span,
+                "encountered duplicate `{}` parameter: duplicate set to {:?}",
+                name,
+                previous.value
+            )
+        }
+        .into_combine(format_err!(
+            previous.span,
+            "previous `{}` parameter here",
+            name
+        ))
+    }
+
     /// Sets the `bytes: int` #[bitfield] parameter to the given value.
     ///
     /// # Errors
     ///
     /// If the specifier has already been set.
-    pub fn bytes(&mut self, value: usize, span: Span) -> Result<(), syn::Error> {
+    pub fn bytes(&mut self, value: usize, span: Span) -> Result<()> {
         match &self.bytes {
             Some(previous) => {
-                return Err(format_err!(
-                    span,
-                    "encountered duplicate `bytes` parameter: duplicate set to {:?}",
-                    previous.value
-                )
-                .into_combine(format_err!(
-                    previous.span,
-                    "previous `bytes` parameter here"
-                )))
+                return Err(Self::raise_duplicate_error("bytes", span, previous))
             }
             None => self.bytes = Some(ConfigValue::new(value, span)),
+        }
+        Ok(())
+    }
+
+    /// Sets the `bits: int` #[bitfield] parameter to the given value.
+    ///
+    /// # Errors
+    ///
+    /// If the specifier has already been set.
+    pub fn bits(&mut self, value: usize, span: Span) -> Result<()> {
+        match &self.bits {
+            Some(previous) => {
+                return Err(Self::raise_duplicate_error("bits", span, previous))
+            }
+            None => self.bits = Some(ConfigValue::new(value, span)),
         }
         Ok(())
     }
@@ -111,18 +224,10 @@ impl Config {
     /// # Errors
     ///
     /// If the specifier has already been set.
-    pub fn filled(&mut self, value: bool, span: Span) -> Result<(), syn::Error> {
+    pub fn filled(&mut self, value: bool, span: Span) -> Result<()> {
         match &self.filled {
             Some(previous) => {
-                return Err(format_err!(
-                    span,
-                    "encountered duplicate `filled` parameter: duplicate set to {:?}",
-                    previous.value
-                )
-                .into_combine(format_err!(
-                    previous.span,
-                    "previous `filled` parameter here"
-                )))
+                return Err(Self::raise_duplicate_error("filled", span, previous))
             }
             None => self.filled = Some(ConfigValue::new(value, span)),
         }
@@ -134,18 +239,10 @@ impl Config {
     /// # Errors
     ///
     /// If a `#[repr(uN)]` attribute has already been found.
-    pub fn repr(&mut self, value: ReprKind, span: Span) -> Result<(), syn::Error> {
+    pub fn repr(&mut self, value: ReprKind, span: Span) -> Result<()> {
         match &self.repr {
             Some(previous) => {
-                return Err(format_err!(
-                span,
-                "encountered duplicate `#[repr(uN)]` attribute: duplicate set to {:?}",
-                previous.value
-            )
-                .into_combine(format_err!(
-                    previous.span,
-                    "previous `#[repr(uN)]` parameter here"
-                )))
+                return Err(Self::raise_duplicate_error("#[repr(uN)]", span, previous))
             }
             None => self.repr = Some(ConfigValue::new(value, span)),
         }
@@ -157,17 +254,14 @@ impl Config {
     /// # Errors
     ///
     /// If a `#[derive(Debug)]` attribute has already been found.
-    pub fn derive_debug(&mut self, span: Span) -> Result<(), syn::Error> {
+    pub fn derive_debug(&mut self, span: Span) -> Result<()> {
         match &self.derive_debug {
             Some(previous) => {
-                return Err(format_err!(
+                return Err(Self::raise_duplicate_error(
+                    "#[derive(Debug)]",
                     span,
-                    "encountered duplicate `#[derive(Debug)]` attribute",
-                )
-                .into_combine(format_err!(
-                    previous.span,
-                    "previous `#[derive(Debug)]` parameter here"
-                )))
+                    previous,
+                ))
             }
             None => self.derive_debug = Some(ConfigValue::new((), span)),
         }
@@ -179,17 +273,14 @@ impl Config {
     /// # Errors
     ///
     /// If a `#[derive(BitfieldSpecifier)]` attribute has already been found.
-    pub fn derive_specifier(&mut self, span: Span) -> Result<(), syn::Error> {
+    pub fn derive_specifier(&mut self, span: Span) -> Result<()> {
         match &self.derive_specifier {
             Some(previous) => {
-                return Err(format_err!(
+                return Err(Self::raise_duplicate_error(
+                    "#[derive(BitfieldSpecifier)]",
                     span,
-                    "encountered duplicate `#[derive(BitfieldSpecifier)]` attribute",
-                )
-                .into_combine(format_err!(
-                    previous.span,
-                    "previous `#[derive(BitfieldSpecifier)]` parameter here"
-                )))
+                    previous,
+                ))
             }
             None => self.derive_specifier = Some(ConfigValue::new((), span)),
         }
@@ -214,7 +305,7 @@ impl Config {
         index: usize,
         span: Span,
         config: FieldConfig,
-    ) -> Result<(), syn::Error> {
+    ) -> Result<()> {
         match self.field_configs.entry(index) {
             Entry::Occupied(occupied) => {
                 return Err(format_err!(span, "encountered duplicate config for field")

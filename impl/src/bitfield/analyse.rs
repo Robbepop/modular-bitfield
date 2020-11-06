@@ -27,6 +27,7 @@ impl TryFrom<(&mut Config, syn::ItemStruct)> for BitfieldStruct {
         Self::ensure_no_generics(&item_struct)?;
         Self::extract_attributes(&item_struct.attrs, config)?;
         Self::analyse_config_for_fields(&item_struct, config)?;
+        config.ensure_no_conflicts()?;
         Ok(Self { item_struct })
     }
 }

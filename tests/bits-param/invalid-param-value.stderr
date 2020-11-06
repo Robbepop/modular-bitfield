@@ -1,0 +1,5 @@
+error: encountered invalid value argument for #[bitfield] `bits` parameter
+ --> $DIR/invalid-param-value.rs:3:19
+  |
+3 | #[bitfield(bits = true)]
+  |                   ^^^^

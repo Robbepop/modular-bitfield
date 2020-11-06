@@ -25,7 +25,7 @@ impl BitfieldStruct {
         let span = self.item_struct.span();
         let check_filled = self.generate_check_for_filled(config);
         let struct_definition = self.generate_struct(config);
-        let constructor_definition = self.generate_constructor();
+        let constructor_definition = self.generate_constructor(config);
         let specifier_impl = self.generate_specifier_impl(config);
 
         let byte_conversion_impls = self.expand_byte_conversion_impls(config);
@@ -55,7 +55,7 @@ impl BitfieldStruct {
         config.derive_specifier.as_ref()?;
         let span = self.item_struct.span();
         let ident = &self.item_struct.ident;
-        let bits = self.generate_bitfield_size();
+        let bits = self.generate_target_or_actual_bitfield_size(config);
         let next_divisible_by_8 = Self::next_divisible_by_8(&bits);
         Some(quote_spanned!(span =>
             #[allow(clippy::identity_op)]
@@ -65,12 +65,12 @@ impl BitfieldStruct {
                 }
             };
 
-            #[automatically_derived]
             #[allow(clippy::identity_op)]
             impl ::modular_bitfield::Specifier for #ident {
                 const BITS: usize = #bits;
 
-                type Bytes = <[(); if #bits > 128 { 128 } else #bits] as ::modular_bitfield::private::SpecifierBytes>::Bytes;
+                #[allow(unused_braces)]
+                type Bytes = <[(); if { #bits } > 128 { 128 } else { #bits }] as ::modular_bitfield::private::SpecifierBytes>::Bytes;
                 type InOut = Self;
 
                 #[inline]
@@ -137,7 +137,6 @@ impl BitfieldStruct {
             ))
         });
         Some(quote_spanned!(span=>
-            #[automatically_derived]
             impl ::core::fmt::Debug for #ident {
                 fn fmt(&self, __bf_f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
                     __bf_f.debug_struct(::core::stringify!(#ident))
@@ -205,14 +204,59 @@ impl BitfieldStruct {
         )
     }
 
-    /// Generate check for either of the following two cases:
+    /// Generates the expression denoting the actual configured or implied bit width.
+    fn generate_target_or_actual_bitfield_size(&self, config: &Config) -> TokenStream2 {
+        config
+            .bits
+            .as_ref()
+            .map(|bits_config| {
+                let span = bits_config.span;
+                let value = bits_config.value;
+                quote_spanned!(span=>
+                    #value
+                )
+            })
+            .unwrap_or_else(|| self.generate_bitfield_size())
+    }
+
+    /// Generates a check in case `bits = N` is unset to verify that the actual amount of bits is either
     ///
-    /// - `filled = true`: Check if the total number of required bits is a multiple of 8.
-    /// - `filled = false`: Check if the total number of required bits is NOT a multiple of 8.
-    fn generate_check_for_filled(&self, config: &Config) -> TokenStream2 {
+    /// - ... equal to `N`, if `filled = true` or
+    /// - ... smaller than `N`, if `filled = false`
+    fn generate_filled_check_for_unaligned_bits(
+        &self,
+        config: &Config,
+        required_bits: usize,
+    ) -> TokenStream2 {
         let span = self.item_struct.span();
         let ident = &self.item_struct.ident;
-        let size = self.generate_bitfield_size();
+        let actual_bits = self.generate_bitfield_size();
+        let check_ident = match config.filled_enabled() {
+            true => quote_spanned!(span => CheckFillsUnalignedBits),
+            false => quote_spanned!(span => CheckDoesNotFillUnalignedBits),
+        };
+        let comparator = match config.filled_enabled() {
+            true => quote! { == },
+            false => quote! { > },
+        };
+        quote_spanned!(span=>
+            #[allow(clippy::identity_op)]
+            const _: () = {
+                impl ::modular_bitfield::private::checks::#check_ident for #ident {
+                    type CheckType = [(); (#required_bits #comparator #actual_bits) as usize];
+                }
+            };
+        )
+    }
+
+    /// Generates a check in case `bits = N` is unset to verify that the actual amount of bits is either
+    ///
+    /// - ... divisible by 8, if `filled = true` or
+    /// - ... not divisible by 8, if `filled = false`
+    fn generate_filled_check_for_aligned_bits(&self, config: &Config) -> TokenStream2 {
+        let span = self.item_struct.span();
+        let ident = &self.item_struct.ident;
+        let actual_bits = self.generate_bitfield_size();
         let check_ident = match config.filled_enabled() {
             true => quote_spanned!(span => CheckTotalSizeMultipleOf8),
             false => quote_spanned!(span => CheckTotalSizeIsNotMultipleOf8),
@@ -221,10 +265,27 @@ impl BitfieldStruct {
             #[allow(clippy::identity_op)]
             const _: () = {
                 impl ::modular_bitfield::private::checks::#check_ident for #ident {
-                    type Size = ::modular_bitfield::private::checks::TotalSize<[(); #size % 8usize]>;
+                    type Size = ::modular_bitfield::private::checks::TotalSize<[(); #actual_bits % 8usize]>;
                 }
             };
         )
+    }
+
+    /// Generate check for either of the following two cases:
+    ///
+    /// - `filled = true`: Check if the total number of required bits is
+    ///         - ... the same as `N` if `bits = N` was provided or
+    ///         - ... a multiple of 8, otherwise
+    /// - `filled = false`: Check if the total number of required bits is
+    ///         - ... smaller than `N` if `bits = N` was provided or
+    ///         - ... NOT a multiple of 8, otherwise
+    fn generate_check_for_filled(&self, config: &Config) -> TokenStream2 {
+        match config.bits.as_ref() {
+            Some(bits_config) => {
+                self.generate_filled_check_for_unaligned_bits(config, bits_config.value)
+            }
+            None => self.generate_filled_check_for_aligned_bits(config),
+        }
     }
 
     /// Returns a token stream representing the next greater value divisible by 8.
@@ -244,7 +305,7 @@ impl BitfieldStruct {
         let attrs = &config.retained_attributes;
         let vis = &self.item_struct.vis;
         let ident = &self.item_struct.ident;
-        let size = self.generate_bitfield_size();
+        let size = self.generate_target_or_actual_bitfield_size(config);
         let next_divisible_by_8 = Self::next_divisible_by_8(&size);
         quote_spanned!(span=>
             #( #attrs )*
@@ -257,10 +318,10 @@ impl BitfieldStruct {
     }
 
     /// Generates the constructor for the bitfield that initializes all bytes to zero.
-    fn generate_constructor(&self) -> TokenStream2 {
+    fn generate_constructor(&self, config: &Config) -> TokenStream2 {
         let span = self.item_struct.span();
         let ident = &self.item_struct.ident;
-        let size = self.generate_bitfield_size();
+        let size = self.generate_target_or_actual_bitfield_size(config);
         let next_divisible_by_8 = Self::next_divisible_by_8(&size);
         quote_spanned!(span=>
             impl #ident
@@ -307,7 +368,7 @@ impl BitfieldStruct {
                 ReprKind::U64 => quote! { ::core::primitive::u64 },
                 ReprKind::U128 => quote! { ::core::primitive::u128 },
             };
-            let actual_bits = self.generate_bitfield_size();
+            let actual_bits = self.generate_target_or_actual_bitfield_size(config);
             let trait_check_ident = match kind {
                 ReprKind::U8 => quote! { IsU8Compatible },
                 ReprKind::U16 => quote! { IsU16Compatible },
@@ -343,7 +404,7 @@ impl BitfieldStruct {
     fn expand_byte_conversion_impls(&self, config: &Config) -> TokenStream2 {
         let span = self.item_struct.span();
         let ident = &self.item_struct.ident;
-        let size = self.generate_bitfield_size();
+        let size = self.generate_target_or_actual_bitfield_size(config);
         let next_divisible_by_8 = Self::next_divisible_by_8(&size);
         let from_bytes = match config.filled_enabled() {
             true => {

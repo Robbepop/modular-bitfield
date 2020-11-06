@@ -1,4 +1,5 @@
 use super::config::Config;
+use proc_macro2::Span;
 use syn::{
     parse::Result,
     spanned::Spanned,
@@ -50,29 +51,48 @@ impl IntoIterator for ParamArgs {
 }
 
 impl Config {
-    /// Feeds a `bytes: int` parameter to the `#[bitfield]` configuration.
-    fn feed_bytes_param(&mut self, name_value: syn::MetaNameValue) -> Result<()> {
-        assert!(name_value.path.is_ident("bytes"));
+    /// Feeds a parameter that takes an integer value to the `#[bitfield]` configuration.
+    fn feed_int_param<F>(
+        name_value: syn::MetaNameValue,
+        name: &str,
+        on_success: F,
+    ) -> Result<()>
+    where
+        F: FnOnce(usize, Span) -> Result<()>,
+    {
+        assert!(name_value.path.is_ident(name));
         match &name_value.lit {
             syn::Lit::Int(lit_int) => {
                 let span = lit_int.span();
                 let value = lit_int.base10_parse::<usize>().map_err(|err| {
                     format_err!(
                         span,
-                        "encountered malformatted integer value for bytes parameter: {}",
+                        "encountered malformatted integer value for `{}` parameter: {}",
+                        name,
                         err
                     )
                 })?;
-                self.bytes(value, name_value.span())?;
+                on_success(value, name_value.span())?;
             }
             invalid => {
                 return Err(format_err!(
-                invalid,
-                "encountered invalid value argument for #[bitfield] `bytes` parameter",
-            ))
+                    invalid,
+                    "encountered invalid value argument for #[bitfield] `{}` parameter",
+                    name
+                ))
             }
         }
         Ok(())
+    }
+
+    /// Feeds a `bytes: int` parameter to the `#[bitfield]` configuration.
+    fn feed_bytes_param(&mut self, name_value: syn::MetaNameValue) -> Result<()> {
+        Self::feed_int_param(name_value, "bytes", |value, span| self.bytes(value, span))
+    }
+
+    /// Feeds a `bytes: int` parameter to the `#[bitfield]` configuration.
+    fn feed_bits_param(&mut self, name_value: syn::MetaNameValue) -> Result<()> {
+        Self::feed_int_param(name_value, "bits", |value, span| self.bits(value, span))
     }
 
     /// Feeds a `filled: bool` parameter to the `#[bitfield]` configuration.
@@ -108,6 +128,8 @@ impl Config {
                         syn::Meta::NameValue(name_value) => {
                             if name_value.path.is_ident("bytes") {
                                 self.feed_bytes_param(name_value)?;
+                            } else if name_value.path.is_ident("bits") {
+                                self.feed_bits_param(name_value)?;
                             } else if name_value.path.is_ident("filled") {
                                 self.feed_filled_param(name_value)?;
                             } else {

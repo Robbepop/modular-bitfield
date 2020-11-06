@@ -10,10 +10,6 @@ fn tests() {
     t.pass("tests/03-accessors.rs");
     t.compile_fail("tests/04-multiple-of-8bits.rs");
     t.pass("tests/05-accessor-signatures.rs");
-    t.pass("tests/06-enums.rs");
-    t.pass("tests/07-optional-discriminant.rs");
-    t.compile_fail("tests/08-non-power-of-two.rs");
-    t.compile_fail("tests/09-variant-out-of-range.rs");
     t.pass("tests/10-bits-attribute.rs");
     t.compile_fail("tests/11-bits-attribute-wrong.rs");
     t.pass("tests/12-accessors-edge.rs");
@@ -31,6 +27,12 @@ fn tests() {
     t.compile_fail("tests/26-invalid-struct-specifier.rs");
     t.compile_fail("tests/27-invalid-union-specifier.rs");
     t.pass("tests/28-single-bit-enum.rs");
+
+    // Tests specific to the `#[derive(BitfieldSpecifier)]` proc. macro:
+    t.pass("tests/derive-bitfield-specifier/06-enums.rs");
+    t.pass("tests/derive-bitfield-specifier/07-optional-discriminant.rs");
+    t.compile_fail("tests/derive-bitfield-specifier/08-non-power-of-two.rs");
+    t.compile_fail("tests/derive-bitfield-specifier/09-variant-out-of-range.rs");
 
     // Tests for regressions found in published versions:
     t.pass("tests/regressions/no-implicit-prelude.rs");
@@ -72,6 +74,7 @@ fn tests() {
     t.compile_fail("tests/repr/invalid-repr-width-1.rs");
     t.compile_fail("tests/repr/invalid-repr-width-2.rs");
     t.compile_fail("tests/repr/conflicting-ignored-reprs.rs");
+    t.compile_fail("tests/repr/invalid-repr-unfilled.rs");
 
     // Tests for `#[derive(Debug)]`:
     t.pass("tests/derive-debug/valid-use.rs");
@@ -103,4 +106,22 @@ fn tests() {
     t.compile_fail("tests/derive-specifier/out-of-bounds.rs");
     t.compile_fail("tests/derive-specifier/duplicate-derive-1.rs");
     t.compile_fail("tests/derive-specifier/duplicate-derive-2.rs");
+
+    // Tests for `#[bitfield(bits = N)]`:
+    t.pass("tests/bits-param/valid-use-1.rs");
+    t.pass("tests/bits-param/valid-use-2.rs");
+    t.pass("tests/bits-param/valid-use-3.rs");
+    t.pass("tests/bits-param/valid-use-4.rs");
+    t.pass("tests/bits-param/bits-non-filled-1.rs");
+    t.pass("tests/bits-param/bits-non-filled-2.rs");
+    t.pass("tests/bits-param/low-bits-filled.rs");
+    t.pass("tests/bits-param/complex-use-case.rs");
+    t.compile_fail("tests/bits-param/conflicting-params.rs");
+    t.compile_fail("tests/bits-param/conflicting-repr.rs");
+    t.compile_fail("tests/bits-param/duplicate-param-1.rs");
+    t.compile_fail("tests/bits-param/duplicate-param-2.rs");
+    t.compile_fail("tests/bits-param/invalid-param-value.rs");
+    t.compile_fail("tests/bits-param/missing-param-value.rs");
+    t.compile_fail("tests/bits-param/too-few-bits.rs");
+    t.compile_fail("tests/bits-param/too-many-bits.rs");
 }

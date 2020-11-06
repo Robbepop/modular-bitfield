@@ -106,6 +106,8 @@ pub enum False {}
 impl private::Sealed for True {}
 impl DiscriminantInRange for True {}
 impl SpecifierHasAtMost128Bits for True {}
+impl FillsUnalignedBits for True {}
+impl DoesNotFillUnalignedBits for True {}
 
 /// Helper trait to improve compile time error messages.
 pub trait DispatchTrueFalse: private::Sealed {
@@ -146,3 +148,21 @@ where
 pub struct BitsCheck<A> {
     pub arr: A,
 }
+
+pub trait CheckFillsUnalignedBits
+where
+    <Self::CheckType as DispatchTrueFalse>::Out: FillsUnalignedBits,
+{
+    type CheckType: DispatchTrueFalse;
+}
+
+pub trait FillsUnalignedBits {}
+
+pub trait CheckDoesNotFillUnalignedBits
+where
+    <Self::CheckType as DispatchTrueFalse>::Out: DoesNotFillUnalignedBits,
+{
+    type CheckType: DispatchTrueFalse;
+}
+
+pub trait DoesNotFillUnalignedBits {}
