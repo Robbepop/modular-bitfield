@@ -112,7 +112,10 @@ fn tests() {
     t.pass("tests/bits-param/valid-use-2.rs");
     t.pass("tests/bits-param/valid-use-3.rs");
     t.pass("tests/bits-param/valid-use-4.rs");
-    t.pass("tests/bits-param/bits-non-filled.rs");
+    t.pass("tests/bits-param/bits-non-filled-1.rs");
+    t.pass("tests/bits-param/bits-non-filled-2.rs");
+    t.pass("tests/bits-param/low-bits-filled.rs");
+    t.pass("tests/bits-param/complex-use-case.rs");
     t.compile_fail("tests/bits-param/conflicting-params.rs");
     t.compile_fail("tests/bits-param/conflicting-repr.rs");
     t.compile_fail("tests/bits-param/duplicate-param-1.rs");
