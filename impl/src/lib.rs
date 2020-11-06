@@ -98,6 +98,40 @@ pub fn define_specifiers(input: TokenStream) -> TokenStream {
 /// }
 /// ```
 ///
+/// ## Parameter: `bits = N`
+///
+/// With the `bits: int` parameter it is possible to control the targeted bit width of
+/// a `#[bitfield]` annoated struct. Using `bits = N` guarantees that the resulting bitfield
+/// struct will have a bit width of exactly `N`.
+///
+/// ### Example 1
+///
+/// ```
+/// # use modular_bitfield::prelude::*;
+/// #[bitfield(bits = 16)]
+/// pub struct Package {
+///     is_received: bool, // 1 bit
+///     is_alive: bool,    // 1 bit
+///     status: B14,       // 14 bits
+/// }
+/// ```
+///
+/// ### Example 2
+///
+/// The `bits: int` parameter is especially useful when using this in conjunction with
+/// `#[derive(BitfieldSpecifier)] and `filled = false` as shown in the below example.
+///
+/// ```
+/// # use modular_bitfield::prelude::*;
+/// #[bitfield(bits = 5)]
+/// #[derive(BitfieldSpecifier)]
+/// pub struct Package {
+///     is_received: bool, // 1 bit
+///     is_alive: bool,    // 1 bit
+///     status: B3,        // 3 bits
+/// }
+/// ```
+///
 /// ## Field Parameter: `#[bits = N]`
 ///
 /// To ensure at compile time that a field of a `#[bitfield]` struct has a bit width of exactly
