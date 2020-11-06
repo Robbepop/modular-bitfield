@@ -82,8 +82,7 @@ impl Config {
             .unwrap_or(true)
     }
 
-    /// Ensures that there are no conflicting configuration parameters.
-    pub fn ensure_no_conflicts(&self) -> Result<()> {
+    fn ensure_no_bits_and_repr_conflict(&self) -> Result<()> {
         match (self.bits.as_ref(), self.repr.as_ref()) {
             (Some(bits), Some(repr)) => {
                 if bits.value != repr.value.bits() {
@@ -109,6 +108,10 @@ impl Config {
             }
             _ => (),
         }
+        Ok(())
+    }
+
+    fn ensure_no_bits_and_bytes_conflict(&self) -> Result<()> {
         match (self.bits.as_ref(), self.bytes.as_ref()) {
             (Some(bits), Some(bytes)) => {
                 fn next_div_by_8(value: usize) -> usize {
@@ -133,6 +136,13 @@ impl Config {
             }
             _ => (),
         }
+        Ok(())
+    }
+
+    /// Ensures that there are no conflicting configuration parameters.
+    pub fn ensure_no_conflicts(&self) -> Result<()> {
+        self.ensure_no_bits_and_repr_conflict()?;
+        self.ensure_no_bits_and_bytes_conflict()?;
         Ok(())
     }
 
