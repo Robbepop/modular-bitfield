@@ -69,6 +69,7 @@ impl BitfieldStruct {
             impl ::modular_bitfield::Specifier for #ident {
                 const BITS: usize = #bits;
 
+                #[allow(unused_braces)]
                 type Bytes = <[(); if { #bits } > 128 { 128 } else { #bits }] as ::modular_bitfield::private::SpecifierBytes>::Bytes;
                 type InOut = Self;
 
