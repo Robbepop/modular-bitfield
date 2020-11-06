@@ -109,6 +109,30 @@ impl Config {
             }
             _ => (),
         }
+        match (self.bits.as_ref(), self.bytes.as_ref()) {
+            (Some(bits), Some(bytes)) => {
+                fn next_div_by_8(value: usize) -> usize {
+                    ((value.saturating_sub(1) / 8) + 1) * 8
+                }
+                if next_div_by_8(bits.value) / 8 != bytes.value {
+                    return Err(format_err!(
+                        Span::call_site(),
+                        "encountered conflicting `bits = {}` and `bytes = {}` parameters",
+                        bits.value,
+                        bytes.value,
+                    ).into_combine(format_err!(
+                        bits.span,
+                        "conflicting `bits = {}` here",
+                        bits.value
+                    )).into_combine(format_err!(
+                        bytes.span,
+                        "conflicting `bytes = {}` here",
+                        bytes.value,
+                    )))
+                }
+            }
+            _ => (),
+        }
         Ok(())
     }
 
