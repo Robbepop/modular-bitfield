@@ -208,6 +208,39 @@
 //! }
 //! ```
 //!
+//! With the `bits: int` parameter of the `#[bitfield]` macro on the `Header` struct and the
+//! `#[bits: int]` attribute of the `#[derive(BitfieldSpecifier)]` on the `Status` enum we
+//! can have additional compile-time guarantees about the bit widths of the resulting entities:
+//!
+//! ```
+//! # use modular_bitfield::prelude::*;
+//! #
+//! #[derive(BitfieldSpecifier)]
+//! #[bits = 2]
+//! pub enum Status {
+//!     Red, Green, Yellow, None,
+//! }
+//!
+//! #[bitfield(bits = 4)]
+//! #[derive(BitfieldSpecifier)]
+//! pub struct Header {
+//!     is_compact: bool,
+//!     is_secure: bool,
+//!     #[bits = 2]
+//!     pre_status: Status,
+//! }
+//!
+//! #[bitfield(bits = 16)]
+//! pub struct PackedData {
+//!     #[bits = 4]
+//!     header: Header,
+//!     body: B9,
+//!     is_alive: bool,
+//!     #[bits = 2]
+//!     status: Status,
+//! }
+//! ```
+//!
 //! #### Example: Advanced Enum Specifiers
 //!
 //! For our `Status` enum we actually just need 3 status variants: `Green`, `Yellow` and `Red`.
