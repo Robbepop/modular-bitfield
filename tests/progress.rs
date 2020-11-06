@@ -88,7 +88,8 @@ fn tests() {
 
     // Tests for `#[skip(..)]`:
     t.pass("tests/skip/skip-default.rs");
-    t.pass("tests/skip/skip-getters-and-setters.rs");
+    t.pass("tests/skip/skip-getters-and-setters-1.rs");
+    t.pass("tests/skip/skip-getters-and-setters-2.rs");
     t.pass("tests/skip/skip-with-debug.rs");
     t.pass("tests/skip/double_wildcards-1.rs");
     t.pass("tests/skip/double_wildcards-2.rs");
