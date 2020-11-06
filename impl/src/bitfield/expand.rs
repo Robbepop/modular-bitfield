@@ -25,7 +25,7 @@ impl BitfieldStruct {
         let span = self.item_struct.span();
         let check_filled = self.generate_check_for_filled(config);
         let struct_definition = self.generate_struct(config);
-        let constructor_definition = self.generate_constructor();
+        let constructor_definition = self.generate_constructor(config);
         let specifier_impl = self.generate_specifier_impl(config);
 
         let byte_conversion_impls = self.expand_byte_conversion_impls(config);
@@ -55,7 +55,7 @@ impl BitfieldStruct {
         config.derive_specifier.as_ref()?;
         let span = self.item_struct.span();
         let ident = &self.item_struct.ident;
-        let bits = self.generate_bitfield_size();
+        let bits = self.generate_target_or_actual_bitfield_size(config);
         let next_divisible_by_8 = Self::next_divisible_by_8(&bits);
         Some(quote_spanned!(span =>
             #[allow(clippy::identity_op)]
@@ -69,7 +69,7 @@ impl BitfieldStruct {
             impl ::modular_bitfield::Specifier for #ident {
                 const BITS: usize = #bits;
 
-                type Bytes = <[(); if #bits > 128 { 128 } else #bits] as ::modular_bitfield::private::SpecifierBytes>::Bytes;
+                type Bytes = <[(); if { #bits } > 128 { 128 } else { #bits }] as ::modular_bitfield::private::SpecifierBytes>::Bytes;
                 type InOut = Self;
 
                 #[inline]
@@ -203,6 +203,21 @@ impl BitfieldStruct {
         )
     }
 
+    /// Generates the expression denoting the actual configured or implied bit width.
+    fn generate_target_or_actual_bitfield_size(&self, config: &Config) -> TokenStream2 {
+        config
+            .bits
+            .as_ref()
+            .map(|bits_config| {
+                let span = bits_config.span;
+                let value = bits_config.value;
+                quote_spanned!(span=>
+                    #value
+                )
+            })
+            .unwrap_or_else(|| self.generate_bitfield_size())
+    }
+
     /// Generates a check in case `bits = N` is unset to verify that the actual amount of bits is either
     ///
     /// - ... equal to `N`, if `filled = true` or
@@ -289,7 +304,7 @@ impl BitfieldStruct {
         let attrs = &config.retained_attributes;
         let vis = &self.item_struct.vis;
         let ident = &self.item_struct.ident;
-        let size = self.generate_bitfield_size();
+        let size = self.generate_target_or_actual_bitfield_size(config);
         let next_divisible_by_8 = Self::next_divisible_by_8(&size);
         quote_spanned!(span=>
             #( #attrs )*
@@ -302,10 +317,10 @@ impl BitfieldStruct {
     }
 
     /// Generates the constructor for the bitfield that initializes all bytes to zero.
-    fn generate_constructor(&self) -> TokenStream2 {
+    fn generate_constructor(&self, config: &Config) -> TokenStream2 {
         let span = self.item_struct.span();
         let ident = &self.item_struct.ident;
-        let size = self.generate_bitfield_size();
+        let size = self.generate_target_or_actual_bitfield_size(config);
         let next_divisible_by_8 = Self::next_divisible_by_8(&size);
         quote_spanned!(span=>
             impl #ident
@@ -352,7 +367,7 @@ impl BitfieldStruct {
                 ReprKind::U64 => quote! { ::core::primitive::u64 },
                 ReprKind::U128 => quote! { ::core::primitive::u128 },
             };
-            let actual_bits = self.generate_bitfield_size();
+            let actual_bits = self.generate_target_or_actual_bitfield_size(config);
             let trait_check_ident = match kind {
                 ReprKind::U8 => quote! { IsU8Compatible },
                 ReprKind::U16 => quote! { IsU16Compatible },
@@ -388,7 +403,7 @@ impl BitfieldStruct {
     fn expand_byte_conversion_impls(&self, config: &Config) -> TokenStream2 {
         let span = self.item_struct.span();
         let ident = &self.item_struct.ident;
-        let size = self.generate_bitfield_size();
+        let size = self.generate_target_or_actual_bitfield_size(config);
         let next_divisible_by_8 = Self::next_divisible_by_8(&size);
         let from_bytes = match config.filled_enabled() {
             true => {
