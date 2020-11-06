@@ -1,10 +1,10 @@
-error: encountered duplicate `#[bits = N]` attribute for field
+error: encountered duplicate `#[skip]` attribute for field
  --> $DIR/duplicate-attr.rs:5:15
   |
 5 |     #[skip] #[skip]
   |               ^^^^
 
-error: duplicate `#[bits = M]` here
+error: duplicate `#[skip]` here
  --> $DIR/duplicate-attr.rs:5:7
   |
 5 |     #[skip] #[skip]

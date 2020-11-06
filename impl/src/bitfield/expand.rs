@@ -676,13 +676,8 @@ impl BitfieldStruct {
         info: FieldInfo<'_>,
     ) -> Option<TokenStream2> {
         let FieldInfo {
-            index: _,
-            field,
-            config,
+            index: _, field, ..
         } = &info;
-        if config.skip_getters_and_setters() {
-            return None
-        }
         let span = field.span();
         let ty = &field.ty;
         let getters = self.expand_getters_for_field(offset, &info);

@@ -39,6 +39,7 @@ fn tests() {
     t.pass("tests/regressions/no-implicit-prelude-2.rs");
     t.pass("tests/regressions/regression-issue-8.rs");
     t.pass("tests/regressions/deny_elided_lifetime.rs");
+    t.pass("tests/regressions/regression-v0.11.rs");
     t.compile_fail("tests/regressions/invalid_bits_field_attr.rs");
 
     // Tests for `bytes = N` #[bitfield] parameter:
@@ -87,7 +88,8 @@ fn tests() {
 
     // Tests for `#[skip(..)]`:
     t.pass("tests/skip/skip-default.rs");
-    t.pass("tests/skip/skip-getters-and-setters.rs");
+    t.pass("tests/skip/skip-getters-and-setters-1.rs");
+    t.pass("tests/skip/skip-getters-and-setters-2.rs");
     t.pass("tests/skip/skip-with-debug.rs");
     t.pass("tests/skip/double_wildcards-1.rs");
     t.pass("tests/skip/double_wildcards-2.rs");
@@ -98,6 +100,12 @@ fn tests() {
     t.compile_fail("tests/skip/duplicate-specifier.rs");
     t.compile_fail("tests/skip/use-skipped-getter.rs");
     t.compile_fail("tests/skip/use-skipped-setter.rs");
+    t.compile_fail("tests/skip/duplicate-getters-1.rs");
+    t.compile_fail("tests/skip/duplicate-getters-2.rs");
+    t.compile_fail("tests/skip/duplicate-getters-3.rs");
+    t.compile_fail("tests/skip/duplicate-setters-1.rs");
+    t.compile_fail("tests/skip/duplicate-setters-2.rs");
+    t.compile_fail("tests/skip/duplicate-setters-3.rs");
 
     // Tests for `#[derive(BitfieldSpecifier)] using `#[bitfield]`:
     t.pass("tests/derive-specifier/valid-use.rs");
@@ -120,7 +128,8 @@ fn tests() {
     t.compile_fail("tests/bits-param/conflicting-repr.rs");
     t.compile_fail("tests/bits-param/duplicate-param-1.rs");
     t.compile_fail("tests/bits-param/duplicate-param-2.rs");
-    t.compile_fail("tests/bits-param/invalid-param-value.rs");
+    t.compile_fail("tests/bits-param/invalid-param-value-1.rs");
+    t.compile_fail("tests/bits-param/invalid-param-value-2.rs");
     t.compile_fail("tests/bits-param/missing-param-value.rs");
     t.compile_fail("tests/bits-param/too-few-bits.rs");
     t.compile_fail("tests/bits-param/too-many-bits.rs");
