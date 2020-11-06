@@ -154,6 +154,43 @@
 //! assert_eq!(data.status(), Status::Red);
 //! ```
 //!
+//! #### Example: Skipping Fields
+//!
+//! It might make sense to only allow users to set or get information from a field or
+//! even to entirely disallow interaction with a bitfield. For this the `#[skip]` attribute
+//! can be used on a bitfield of a `#[bitfield]` annotated struct.
+//!
+//! ```
+//! # use modular_bitfield::prelude::*;
+//! #
+//! #[bitfield]
+//! pub struct SomeBitsUndefined {
+//!     #[skip(setters)]
+//!     read_only: bool,
+//!     #[skip(getters)]
+//!     write_only: bool,
+//!     #[skip]
+//!     unused: B3,
+//! }
+//! ```
+//!
+//! It is possible to use `#[skip(getters, setters)]` or `#[skip(getters)]` followed by a `#[skip(setters)]`
+//! attribute applied on the same bitfield. The effects are the same. When skipping both, getters and setters,
+//! it is possible to completely avoid having to specify a name:
+//!
+//! ```
+//! # use modular_bitfield::prelude::*;
+//! #
+//! #[bitfield]
+//! pub struct SomeBitsUndefined {
+//!     #[skip] __: B2,
+//!     is_activ: bool,
+//!     #[skip] __: B2,
+//!     is_received: bool,
+//!     #[skip] __: B2,
+//! }
+//! ```
+//!
 //! #### Example: Unfilled Bitfields
 //!
 //! Sometimes it might be useful to not be required to construct a bitfield that defines
