@@ -118,4 +118,6 @@ fn tests() {
     t.compile_fail("tests/bits-param/duplicate-param-2.rs");
     t.compile_fail("tests/bits-param/invalid-param-value.rs");
     t.compile_fail("tests/bits-param/missing-param-value.rs");
+    t.compile_fail("tests/bits-param/too-few-bits.rs");
+    t.compile_fail("tests/bits-param/too-many-bits.rs");
 }
