@@ -139,10 +139,34 @@ impl Config {
         Ok(())
     }
 
+    pub fn ensure_no_repr_and_filled_conflict(&self) -> Result<()> {
+        match (self.repr.as_ref(), self.filled.as_ref()) {
+            (Some(repr), Some(filled @ ConfigValue { value: false, .. })) => {
+                return Err(format_err!(
+                    Span::call_site(),
+                    "encountered conflicting `{:?}` and `filled = {}` parameters",
+                    repr.value,
+                    filled.value,
+                ).into_combine(format_err!(
+                    repr.span,
+                    "conflicting `{:?}` here",
+                    repr.value
+                )).into_combine(format_err!(
+                    filled.span,
+                    "conflicting `filled = {}` here",
+                    filled.value,
+                )))
+            }
+            _ => (),
+        }
+        Ok(())
+    }
+
     /// Ensures that there are no conflicting configuration parameters.
     pub fn ensure_no_conflicts(&self) -> Result<()> {
         self.ensure_no_bits_and_repr_conflict()?;
         self.ensure_no_bits_and_bytes_conflict()?;
+        self.ensure_no_repr_and_filled_conflict()?;
         Ok(())
     }
 
