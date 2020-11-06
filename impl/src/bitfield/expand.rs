@@ -203,14 +203,44 @@ impl BitfieldStruct {
         )
     }
 
-    /// Generate check for either of the following two cases:
+    /// Generates a check in case `bits = N` is unset to verify that the actual amount of bits is either
     ///
-    /// - `filled = true`: Check if the total number of required bits is a multiple of 8.
-    /// - `filled = false`: Check if the total number of required bits is NOT a multiple of 8.
-    fn generate_check_for_filled(&self, config: &Config) -> TokenStream2 {
+    /// - ... equal to `N`, if `filled = true` or
+    /// - ... smaller than `N`, if `filled = false`
+    fn generate_filled_check_for_unaligned_bits(
+        &self,
+        config: &Config,
+        required_bits: usize,
+    ) -> TokenStream2 {
         let span = self.item_struct.span();
         let ident = &self.item_struct.ident;
-        let size = self.generate_bitfield_size();
+        let actual_bits = self.generate_bitfield_size();
+        let check_ident = match config.filled_enabled() {
+            true => quote_spanned!(span => CheckFillsUnalignedBits),
+            false => quote_spanned!(span => CheckDoesNotFillUnalignedBits),
+        };
+        let comparator = match config.filled_enabled() {
+            true => quote! { == },
+            false => quote! { > },
+        };
+        quote_spanned!(span=>
+            #[allow(clippy::identity_op)]
+            const _: () = {
+                impl ::modular_bitfield::private::checks::#check_ident for #ident {
+                    type CheckType = [(); (#required_bits #comparator #actual_bits) as usize];
+                }
+            };
+        )
+    }
+
+    /// Generates a check in case `bits = N` is unset to verify that the actual amount of bits is either
+    ///
+    /// - ... divisible by 8, if `filled = true` or
+    /// - ... not divisible by 8, if `filled = false`
+    fn generate_filled_check_for_aligned_bits(&self, config: &Config) -> TokenStream2 {
+        let span = self.item_struct.span();
+        let ident = &self.item_struct.ident;
+        let actual_bits = self.generate_bitfield_size();
         let check_ident = match config.filled_enabled() {
             true => quote_spanned!(span => CheckTotalSizeMultipleOf8),
             false => quote_spanned!(span => CheckTotalSizeIsNotMultipleOf8),
@@ -219,10 +249,27 @@ impl BitfieldStruct {
             #[allow(clippy::identity_op)]
             const _: () = {
                 impl ::modular_bitfield::private::checks::#check_ident for #ident {
-                    type Size = ::modular_bitfield::private::checks::TotalSize<[(); #size % 8usize]>;
+                    type Size = ::modular_bitfield::private::checks::TotalSize<[(); #actual_bits % 8usize]>;
                 }
             };
         )
+    }
+
+    /// Generate check for either of the following two cases:
+    ///
+    /// - `filled = true`: Check if the total number of required bits is
+    ///         - ... the same as `N` if `bits = N` was provided or
+    ///         - ... a multiple of 8, otherwise
+    /// - `filled = false`: Check if the total number of required bits is
+    ///         - ... smaller than `N` if `bits = N` was provided or
+    ///         - ... NOT a multiple of 8, otherwise
+    fn generate_check_for_filled(&self, config: &Config) -> TokenStream2 {
+        match config.bits.as_ref() {
+            Some(bits_config) => {
+                self.generate_filled_check_for_unaligned_bits(config, bits_config.value)
+            }
+            None => self.generate_filled_check_for_aligned_bits(config),
+        }
     }
 
     /// Returns a token stream representing the next greater value divisible by 8.
