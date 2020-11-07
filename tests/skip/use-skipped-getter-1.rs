@@ -4,17 +4,12 @@ use modular_bitfield::prelude::*;
 #[derive(Debug)]
 pub struct Sparse {
     #[skip(getters)]
-    unused_1: B10,
+    unused_1: B7,
     a: bool,
-    #[skip(getters)]
-    unused_2: B10,
-    b: bool,
-    #[skip(getters)]
-    unused_3: B10,
 }
 
 fn main() {
-    let sparse = Sparse::from_bytes([0xFF; 4]);
+    let sparse = Sparse::from_bytes([0xFF; 1]);
     sparse.set_unused_1(0);
     assert_eq!(sparse.unused_1(), 0); // ERROR!
 }

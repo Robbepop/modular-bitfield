@@ -98,8 +98,12 @@ fn tests() {
     t.compile_fail("tests/skip/invalid-specifier.rs");
     t.compile_fail("tests/skip/duplicate-attr.rs");
     t.compile_fail("tests/skip/duplicate-specifier.rs");
-    t.compile_fail("tests/skip/use-skipped-getter.rs");
-    t.compile_fail("tests/skip/use-skipped-setter.rs");
+    t.compile_fail("tests/skip/use-skipped-getter-1.rs");
+    t.compile_fail("tests/skip/use-skipped-getter-2.rs");
+    t.compile_fail("tests/skip/use-skipped-getter-3.rs");
+    t.compile_fail("tests/skip/use-skipped-setter-1.rs");
+    t.compile_fail("tests/skip/use-skipped-setter-2.rs");
+    t.compile_fail("tests/skip/use-skipped-setter-3.rs");
     t.compile_fail("tests/skip/duplicate-getters-1.rs");
     t.compile_fail("tests/skip/duplicate-getters-2.rs");
     t.compile_fail("tests/skip/duplicate-getters-3.rs");

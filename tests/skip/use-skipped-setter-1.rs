@@ -4,13 +4,8 @@ use modular_bitfield::prelude::*;
 #[derive(Debug)]
 pub struct Sparse {
     #[skip(setters)]
-    unused_1: B10,
+    unused_1: B7,
     a: bool,
-    #[skip(setters)]
-    unused_2: B10,
-    b: bool,
-    #[skip(setters)]
-    unused_3: B10,
 }
 
 fn main() {

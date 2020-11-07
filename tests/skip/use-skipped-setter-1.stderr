@@ -1,0 +1,9 @@
+error[E0599]: no method named `set_unused_1` found for struct `Sparse` in the current scope
+  --> $DIR/use-skipped-setter-1.rs:14:12
+   |
+4  | / #[derive(Debug)]
+5  | | pub struct Sparse {
+   | |___- method `set_unused_1` not found for this
+...
+14 |       sparse.set_unused_1(0b11_1111_1111); // ERROR!
+   |              ^^^^^^^^^^^^ help: there is an associated function with a similar name: `unused_1`
