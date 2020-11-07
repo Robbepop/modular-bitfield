@@ -176,7 +176,9 @@ pub fn define_specifiers(input: TokenStream) -> TokenStream {
 ///     #[skip]
 ///     skipped_entirely: B4,
 ///     #[skip(getters, setters)]
-///     skipped_entirely_2: B4,
+///     skipped_entirely_2: B2,
+///     #[skip(getters)] #[skip(setters)]
+///     skipped_entirely_2: B2,
 /// }
 /// ```
 ///
