@@ -1,3 +1,8 @@
+# 0.11.2 (2020-11-07)
+
+- Fixed a bug that all but the first `#[skip(..)]` attribute for a bitfield were ignored despite proper error handling.
+  E.g. when flagging a field with `#[skip(getters)] #[skip(setters)]` the `#[skip(setters)]` was ignored.
+
 # 0.11.1 (2020-11-07)
 
 - Allow non-overlapping `#[skip(getters)]` and `#[skip(setters)]` attributes. This might be useful for conditional compilation.
