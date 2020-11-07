@@ -130,7 +130,7 @@ impl FieldConfig {
                 }
                 self.skip = Some(ConfigValue {
                     value: SkipWhich::All,
-                    span: span.join(previous.span).unwrap_or_else(|| span),
+                    span: span.join(previous.span).unwrap_or(span),
                 });
             }
             None => self.skip = Some(ConfigValue { value: which, span }),
