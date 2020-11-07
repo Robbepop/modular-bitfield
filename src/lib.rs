@@ -170,7 +170,7 @@
 //!     #[skip(getters)]
 //!     write_only: bool,
 //!     #[skip]
-//!     unused: B3,
+//!     unused: B6,
 //! }
 //! ```
 //!
