@@ -1,3 +1,9 @@
+# 0.11.1 (2020-11-07)
+
+- Allow non-overlapping `#[skip(getters)]` and `#[skip(setters)]` attributes. This might be useful for conditional compilation.
+- Fixed a bug with `#[skip]` skipped fields not properly bumping the bit offset
+- Fixed a minor bug where duplicate `#[skip]` attributes would yield a confusing error.
+
 # 0.11.0 (2020-11-06)
 
 - Add `bits: int` parameter to the `#[bitfield]` macro which allows to precisely control the resulting bit width
