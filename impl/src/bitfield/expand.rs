@@ -69,8 +69,7 @@ impl BitfieldStruct {
             impl ::modular_bitfield::Specifier for #ident {
                 const BITS: usize = #bits;
 
-                #[allow(unused_braces)]
-                type Bytes = <[(); if { #bits } > 128 { 128 } else { #bits }] as ::modular_bitfield::private::SpecifierBytes>::Bytes;
+                type Bytes = <[(); if #bits  > 128 { 128 } else { #bits }] as ::modular_bitfield::private::SpecifierBytes>::Bytes;
                 type InOut = Self;
 
                 #[inline]
@@ -169,14 +168,14 @@ impl BitfieldStruct {
     ///
     /// ```
     /// # use modular_bitfield::prelude::*;
-    /// {
-    ///     0usize +
-    ///     <B8 as ::modular_bitfield::Specifier>::BITS +
-    ///     <B8 as ::modular_bitfield::Specifier>::BITS +
-    ///     <B8 as ::modular_bitfield::Specifier>::BITS +
-    ///     <bool as ::modular_bitfield::Specifier>::BITS +
-    ///     <B7 as ::modular_bitfield::Specifier>::BITS
-    /// }
+    ///
+    ///0usize +
+    ///<B8 as ::modular_bitfield::Specifier>::BITS +
+    ///<B8 as ::modular_bitfield::Specifier>::BITS +
+    ///<B8 as ::modular_bitfield::Specifier>::BITS +
+    ///<bool as ::modular_bitfield::Specifier>::BITS +
+    ///<B7 as ::modular_bitfield::Specifier>::BITS
+    ///
     /// # ;
     /// ```
     ///
@@ -200,7 +199,7 @@ impl BitfieldStruct {
                 )
             });
         quote_spanned!(span=>
-            { #sum }
+            #sum
         )
     }
 
@@ -265,7 +264,7 @@ impl BitfieldStruct {
             #[allow(clippy::identity_op)]
             const _: () = {
                 impl ::modular_bitfield::private::checks::#check_ident for #ident {
-                    type Size = ::modular_bitfield::private::checks::TotalSize<[(); #actual_bits % 8usize]>;
+                    type Size = ::modular_bitfield::private::checks::TotalSize<[(); (#actual_bits) % 8usize]>;
                 }
             };
         )
