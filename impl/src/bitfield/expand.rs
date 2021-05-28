@@ -169,12 +169,12 @@ impl BitfieldStruct {
     /// ```
     /// # use modular_bitfield::prelude::*;
     ///
-    ///0usize +
-    ///<B8 as ::modular_bitfield::Specifier>::BITS +
-    ///<B8 as ::modular_bitfield::Specifier>::BITS +
-    ///<B8 as ::modular_bitfield::Specifier>::BITS +
-    ///<bool as ::modular_bitfield::Specifier>::BITS +
-    ///<B7 as ::modular_bitfield::Specifier>::BITS
+    /// 0usize +
+    /// <B8 as ::modular_bitfield::Specifier>::BITS +
+    /// <B8 as ::modular_bitfield::Specifier>::BITS +
+    /// <B8 as ::modular_bitfield::Specifier>::BITS +
+    /// <bool as ::modular_bitfield::Specifier>::BITS +
+    /// <B7 as ::modular_bitfield::Specifier>::BITS
     ///
     /// # ;
     /// ```
@@ -195,7 +195,7 @@ impl BitfieldStruct {
             })
             .fold(quote_spanned!(span=> 0usize), |lhs, rhs| {
                 quote_spanned!(span =>
-                    #lhs + #rhs
+                    (#lhs + #rhs)
                 )
             });
         quote_spanned!(span=>
