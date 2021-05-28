@@ -195,7 +195,7 @@ impl BitfieldStruct {
             })
             .fold(quote_spanned!(span=> 0usize), |lhs, rhs| {
                 quote_spanned!(span =>
-                    (#lhs + #rhs)
+                    #lhs + #rhs
                 )
             });
         quote_spanned!(span=>
