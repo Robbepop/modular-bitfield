@@ -290,9 +290,9 @@ impl BitfieldStruct {
     /// Returns a token stream representing the next greater value divisible by 8.
     fn next_divisible_by_8(value: &TokenStream2) -> TokenStream2 {
         let span = value.span();
-        quote_spanned!(span=> {
+        quote_spanned!(span=>
             (((#value - 1) / 8) + 1) * 8
-        })
+        )
     }
 
     /// Generates the actual item struct definition for the `#[bitfield]`.
