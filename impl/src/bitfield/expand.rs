@@ -74,6 +74,7 @@ impl BitfieldStruct {
                 type InOut = Self;
 
                 #[inline]
+                #[allow(dead_code)]
                 fn into_bytes(
                     value: Self::InOut,
                 ) -> ::core::result::Result<Self::Bytes, ::modular_bitfield::error::OutOfBounds> {
@@ -85,6 +86,7 @@ impl BitfieldStruct {
                 }
 
                 #[inline]
+                #[allow(dead_code)]
                 fn from_bytes(
                     bytes: Self::Bytes,
                 ) -> ::core::result::Result<Self::InOut, ::modular_bitfield::error::InvalidBitPattern<Self::Bytes>>
@@ -328,6 +330,7 @@ impl BitfieldStruct {
             {
                 /// Returns an instance with zero initialized data.
                 #[allow(clippy::identity_op)]
+                #[allow(daed_code)]
                 pub const fn new() -> Self {
                     Self {
                         bytes: [0u8; #next_divisible_by_8 / 8usize],
@@ -412,6 +415,7 @@ impl BitfieldStruct {
                     /// Converts the given bytes directly into the bitfield struct.
                     #[inline]
                     #[allow(clippy::identity_op)]
+                    #[allow(dead_code)]
                     pub const fn from_bytes(bytes: [::core::primitive::u8; #next_divisible_by_8 / 8usize]) -> Self {
                         Self { bytes }
                     }
@@ -426,6 +430,7 @@ impl BitfieldStruct {
                     /// If the given bytes contain bits at positions that are undefined for `Self`.
                     #[inline]
                     #[allow(clippy::identity_op)]
+                    #[allow(dead_code)]
                     pub fn from_bytes(
                         bytes: [::core::primitive::u8; #next_divisible_by_8 / 8usize]
                     ) -> ::core::result::Result<Self, ::modular_bitfield::error::OutOfBounds> {
@@ -447,6 +452,7 @@ impl BitfieldStruct {
                 /// [here](https://docs.rs/modular-bitfield/#generated-structure).
                 #[inline]
                 #[allow(clippy::identity_op)]
+                #[allow(dead_code)]
                 pub const fn into_bytes(self) -> [::core::primitive::u8; #next_divisible_by_8 / 8usize] {
                     self.bytes
                 }
@@ -531,6 +537,7 @@ impl BitfieldStruct {
         let getters = quote_spanned!(span=>
             #[doc = #getter_docs]
             #[inline]
+            #[allow(dead_code)]
             #( #retained_attrs )*
             #vis fn #get_ident(&self) -> <#ty as ::modular_bitfield::Specifier>::InOut {
                 self.#get_checked_ident().expect(#get_assert_msg)
