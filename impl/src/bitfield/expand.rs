@@ -50,7 +50,7 @@ impl BitfieldStruct {
     /// Generates code to check for the bit size arguments of bit-fields.
     fn expand_bits_checks_for_field(field_info: FieldInfo<'_>) -> TokenStream2 {
         let FieldInfo {
-            index: _,
+            index,
             field,
             config,
         } = field_info;
@@ -60,9 +60,12 @@ impl BitfieldStruct {
                 let ty = &field.ty;
                 let expected_bits = bits.value;
                 let span = bits.span;
+                let check_name = format_ident!("_{}_CHECK_EXPECTED_BITS", index);
+                let check_name_inner =
+                    format_ident!("_{}_check_expected_bits_inner", index);
                 Some(quote_spanned!(span =>
-                    const _: () = {
-                        let _: ::modular_bitfield::private::checks::BitsCheck::<[(); #expected_bits]> =
+                    const #check_name: () = {
+                        let #check_name_inner: ::modular_bitfield::private::checks::BitsCheck::<[(); #expected_bits]> =
                             ::modular_bitfield::private::checks::BitsCheck::<[(); #expected_bits]>{
                                 arr: [(); <#ty as ::modular_bitfield::Specifier>::BITS]
                             };
@@ -248,10 +251,11 @@ impl BitfieldStruct {
         let ident = &self.item_struct.ident;
         config.bytes.as_ref().map(|config| {
             let bytes = config.value;
+            let check_name = format_ident!("_{}_CHECK_EXPECTED_BYTES", ident.to_string().to_uppercase());
             quote_spanned!(config.span =>
                 #[automatically_derived]
                 impl #ident {
-                    const _: () = {
+                    const #check_name: () = {
                         struct ExpectedBytes { __bf_unused: [::core::primitive::u8; #bytes] };
 
                         ::modular_bitfield::private::static_assertions::assert_eq_size!(
@@ -583,10 +587,15 @@ impl BitfieldStruct {
             quote_spanned!(span => CheckTotalSizeIsNotMultipleOf8)
         };
 
+        let check_name = format_ident!(
+            "_{}_CHECK_{}",
+            ident.to_string().to_uppercase(),
+            check_ident.to_string().to_uppercase()
+        );
         quote_spanned!(span =>
             #[automatically_derived]
             impl #ident {
-                const _: () = {
+                const #check_name: () = {
                     #[automatically_derived]
                     impl ::modular_bitfield::private::checks::#check_ident for #ident {
                         type Size = ::modular_bitfield::private::checks::TotalSize<[(); #actual_bits % 8usize]>;
@@ -619,10 +628,15 @@ impl BitfieldStruct {
             quote! { > }
         };
 
+        let check_name = format_ident!(
+            "_{}_CHECK_{}",
+            ident.to_string().to_uppercase(),
+            check_ident.to_string().to_uppercase()
+        );
         quote_spanned!(span =>
             #[automatically_derived]
             impl #ident {
-                const _: () = {
+                const #check_name: () = {
                     #[automatically_derived]
                     impl ::modular_bitfield::private::checks::#check_ident for #ident {
                         #[allow(clippy::cast_lossless)]
@@ -644,14 +658,16 @@ impl BitfieldStruct {
         let bits = self.generate_target_or_actual_bitfield_size(config);
         let next_divisible_by_8 = Self::next_divisible_by_8(&bits, true);
 
+        let check_name =
+            format_ident!("_{}_CHECK_AT_MOST_128", ident.to_string().to_uppercase());
         Some(quote_spanned!(span =>
             #[automatically_derived]
             impl #ident {
-                const _: () = {
+                const #check_name: () = {
                     #[automatically_derived]
                     impl ::modular_bitfield::private::checks::CheckSpecifierHasAtMost128Bits for #ident {
                         #[allow(clippy::cast_lossless)]
-                        type CheckType = [(); (#bits <= 128) as ::core::primitive::usize];
+                        type CheckType = [(); (#bits <= 128) as usize];
                     }
                 };
             }
