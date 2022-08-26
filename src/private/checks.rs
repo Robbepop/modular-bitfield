@@ -6,6 +6,7 @@ pub(crate) mod private {
 macro_rules! impl_sealed_for {
     ( $($primitive:ty),* ) => {
         $(
+            #[automatically_derived]
             impl private::Sealed for $primitive {}
         )*
     }
@@ -32,8 +33,14 @@ macro_rules! impl_total_size_for {
     ( $(($n:expr, $name:ident)),* ) => {
         $(
             pub enum $name {}
+
+            #[automatically_derived]
             impl private::Sealed for TotalSize<[(); $n]> {}
+
+            #[automatically_derived]
             impl private::Sealed for $name {}
+
+            #[automatically_derived]
             impl RenameSizeType for TotalSize<[(); $n]> {
                 type CheckType = $name;
             }

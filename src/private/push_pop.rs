@@ -36,8 +36,10 @@ impl PopBits for PopBuffer<u8> {
 macro_rules! impl_pop_bits {
     ( $($type:ty),+ ) => {
         $(
+            #[automatically_derived]
             impl Sealed for PopBuffer<$type> {}
 
+            #[automatically_derived]
             impl PopBits for PopBuffer<$type> {
                 #[inline]
                 fn pop_bits(&mut self, amount: u32) -> u8 {
@@ -73,8 +75,10 @@ impl<T> PushBuffer<T> {
 macro_rules! impl_push_bits {
     ( $($type:ty),+ ) => {
         $(
+            #[automatically_derived]
             impl Sealed for PushBuffer<$type> {}
 
+            #[automatically_derived]
             impl Default for PushBuffer<$type> {
                 #[inline]
                 fn default() -> Self {
@@ -82,6 +86,7 @@ macro_rules! impl_push_bits {
                 }
             }
 
+            #[automatically_derived]
             impl PushBits for PushBuffer<$type> {
                 #[inline]
                 fn push_bits(&mut self, amount: u32, bits: u8) {

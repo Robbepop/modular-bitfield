@@ -31,6 +31,7 @@ impl Specifier for bool {
 macro_rules! impl_specifier_for_primitive {
     ( $( ($prim:ty: $bits:literal) ),* $(,)? ) => {
         $(
+            #[automatically_derived]
             impl Specifier for $prim {
                 const BITS: usize = $bits;
                 type Bytes = Self;

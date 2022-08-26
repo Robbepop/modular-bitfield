@@ -11,6 +11,7 @@ pub trait ArrayBytesConversion {
 macro_rules! impl_array_bytes_conversion_for_prim {
     ( $( $prim:ty ),* ) => {
         $(
+            #[automatically_derived]
             impl ArrayBytesConversion for [(); ::core::mem::size_of::<$prim>() * 8] {
                 type Array = [u8; ::core::mem::size_of::<$prim>()];
                 type Bytes = <Self as SpecifierBytes>::Bytes;
@@ -31,6 +32,7 @@ impl_array_bytes_conversion_for_prim!(u8, u16, u32, u64, u128);
 macro_rules! impl_array_bytes_conversion_for_size {
     ( $( $size:literal ),* ) => {
         $(
+            #[automatically_derived]
             impl ArrayBytesConversion for [(); $size] {
                 type Array = [u8; $size / 8];
                 type Bytes = <Self as SpecifierBytes>::Bytes;

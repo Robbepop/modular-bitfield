@@ -116,7 +116,9 @@ fn generate_enum(input: &syn::ItemEnum) -> syn::Result<TokenStream2> {
     let check_discriminants = variants.iter().map(|ident| {
         let span = ident.span();
         quote_spanned!(span =>
+            #[automatically_derived]
             impl ::modular_bitfield::private::checks::CheckDiscriminantInRange<[(); Self::#ident as usize]> for #enum_ident {
+                #[allow(clippy::cast_lossless)]
                 type CheckType = [(); ((Self::#ident as usize) < (0x01_usize << #bits)) as usize ];
             }
         )
@@ -133,6 +135,7 @@ fn generate_enum(input: &syn::ItemEnum) -> syn::Result<TokenStream2> {
     Ok(quote_spanned!(span=>
         #( #check_discriminants )*
 
+        #[automatically_derived]
         impl ::modular_bitfield::Specifier for #enum_ident {
             const BITS: usize = #bits;
             type Bytes = <[(); #bits] as ::modular_bitfield::private::SpecifierBytes>::Bytes;
