@@ -146,6 +146,7 @@ impl BitfieldStruct {
         });
         quote_spanned!(span =>
             #[automatically_derived]
+            #[allow(clippy::no_effect_underscore_binding)]
             impl #ident {
                 #( #bits_checks )*
 
@@ -254,6 +255,7 @@ impl BitfieldStruct {
             let check_name = format_ident!("_{}_CHECK_EXPECTED_BYTES", ident.to_string().to_uppercase());
             quote_spanned!(config.span =>
                 #[automatically_derived]
+                #[allow(clippy::no_effect_underscore_binding)]
                 impl #ident {
                     const #check_name: () = {
                         struct ExpectedBytes { __bf_unused: [::core::primitive::u8; #bytes] };
@@ -594,6 +596,7 @@ impl BitfieldStruct {
         );
         quote_spanned!(span =>
             #[automatically_derived]
+            #[allow(clippy::no_effect_underscore_binding)]
             impl #ident {
                 const #check_name: () = {
                     #[automatically_derived]
@@ -635,6 +638,7 @@ impl BitfieldStruct {
         );
         quote_spanned!(span =>
             #[automatically_derived]
+            #[allow(clippy::no_effect_underscore_binding)]
             impl #ident {
                 const #check_name: () = {
                     #[automatically_derived]
@@ -662,6 +666,7 @@ impl BitfieldStruct {
             format_ident!("_{}_CHECK_AT_MOST_128", ident.to_string().to_uppercase());
         Some(quote_spanned!(span =>
             #[automatically_derived]
+            #[allow(clippy::no_effect_underscore_binding)]
             impl #ident {
                 const #check_name: () = {
                     #[automatically_derived]
