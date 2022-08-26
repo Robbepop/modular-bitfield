@@ -12,11 +12,11 @@ macro_rules! impl_sealed_for {
 }
 impl_sealed_for!(bool, u8, u16, u32, u64, u128);
 
-/// Helper trait to check whether the size of bitfield structs
+/// Helper trait to check whether the size of bit-field structures
 /// is a multiple of 8 to form complete bytes.
 pub trait TotalSizeIsMultipleOfEightBits: private::Sealed {}
 
-/// Helper trait used to check whether a bitfield struct does not
+/// Helper trait used to check whether a bit-field structure does not
 /// fill its entire value space, e.g. has undefined bits.
 pub trait TotalSizeIsNotMultipleOfEightBits: private::Sealed {}
 
@@ -25,7 +25,7 @@ pub trait RenameSizeType: private::Sealed {
     type CheckType;
 }
 
-/// Helper type to sum up bit size of a bitfield at compile time.
+/// Helper type to sum up bit size of a bit-field at compile time.
 pub struct TotalSize<T>(::core::marker::PhantomData<T>);
 
 macro_rules! impl_total_size_for {
@@ -62,7 +62,7 @@ impl TotalSizeIsNotMultipleOfEightBits for FiveMod8 {}
 impl TotalSizeIsNotMultipleOfEightBits for SixMod8 {}
 impl TotalSizeIsNotMultipleOfEightBits for SevenMod8 {}
 
-/// Public facing trait implemented by bitfield structs in order to let the compiler
+/// Public facing trait implemented by bit-field structures in order to let the compiler
 /// check if their sizes match a multiple of 8.
 pub trait CheckTotalSizeMultipleOf8
 where
@@ -71,7 +71,7 @@ where
     type Size: RenameSizeType;
 }
 
-/// Public facing trait implemented by bitfield structs in order to let the compiler
+/// Public facing trait implemented by bit-field structures in order to let the compiler
 /// check if their sizes does not match a multiple of 8.
 pub trait CheckTotalSizeIsNotMultipleOf8
 where
@@ -80,11 +80,11 @@ where
     type Size: RenameSizeType;
 }
 
-/// Helper trait to check if an enum discriminant of a bitfield specifier
+/// Helper trait to check if an enum discriminant of a bit-field specifier
 /// is within valid bounds.
 pub trait DiscriminantInRange: private::Sealed {}
 
-/// Helper trait to check if a `#[derive(BitfieldSpecifier)]` flagged bitfield
+/// Helper trait to check if a `#[derive(BitfieldSpecifier)]` flagged bit-field
 /// requires
 /// at most 128 bits.
 pub trait SpecifierHasAtMost128Bits: private::Sealed {}
@@ -124,7 +124,7 @@ impl DispatchTrueFalse for [(); 1] {
     type Out = True;
 }
 
-/// Public facing trait that is implemented by bitfield specifiers to
+/// Public facing trait that is implemented by bit-field specifiers to
 /// let the compiler check if all its variant discriminants are within
 /// valid bounds.
 pub trait CheckDiscriminantInRange<A>
@@ -143,7 +143,7 @@ where
     type CheckType: DispatchTrueFalse;
 }
 
-/// Helper type to check whether a bitfield member aligns to
+/// Helper type to check whether a bit-field member aligns to
 /// the specified bits.
 pub struct BitsCheck<A> {
     pub arr: A,

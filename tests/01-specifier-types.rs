@@ -4,7 +4,7 @@
 // It would be possible to implement this without having any actual types B1
 // through B64 -- the attribute macro could recognize the names "B1" through
 // "B64" and deduce the bit width from the number in the name. But this hurts
-// composability! Later we'll want to make bitfield members out of other things,
+// composability! Later we'll want to make bit-field members out of other things,
 // like enums or type aliases which won't necessarily have a width in their
 // name:
 //
@@ -36,13 +36,13 @@
 //
 // So instead of parsing a bit width from the type name, the approach we will
 // follow will hold bit widths in an associated constant of a trait that is
-// implemented for legal bitfield specifier types, including B1 through B64.
+// implemented for legal bit-field specifier types, including B1 through B64.
 //
-// Create a trait called bitfield::Specifier with an associated constant BITS,
+// Create a trait called `bitfield::Specifier` with an associated constant BITS,
 // and write a function-like procedural macro to define some types B1 through
-// B64 with corresponding impls of the Specifier trait. The B* types can be
+// B64 with corresponding implementations of the Specifier trait. The B* types can be
 // anything since we don't need them to carry any meaning outside of a
-// #[bitfield] struct definition; an uninhabited enum like `pub enum B1 {}`
+// `#[bitfield]` structure definition; an uninhabited enum like `pub enum B1 {}`
 // would work best.
 //
 // Be aware that crates that have the "proc-macro" crate type are not allowed to

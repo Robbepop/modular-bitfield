@@ -1,4 +1,4 @@
-// Write an attribute macro that replaces the struct in its input with a byte
+// Write an attribute macro that replaces the structure in its input with a byte
 // array representation of the correct size. For example the invocation in the
 // test case below might expand to the following where the `size` expression is
 // computed by summing the Specifier::BITS constant of each field type.

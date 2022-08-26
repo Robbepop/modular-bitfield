@@ -24,7 +24,7 @@ impl<'a> FieldInfo<'a> {
         }
     }
 
-    /// Returns the ident fragment for this field.
+    /// Returns the identifier fragment for this field.
     pub fn ident_frag(&self) -> &dyn quote::IdentFragment {
         match &self.field.ident {
             Some(ident) => ident,

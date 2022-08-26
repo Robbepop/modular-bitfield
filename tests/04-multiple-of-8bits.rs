@@ -1,4 +1,4 @@
-// Make it so that a bitfield with a size not a multiple of 8 bits will not
+// Make it so that a bit-field with a size not a multiple of 8 bits will not
 // compile.
 //
 // Aim to make the error message as relevant and free of distractions as you can
@@ -33,7 +33,7 @@
 // To the extent that there are any tricks to macro development, all of them
 // revolve around *what* code the macros emit, not *how* the macros emit the
 // code. This realization can be surprising to people who entered into macro
-// development with a vague notion of procedural macros as a "compiler plugin"
+// development with a vague notion of procedural macros as a "compiler plug-in"
 // which they imagine must imply all sorts of complicated APIs for *how* to
 // integrate with the rest of the compiler. That's not how it works. The only
 // thing macros do is emit code that could have been written by hand. If you

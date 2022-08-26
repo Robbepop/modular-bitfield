@@ -474,15 +474,6 @@ pub trait Specifier {
     /// This is the type that is used for the getters and setters.
     type InOut;
 
-    /// Converts some bytes into the in-out type.
-    ///
-    /// # Errors
-    ///
-    /// If the in-out type is out of bounds. This can for example happen if your
-    /// in-out type is `u8` (for `B7`) but you specified a value that is bigger
-    /// or equal to 128 which exceeds the 7 bits.
-    fn into_bytes(input: Self::InOut) -> Result<Self::Bytes, OutOfBounds>;
-
     /// Converts the given bytes into the in-out type.
     ///
     /// # Errors
@@ -494,6 +485,15 @@ pub trait Specifier {
     fn from_bytes(
         bytes: Self::Bytes,
     ) -> Result<Self::InOut, InvalidBitPattern<Self::Bytes>>;
+
+    /// Converts some bytes into the in-out type.
+    ///
+    /// # Errors
+    ///
+    /// If the in-out type is out of bounds. This can for example happen if your
+    /// in-out type is `u8` (for `B7`) but you specified a value that is bigger
+    /// or equal to 128 which exceeds the 7 bits.
+    fn into_bytes(input: Self::InOut) -> Result<Self::Bytes, OutOfBounds>;
 }
 
 /// The default set of predefined specifiers.

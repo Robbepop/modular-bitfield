@@ -26,13 +26,13 @@ fn generate_or_error(input: TokenStream2) -> syn::Result<TokenStream2> {
         syn::Data::Struct(_) => {
             Err(format_err!(
                 input,
-                "structs are not supported as bitfield specifiers",
+                "structures are not supported as bit-field specifiers",
             ))
         }
         syn::Data::Union(_) => {
             Err(format_err!(
                 input,
-                "unions are not supported as bitfield specifiers",
+                "unions are not supported as bit-field specifiers",
             ))
         }
     }
@@ -96,7 +96,7 @@ fn generate_enum(input: &syn::ItemEnum) -> syn::Result<TokenStream2> {
             None => {
                 return Err(format_err!(
                     span,
-                    "BitfieldSpecifier has too many variants to pack into a bitfield",
+                    "BitfieldSpecifier has too many variants to pack into a bit-field",
                 ))
             }
         }

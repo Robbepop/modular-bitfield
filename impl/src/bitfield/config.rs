@@ -23,7 +23,7 @@ pub struct Config {
     pub field_configs: HashMap<usize, Value<FieldConfig>>,
 }
 
-/// Kinds of `#[repr(uN)]` annotations for a `#[bitfield]` struct.
+/// Kinds of `#[repr(uN)]` annotations for a `#[bitfield]` structure.
 #[derive(Copy, Clone)]
 pub enum ReprKind {
     /// Found a `#[repr(u8)]` annotation.
@@ -39,7 +39,7 @@ pub enum ReprKind {
 }
 
 impl ReprKind {
-    /// Returns the amount of bits required to have for the bitfield to satisfy the `#[repr(uN)]`.
+    /// Returns the amount of bits required to have for the bit-field to satisfy the `#[repr(uN)]`.
     pub const fn bits(self) -> usize {
         match self {
             Self::U8 => 8,
@@ -60,14 +60,14 @@ impl core::fmt::Debug for ReprKind {
 /// A configuration value and its originating span.
 #[derive(Clone)]
 pub struct Value<T> {
-    /// The actual value of the config.
+    /// The actual value of the configuration.
     pub value: T,
-    /// The originating span of the config.
+    /// The originating span of the configuration.
     pub span: Span,
 }
 
 impl<T> Value<T> {
-    /// Creates a new config value.
+    /// Creates a new configuration value.
     pub const fn new(value: T, span: Span) -> Self {
         Self { value, span }
     }

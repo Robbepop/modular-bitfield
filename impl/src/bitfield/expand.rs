@@ -20,7 +20,7 @@ use syn::{
 };
 
 impl BitfieldStruct {
-    /// Expands the given `#[bitfield]` struct into an actual bitfield definition.
+    /// Expands the given `#[bitfield]` structure into an actual bit-field definition.
     pub fn expand(&self, config: &Config) -> TokenStream2 {
         let span = self.item_struct.span();
         let check_filled = self.generate_check_for_filled(config);
@@ -47,7 +47,7 @@ impl BitfieldStruct {
         )
     }
 
-    /// Generates code to check for the bit size arguments of bitfields.
+    /// Generates code to check for the bit size arguments of bit-fields.
     fn expand_bits_checks_for_field(field_info: FieldInfo<'_>) -> TokenStream2 {
         let FieldInfo {
             index: _,
@@ -76,7 +76,7 @@ impl BitfieldStruct {
         )
     }
 
-    /// Generates routines to allow conversion from and to bytes for the `#[bitfield]` struct.
+    /// Generates routines to allow conversion from and to bytes for the `#[bitfield]` structure.
     fn expand_byte_conversion_impls(&self, config: &Config) -> TokenStream2 {
         let span = self.item_struct.span();
         let ident = &self.item_struct.ident;
@@ -84,7 +84,7 @@ impl BitfieldStruct {
         let next_divisible_by_8 = Self::next_divisible_by_8(&size);
         let from_bytes = if config.filled_enabled() {
             quote_spanned!(span=>
-                /// Converts the given bytes directly into the bitfield struct.
+                /// Converts the given bytes directly into the bit-field structure.
                 #[inline]
                 #[allow(clippy::identity_op)]
                 pub const fn from_bytes(bytes: [::core::primitive::u8; #next_divisible_by_8 / 8usize]) -> Self {
@@ -93,7 +93,7 @@ impl BitfieldStruct {
             )
         } else {
             quote_spanned!(span=>
-                /// Converts the given bytes directly into the bitfield struct.
+                /// Converts the given bytes directly into the bit-field structure.
                 ///
                 /// # Errors
                 ///
@@ -116,7 +116,7 @@ impl BitfieldStruct {
                 ///
                 /// # Layout
                 ///
-                /// The returned byte array is layed out in the same way as described
+                /// The returned byte array is laid out in the same way as described
                 /// [here](https://docs.rs/modular-bitfield/#generated-structure).
                 #[inline]
                 #[allow(clippy::identity_op)]
@@ -261,7 +261,7 @@ impl BitfieldStruct {
         })
     }
 
-    /// Generates `From` impls for a `#[repr(uN)]` annotated #[bitfield] struct.
+    /// Generates `From` implementations for a `#[repr(uN)]` annotated #[bitfield] structure.
     fn expand_repr_from_impls_and_checks(&self, config: &Config) -> Option<TokenStream2> {
         let ident = &self.item_struct.ident;
         config.repr.as_ref().map(|repr| {
@@ -425,7 +425,7 @@ impl BitfieldStruct {
     ///
     /// # Example
     ///
-    /// For the following struct:
+    /// For the following structure:
     ///
     /// ```
     /// # use modular_bitfield::prelude::*;
@@ -454,7 +454,7 @@ impl BitfieldStruct {
     /// # ;
     /// ```
     ///
-    /// Which is a compile time evaluatable expression.
+    /// Which is a compile time evaluable expression.
     fn generate_bitfield_size(&self) -> TokenStream2 {
         let span = self.item_struct.span();
         let sum = self
@@ -495,7 +495,7 @@ impl BitfieldStruct {
         }
     }
 
-    /// Generates the constructor for the bitfield that initializes all bytes to zero.
+    /// Generates the constructor for the bit-field that initializes all bytes to zero.
     fn generate_constructor(&self, config: &Config) -> TokenStream2 {
         let span = self.item_struct.span();
         let ident = &self.item_struct.ident;
@@ -612,7 +612,7 @@ impl BitfieldStruct {
         )
     }
 
-    /// Expands to the `Specifier` impl for the `#[bitfield]` struct if the
+    /// Expands to the `Specifier` implementation for the `#[bitfield]` structure if the
     /// `#[derive(BitfieldSpecifier)]` attribute is applied to it as well.
     ///
     /// Otherwise returns `None`.
@@ -669,7 +669,7 @@ impl BitfieldStruct {
         ))
     }
 
-    /// Generates the actual item struct definition for the `#[bitfield]`.
+    /// Generates the actual item structure definition for the `#[bitfield]`.
     ///
     /// Internally it only contains a byte array equal to the minimum required
     /// amount of bytes to compactly store the information of all its bit fields.

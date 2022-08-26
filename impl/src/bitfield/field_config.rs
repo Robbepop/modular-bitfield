@@ -138,7 +138,7 @@ impl FieldConfig {
         Ok(())
     }
 
-    /// Returns `true` if the config demands that code generation for setters should be skipped.
+    /// Returns `true` if the configuration demands that code generation for setters should be skipped.
     pub fn skip_setters(&self) -> bool {
         self.skip
             .as_ref()
@@ -146,7 +146,7 @@ impl FieldConfig {
             .map_or(false, SkipWhich::skip_setters)
     }
 
-    /// Returns `true` if the config demands that code generation for getters should be skipped.
+    /// Returns `true` if the configuration demands that code generation for getters should be skipped.
     pub fn skip_getters(&self) -> bool {
         self.skip
             .as_ref()

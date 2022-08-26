@@ -13,7 +13,7 @@ where
     format_err!(arg, "encountered unsupported #[bitfield] attribute")
 }
 
-/// The parameters given to the `#[bitfield]` proc. macro.
+/// The parameters given to the `#[bitfield]` procedural macro.
 ///
 /// # Example
 ///
@@ -116,7 +116,7 @@ impl Config {
     ///
     /// # Errors
     ///
-    /// If a parameter is malformatted, unexpected, duplicate or in conflict.
+    /// If a parameter is malformed, unexpected, duplicate or in conflict.
     pub fn feed_params<'a, P>(&mut self, params: P) -> Result<()>
     where
         P: IntoIterator<Item = syn::NestedMeta> + 'a,
