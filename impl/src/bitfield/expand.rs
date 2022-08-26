@@ -252,13 +252,16 @@ impl BitfieldStruct {
         let ident = &self.item_struct.ident;
         config.bytes.as_ref().map(|config| {
             let bytes = config.value;
-            let check_name = format_ident!("_{}_CHECK_EXPECTED_BYTES", ident.to_string().to_uppercase());
+            let check_name = format_ident!(
+                "_{}_CHECK_EXPECTED_BYTES",
+                ident.to_string().to_uppercase()
+            );
             quote_spanned!(config.span =>
                 #[automatically_derived]
                 #[allow(clippy::no_effect_underscore_binding)]
                 impl #ident {
                     const #check_name: () = {
-                        struct ExpectedBytes { __bf_unused: [::core::primitive::u8; #bytes] };
+                        struct ExpectedBytes { __bf_unused: [u8; #bytes] }
 
                         ::modular_bitfield::private::static_assertions::assert_eq_size!(
                             ExpectedBytes,
