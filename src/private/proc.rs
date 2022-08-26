@@ -60,7 +60,7 @@ where
             );
         } else {
             buffer.push_bits(
-                (0 - lsb_offset).try_into().unwrap(),
+                (8 - lsb_offset).try_into().unwrap(),
                 bytes[least_sb] >> lsb_offset,
             );
         }
