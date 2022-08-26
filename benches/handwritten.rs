@@ -52,7 +52,7 @@ pub struct Handwritten {
 }
 
 impl Handwritten {
-    /// Creates a new hand-written struct initialized with all zeros.
+    /// Creates a new hand-written structure initialized with all zeros.
     pub fn new() -> Self {
         Self { data: [0x00; 8] }
     }
@@ -129,6 +129,12 @@ impl Handwritten {
         assert!((new_val as u64) < (0x01_u64 << 32));
         let le_bytes = new_val.to_le_bytes();
         self.data[4..].copy_from_slice(&le_bytes[..]);
+    }
+}
+
+impl Default for Handwritten {
+    fn default() -> Self {
+        Self::new()
     }
 }
 

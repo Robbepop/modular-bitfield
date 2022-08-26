@@ -13,7 +13,7 @@ fn generate_or_error(input: TokenStream2) -> syn::Result<TokenStream2> {
     let input = syn::parse::<syn::DeriveInput>(input.into())?;
     match input.data {
         syn::Data::Enum(data_enum) => {
-            generate_enum(syn::ItemEnum {
+            generate_enum(&syn::ItemEnum {
                 attrs: input.attrs,
                 vis: input.vis,
                 enum_token: data_enum.enum_token,
@@ -74,31 +74,30 @@ fn parse_attrs(attrs: &[syn::Attribute]) -> syn::Result<Attributes> {
     Ok(attributes)
 }
 
-fn generate_enum(input: syn::ItemEnum) -> syn::Result<TokenStream2> {
+fn generate_enum(input: &syn::ItemEnum) -> syn::Result<TokenStream2> {
     let span = input.span();
     let attributes = parse_attrs(&input.attrs)?;
     let enum_ident = &input.ident;
 
-    let bits = match attributes.bits {
-        Some(bits) => bits,
-        None => {
-            let count_variants = input.variants.iter().count();
-            if !count_variants.is_power_of_two() {
+    let bits = if let Some(bits) = attributes.bits {
+        bits
+    } else {
+        let count_variants = input.variants.iter().count();
+        if !count_variants.is_power_of_two() {
+            return Err(format_err!(
+                span,
+                "BitfieldSpecifier expected a number of variants which is a power of 2, specify #[bits = {}] if that was your intent",
+                count_variants.next_power_of_two().trailing_zeros(),
+            ))
+        }
+        // We can take `trailing_zeros` returns type as the required amount of bits.
+        match count_variants.checked_next_power_of_two() {
+            Some(power_of_two) => power_of_two.trailing_zeros() as usize,
+            None => {
                 return Err(format_err!(
                     span,
-                    "BitfieldSpecifier expected a number of variants which is a power of 2, specify #[bits = {}] if that was your intent",
-                    count_variants.next_power_of_two().trailing_zeros(),
+                    "BitfieldSpecifier has too many variants to pack into a bitfield",
                 ))
-            }
-            // We can take `trailing_zeros` returns type as the required amount of bits.
-            match count_variants.checked_next_power_of_two() {
-                Some(power_of_two) => power_of_two.trailing_zeros() as usize,
-                None => {
-                    return Err(format_err!(
-                        span,
-                        "BitfieldSpecifier has too many variants to pack into a bitfield",
-                    ))
-                }
             }
         }
     };

@@ -4,7 +4,7 @@ use quote::{
     quote,
 };
 
-pub fn generate(_input: TokenStream2) -> TokenStream2 {
+pub fn generate() -> TokenStream2 {
     let specifiers = (1usize..=128).map(generate_specifier_for);
     quote! {
         #( #specifiers )*

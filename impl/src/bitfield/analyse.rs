@@ -263,7 +263,7 @@ impl BitfieldStruct {
                             config.skip(SkipWhich::Setters, span)?;
                         }
                     }
-                    _ => {
+                    syn::Meta::NameValue(_) => {
                         return Err(format_err!(
                             span,
                             "encountered invalid format for #[skip] field attribute"

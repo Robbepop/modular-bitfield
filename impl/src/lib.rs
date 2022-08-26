@@ -1,7 +1,13 @@
 #![recursion_limit = "256"]
 #![forbid(unsafe_code)]
-
-extern crate proc_macro;
+#![deny(
+    warnings,
+    clippy::pedantic,
+    clippy::nursery,
+    clippy::cargo,
+    unused_extern_crates,
+    rust_2021_compatibility
+)]
 
 #[macro_use]
 mod errors;
@@ -13,13 +19,13 @@ use proc_macro::TokenStream;
 
 /// Generates the `B1`, `B2`, ..., `B128` bitfield specifiers.
 ///
-/// Only of use witihn the `modular_bitfield` crate itself.
+/// Only of use within the `modular_bitfield` crate itself.
 #[proc_macro]
-pub fn define_specifiers(input: TokenStream) -> TokenStream {
-    define_specifiers::generate(input.into()).into()
+pub fn define_specifiers(_input: TokenStream) -> TokenStream {
+    define_specifiers::generate().into()
 }
 
-/// Applicable to structs to turn their fields into compact bitfields.
+/// Applicable to structures to turn their fields into compact bit-fields.
 ///
 /// # Generated API
 ///
@@ -119,7 +125,7 @@ pub fn define_specifiers(input: TokenStream) -> TokenStream {
 /// ### Example 2
 ///
 /// The `bits: int` parameter is especially useful when using this in conjunction with
-/// `#[derive(BitfieldSpecifier)] and `filled = false` as shown in the below example.
+/// `#[derive(BitfieldSpecifier)]` and `filled = false` as shown in the below example.
 ///
 /// ```
 /// # use modular_bitfield::prelude::*;

@@ -1,4 +1,4 @@
-use super::config::ConfigValue;
+use super::config::Value;
 use crate::errors::CombineError;
 use proc_macro2::Span;
 
@@ -7,9 +7,9 @@ pub struct FieldConfig {
     /// Attributes that are re-expanded and going to be ignored by the rest of the `#[bitfield]` invocation.
     pub retained_attrs: Vec<syn::Attribute>,
     /// An encountered `#[bits = N]` attribute on a field.
-    pub bits: Option<ConfigValue<usize>>,
+    pub bits: Option<Value<usize>>,
     /// An encountered `#[skip]` attribute on a field.
-    pub skip: Option<ConfigValue<SkipWhich>>,
+    pub skip: Option<Value<SkipWhich>>,
 }
 
 /// Controls which parts of the code generation to skip.
@@ -37,12 +37,12 @@ pub enum SkipWhich {
 
 impl SkipWhich {
     /// Returns `true` if code generation of getters should be skipped.
-    pub fn skip_getters(self) -> bool {
+    pub const fn skip_getters(self) -> bool {
         matches!(self, Self::All | Self::Getters)
     }
 
     /// Returns `true` if code generation of setters should be skipped.
-    pub fn skip_setters(self) -> bool {
+    pub const fn skip_setters(self) -> bool {
         matches!(self, Self::All | Self::Setters)
     }
 }
@@ -68,10 +68,10 @@ impl FieldConfig {
                 .into_combine(format_err!(previous.span, "duplicate `#[bits = M]` here")))
             }
             None => {
-                self.bits = Some(ConfigValue {
+                self.bits = Some(Value {
                     value: amount,
                     span,
-                })
+                });
             }
         }
         Ok(())
@@ -96,7 +96,7 @@ impl FieldConfig {
         fn raise_skip_error(
             skip_params: &str,
             span: Span,
-            previous: &ConfigValue<SkipWhich>,
+            previous: &Value<SkipWhich>,
         ) -> syn::Error {
             format_err!(
                 span,
@@ -128,12 +128,12 @@ impl FieldConfig {
                         }
                     }
                 }
-                self.skip = Some(ConfigValue {
+                self.skip = Some(Value {
                     value: SkipWhich::All,
                     span: span.join(previous.span).unwrap_or(span),
                 });
             }
-            None => self.skip = Some(ConfigValue { value: which, span }),
+            None => self.skip = Some(Value { value: which, span }),
         }
         Ok(())
     }
@@ -143,8 +143,7 @@ impl FieldConfig {
         self.skip
             .as_ref()
             .map(|config| config.value)
-            .map(SkipWhich::skip_setters)
-            .unwrap_or(false)
+            .map_or(false, SkipWhich::skip_setters)
     }
 
     /// Returns `true` if the config demands that code generation for getters should be skipped.
@@ -152,7 +151,6 @@ impl FieldConfig {
         self.skip
             .as_ref()
             .map(|config| config.value)
-            .map(SkipWhich::skip_getters)
-            .unwrap_or(false)
+            .map_or(false, SkipWhich::skip_getters)
     }
 }
