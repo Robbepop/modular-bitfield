@@ -61,21 +61,17 @@ impl BitfieldStruct {
                 let expected_bits = bits.value;
                 let span = bits.span;
                 let check_name = format_ident!("_{}_CHECK_EXPECTED_BITS", index);
-                let check_name_inner =
-                    format_ident!("_{}_check_expected_bits_inner", index);
                 Some(quote_spanned!(span =>
-                    const #check_name: () = {
-                        let #check_name_inner: ::modular_bitfield::private::checks::BitsCheck::<[(); #expected_bits]> =
-                            ::modular_bitfield::private::checks::BitsCheck::<[(); #expected_bits]>{
-                                arr: [(); <#ty as ::modular_bitfield::Specifier>::BITS]
-                            };
-                    };
+                    const #check_name: ::modular_bitfield::private::checks::BitsCheck::<[(); #expected_bits]> =
+                        ::modular_bitfield::private::checks::BitsCheck::<[(); #expected_bits]>{
+                            arr: [(); <#ty as ::modular_bitfield::Specifier>::BITS]
+                        };
                 ))
             }
             None => None,
         };
 
-        quote_spanned!(span=>
+        quote_spanned!(span =>
             #bits_check
         )
     }
@@ -91,6 +87,7 @@ impl BitfieldStruct {
                 /// Converts the given bytes directly into the bit-field structure.
                 #[inline]
                 #[must_use]
+                #[allow(dead_code)]
                 pub const fn from_bytes(bytes: [::core::primitive::u8; #next_divisible_by_8]) -> Self {
                     Self { bytes }
                 }
@@ -106,10 +103,11 @@ impl BitfieldStruct {
                 pub fn from_bytes(
                     bytes: [::core::primitive::u8; #next_divisible_by_8]
                 ) -> ::core::result::Result<Self, ::modular_bitfield::error::OutOfBounds> {
-                    if bytes[(#next_divisible_by_8) - 1] >= (0x01 << (8 - (((#next_divisible_by_8) * 8usize) - #size))) {
-                        return ::core::result::Result::Err(::modular_bitfield::error::OutOfBounds)
+                    if bytes[#next_divisible_by_8 - 1] >= (0x01 << (8 - ((#next_divisible_by_8) * 8usize - (#size)))) {
+                        ::core::result::Result::Err(::modular_bitfield::error::OutOfBounds)
+                    } else {
+                        ::core::result::Result::Ok(Self { bytes })
                     }
-                    ::core::result::Result::Ok(Self { bytes })
                 }
             )
         };
@@ -124,6 +122,7 @@ impl BitfieldStruct {
                 /// [here](https://docs.rs/modular-bitfield/#generated-structure).
                 #[inline]
                 #[must_use]
+                #[allow(dead_code)]
                 pub const fn into_bytes(self) -> [::core::primitive::u8; #next_divisible_by_8] {
                     self.bytes
                 }
@@ -146,10 +145,8 @@ impl BitfieldStruct {
         });
         quote_spanned!(span =>
             #[automatically_derived]
-            #[allow(clippy::no_effect_underscore_binding)]
             impl #ident {
                 #( #bits_checks )*
-
                 #( #setters_and_getters )*
             }
         )
@@ -229,6 +226,7 @@ impl BitfieldStruct {
             #[doc = #getter_docs]
             #[inline]
             #[must_use]
+            #[allow(dead_code)]
             #( #retained_attrs )*
             #vis fn #get_ident(&self) -> <#ty as ::modular_bitfield::Specifier>::InOut {
                 self.#get_checked_ident().expect(#get_assert_msg)
@@ -236,6 +234,7 @@ impl BitfieldStruct {
 
             #[doc = #checked_getter_docs]
             #[inline]
+            #[allow(dead_code)]
             #( #retained_attrs )*
             #vis fn #get_checked_ident(
                 &self,
@@ -284,11 +283,11 @@ impl BitfieldStruct {
             let kind = &repr.value;
             let span = repr.span;
             let prim = match kind {
-                ReprKind::U8 => quote! { ::core::primitive::u8 },
-                ReprKind::U16 => quote! { ::core::primitive::u16 },
-                ReprKind::U32 => quote! { ::core::primitive::u32 },
-                ReprKind::U64 => quote! { ::core::primitive::u64 },
-                ReprKind::U128 => quote! { ::core::primitive::u128 },
+                ReprKind::U8 => quote! { u8 },
+                ReprKind::U16 => quote! { u16 },
+                ReprKind::U32 => quote! { u32 },
+                ReprKind::U64 => quote! { u64 },
+                ReprKind::U128 => quote! { u128 },
             };
             let actual_bits = self.generate_target_or_actual_bitfield_size(config);
             let trait_check_ident = match kind {
@@ -385,6 +384,7 @@ impl BitfieldStruct {
             #[doc = #with_docs]
             #[inline]
             #[must_use]
+            #[allow(dead_code)]
             #( #retained_attrs )*
             #vis fn #with_ident(
                 mut self,
@@ -396,6 +396,7 @@ impl BitfieldStruct {
 
             #[doc = #checked_with_docs]
             #[inline]
+            #[allow(dead_code)]
             #( #retained_attrs )*
             #vis fn #with_checked_ident(
                 mut self,
@@ -407,6 +408,7 @@ impl BitfieldStruct {
 
             #[doc = #setter_docs]
             #[inline]
+            #[allow(dead_code)]
             #( #retained_attrs )*
             #vis fn #set_ident(&mut self, new_val: <#ty as ::modular_bitfield::Specifier>::InOut) {
                 self.#set_checked_ident(new_val).expect(#set_assert_msg)
@@ -414,6 +416,7 @@ impl BitfieldStruct {
 
             #[doc = #checked_setter_docs]
             #[inline]
+            #[allow(dead_code)]
             #( #retained_attrs )*
             #vis fn #set_checked_ident(
                 &mut self,
@@ -459,13 +462,11 @@ impl BitfieldStruct {
     ///
     /// ```
     /// # use modular_bitfield::prelude::*;
-    /// {
     ///     <B8 as ::modular_bitfield::Specifier>::BITS +
     ///     <B8 as ::modular_bitfield::Specifier>::BITS +
     ///     <B8 as ::modular_bitfield::Specifier>::BITS +
     ///     <bool as ::modular_bitfield::Specifier>::BITS +
     ///     <B7 as ::modular_bitfield::Specifier>::BITS
-    /// }
     /// # ;
     /// ```
     ///
@@ -492,9 +493,7 @@ impl BitfieldStruct {
                     )
                 }
             });
-        quote_spanned!(span=>
-            { #sum }
-        )
+        quote_spanned!(span => #sum)
     }
 
     /// Generate check for either of the following two cases:
@@ -525,6 +524,7 @@ impl BitfieldStruct {
             impl #ident {
                 /// Returns an instance with zero initialized data.
                 #[must_use]
+                #[allow(dead_code)]
                 pub const fn new() -> Self {
                     Self {
                         bytes: [0u8; #next_divisible_by_8],
@@ -561,8 +561,8 @@ impl BitfieldStruct {
                     self.#field_getter()
                         .as_ref()
                         .map_or_else(
-                            |__bf_err| __bf_err as &dyn (::core::fmt::Debug),
-                            |__bf_field| __bf_field as &dyn (::core::fmt::Debug),
+                            |__bf_err| __bf_err as &dyn ::core::fmt::Debug,
+                            |__bf_field| __bf_field as &dyn ::core::fmt::Debug,
                         )
                 )
             ))
@@ -595,9 +595,8 @@ impl BitfieldStruct {
 
         quote_spanned!(span =>
             #[automatically_derived]
-            #[allow(clippy::no_effect_underscore_binding)]
             impl ::modular_bitfield::private::checks::#check_ident for #ident {
-                type Size = ::modular_bitfield::private::checks::TotalSize<[(); #actual_bits % 8usize]>;
+                type Size = ::modular_bitfield::private::checks::TotalSize<[(); (#actual_bits) % 8usize]>;
             }
         )
     }
@@ -627,7 +626,6 @@ impl BitfieldStruct {
 
         quote_spanned!(span =>
             #[automatically_derived]
-            #[allow(clippy::no_effect_underscore_binding)]
             impl ::modular_bitfield::private::checks::#check_ident for #ident {
                 #[allow(clippy::cast_lossless)]
                 type CheckType = [(); (#required_bits #comparator #actual_bits) as usize];
@@ -728,15 +726,11 @@ impl BitfieldStruct {
     /// Returns a token stream representing the next greater value divisible by 8.
     fn next_divisible_by_8(value: &TokenStream2, times_8: bool) -> TokenStream2 {
         let span = value.span();
-        let expr = quote_spanned!(span => (((#value - 1) / 8) + 1));
+        let expr = quote_spanned!(span => ((#value - 1) / 8) + 1);
         if times_8 {
-            quote_spanned!(span => {
-                #expr * 8
-            })
+            quote_spanned!(span => (#expr) * 8)
         } else {
-            quote_spanned!(span => {
-                #expr
-            })
+            expr
         }
     }
 }

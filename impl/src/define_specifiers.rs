@@ -13,11 +13,11 @@ pub fn generate() -> TokenStream2 {
 
 fn generate_specifier_for(bits: usize) -> TokenStream2 {
     let in_out = match bits {
-        1..=8 => quote! { ::core::primitive::u8 },
-        9..=16 => quote! { ::core::primitive::u16 },
-        17..=32 => quote! { ::core::primitive::u32 },
-        33..=64 => quote! { ::core::primitive::u64 },
-        65..=128 => quote! { ::core::primitive::u128 },
+        1..=8 => quote! { u8 },
+        9..=16 => quote! { u16 },
+        17..=32 => quote! { u32 },
+        33..=64 => quote! { u64 },
+        65..=128 => quote! { u128 },
         _ => unreachable!(),
     };
     let ident = format_ident!("B{}", bits);
@@ -29,9 +29,9 @@ fn generate_specifier_for(bits: usize) -> TokenStream2 {
     let max_value = if bits.is_power_of_two() && bits >= 8 {
         // The compiler can eliminate a check against `x > MAX` entirely
         // so this will yield a no-op in release mode builds.
-        quote! {{ <#in_out>::MAX }}
+        quote! { <#in_out>::MAX }
     } else {
-        quote! {{ ((0x01 as #in_out) << #bits) - 1 }}
+        quote! { ((0x01 as #in_out) << #bits) - 1 }
     };
     quote! {
         #[doc = #doc_comment]
