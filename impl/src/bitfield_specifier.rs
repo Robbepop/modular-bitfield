@@ -126,8 +126,9 @@ fn generate_enum(input: &syn::ItemEnum) -> syn::Result<TokenStream2> {
     let from_bytes_arms = variants.iter().map(|ident| {
         let span = ident.span();
         quote_spanned!(span =>
-            __bitfield_binding if __bitfield_binding == Self::#ident as <Self as ::modular_bitfield::Specifier>::Bytes =>
+            __bitfield_binding if __bitfield_binding == Self::#ident as <Self as ::modular_bitfield::Specifier>::Bytes => {
                 ::core::result::Result::Ok(Self::#ident)
+            }
         )
     });
 
@@ -149,8 +150,9 @@ fn generate_enum(input: &syn::ItemEnum) -> syn::Result<TokenStream2> {
             fn from_bytes(bytes: Self::Bytes) -> ::core::result::Result<Self::InOut, ::modular_bitfield::error::InvalidBitPattern<Self::Bytes>> {
                 match bytes {
                     #( #from_bytes_arms ),*
-                    invalid_bytes =>
+                    invalid_bytes => {
                         ::core::result::Result::Err(<::modular_bitfield::error::InvalidBitPattern<Self::Bytes>>::new(invalid_bytes))
+                    }
                 }
             }
         }
