@@ -1,9 +1,10 @@
-error[E0277]: the trait bound `[(); 32]: modular_bitfield::private::IsU16Compatible` is not satisfied
- --> $DIR/invalid-repr-width-1.rs:4:8
+error[E0277]: the trait bound `[(); 32]: IsU16Compatible` is not satisfied
+ --> tests/repr/invalid-repr-width-1.rs:3:1
   |
-4 | #[repr(u16)] // Too few bits!
-  |        ^^^ the trait `modular_bitfield::private::IsU16Compatible` is not implemented for `[(); 32]`
+3 | #[bitfield]
+  | ^^^^^^^^^^^ the trait `IsU16Compatible` is not implemented for `[(); 32]`
   |
-  = help: the following implementations were found:
-            <[(); 16] as modular_bitfield::private::IsU16Compatible>
+  = help: the trait `IsU16Compatible` is implemented for `[(); 16]`
   = help: see issue #48214
+  = help: add `#![feature(trivial_bounds)]` to the crate attributes to enable
+  = note: this error originates in the attribute macro `bitfield` (in Nightly builds, run with -Z macro-backtrace for more info)

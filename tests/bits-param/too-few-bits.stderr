@@ -1,10 +1,15 @@
-error[E0277]: the trait bound `modular_bitfield::private::checks::False: modular_bitfield::private::checks::FillsUnalignedBits` is not satisfied
-   --> $DIR/too-few-bits.rs:4:1
+error[E0277]: the trait bound `False: FillsUnalignedBits` is not satisfied
+   --> tests/bits-param/too-few-bits.rs:4:1
     |
-4   | pub struct SignInteger {
-    | ^^^ the trait `modular_bitfield::private::checks::FillsUnalignedBits` is not implemented for `modular_bitfield::private::checks::False`
+4   | / pub struct SignInteger {
+5   | |     sign: bool,
+6   | |     value: B31,
+7   | | }
+    | |_^ the trait `FillsUnalignedBits` is not implemented for `False`
     |
-   ::: $WORKSPACE/src/private/checks.rs
+    = help: the trait `FillsUnalignedBits` is implemented for `True`
+note: required by a bound in `CheckFillsUnalignedBits`
+   --> src/private/checks.rs
     |
     |     <Self::CheckType as DispatchTrueFalse>::Out: FillsUnalignedBits,
-    |                                                  ------------------ required by this bound in `modular_bitfield::private::checks::CheckFillsUnalignedBits`
+    |                                                  ^^^^^^^^^^^^^^^^^^ required by this bound in `CheckFillsUnalignedBits`
