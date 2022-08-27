@@ -104,9 +104,9 @@ impl BitfieldStruct {
                 /// If the given bytes contain bits at positions that are undefined for `Self`.
                 #[inline]
                 pub fn from_bytes(
-                    bytes: [::core::primitive::u8; #next_divisible_by_8 / 8usize]
+                    bytes: [::core::primitive::u8; #next_divisible_by_8]
                 ) -> ::core::result::Result<Self, ::modular_bitfield::error::OutOfBounds> {
-                    if bytes[(#next_divisible_by_8 / 8usize) - 1] >= (0x01 << (8 - (#next_divisible_by_8 * 8usize - #size))) {
+                    if bytes[(#next_divisible_by_8) - 1] >= (0x01 << (8 - (((#next_divisible_by_8) * 8usize) - #size))) {
                         return ::core::result::Result::Err(::modular_bitfield::error::OutOfBounds)
                     }
                     ::core::result::Result::Ok(Self { bytes })
@@ -167,9 +167,14 @@ impl BitfieldStruct {
         let ty = &field.ty;
         let mut zero = Punctuated::<syn::Expr, Token![+]>::new();
         zero.push(syn::parse_quote! { 0usize });
-        let offset = if offset.is_empty() { &mut zero } else { offset };
-        let getters = self.expand_getters_for_field(offset, info);
-        let setters = self.expand_setters_for_field(offset, info);
+        let getters = self.expand_getters_for_field(
+            if offset.is_empty() { &mut zero } else { offset },
+            info,
+        );
+        let setters = self.expand_setters_for_field(
+            if offset.is_empty() { &mut zero } else { offset },
+            info,
+        );
         let getters_and_setters = quote_spanned!(span=>
             #getters
             #setters
@@ -238,9 +243,8 @@ impl BitfieldStruct {
                 <#ty as ::modular_bitfield::Specifier>::InOut,
                 ::modular_bitfield::error::InvalidBitPattern<<#ty as ::modular_bitfield::Specifier>::Bytes>
             > {
-                let __bf_read: <#ty as ::modular_bitfield::Specifier>::Bytes = {
-                    ::modular_bitfield::private::read_specifier::<#ty>(&self.bytes[..], #offset)
-                };
+                let __bf_read: <#ty as ::modular_bitfield::Specifier>::Bytes =
+                    ::modular_bitfield::private::read_specifier::<#ty>(&self.bytes[..], #offset);
                 <#ty as ::modular_bitfield::Specifier>::from_bytes(__bf_read)
             }
         );
@@ -416,13 +420,11 @@ impl BitfieldStruct {
                 new_val: <#ty as ::modular_bitfield::Specifier>::InOut
             ) -> ::core::result::Result<(), ::modular_bitfield::error::OutOfBounds> {
                 let __bf_base_bits: ::core::primitive::usize = 8usize * ::core::mem::size_of::<<#ty as ::modular_bitfield::Specifier>::Bytes>();
-                let __bf_max_value: <#ty as ::modular_bitfield::Specifier>::Bytes = {
-                    !0 >> (__bf_base_bits - <#ty as ::modular_bitfield::Specifier>::BITS)
-                };
+                let __bf_max_value: <#ty as ::modular_bitfield::Specifier>::Bytes =
+                    !0 >> (__bf_base_bits - <#ty as ::modular_bitfield::Specifier>::BITS);
                 let __bf_spec_bits: ::core::primitive::usize = <#ty as ::modular_bitfield::Specifier>::BITS;
-                let __bf_raw_val: <#ty as ::modular_bitfield::Specifier>::Bytes = {
-                    <#ty as ::modular_bitfield::Specifier>::into_bytes(new_val)
-                }?;
+                let __bf_raw_val: <#ty as ::modular_bitfield::Specifier>::Bytes =
+                    <#ty as ::modular_bitfield::Specifier>::into_bytes(new_val)?;
                 // We compare base bits with spec bits to drop this condition
                 // if there cannot be invalid inputs.
                 if !(__bf_base_bits == __bf_spec_bits || __bf_raw_val <= __bf_max_value) {
@@ -520,8 +522,7 @@ impl BitfieldStruct {
         let next_divisible_by_8 = Self::next_divisible_by_8(&size, false);
         quote_spanned!(span=>
             #[automatically_derived]
-            impl #ident
-            {
+            impl #ident {
                 /// Returns an instance with zero initialized data.
                 #[must_use]
                 pub const fn new() -> Self {
@@ -592,21 +593,11 @@ impl BitfieldStruct {
             quote_spanned!(span => CheckTotalSizeIsNotMultipleOf8)
         };
 
-        let check_name = format_ident!(
-            "_{}_CHECK_{}",
-            ident.to_string().to_uppercase(),
-            check_ident.to_string().to_uppercase()
-        );
         quote_spanned!(span =>
             #[automatically_derived]
             #[allow(clippy::no_effect_underscore_binding)]
-            impl #ident {
-                const #check_name: () = {
-                    #[automatically_derived]
-                    impl ::modular_bitfield::private::checks::#check_ident for #ident {
-                        type Size = ::modular_bitfield::private::checks::TotalSize<[(); #actual_bits % 8usize]>;
-                    }
-                };
+            impl ::modular_bitfield::private::checks::#check_ident for #ident {
+                type Size = ::modular_bitfield::private::checks::TotalSize<[(); #actual_bits % 8usize]>;
             }
         )
     }
@@ -634,22 +625,12 @@ impl BitfieldStruct {
             quote! { > }
         };
 
-        let check_name = format_ident!(
-            "_{}_CHECK_{}",
-            ident.to_string().to_uppercase(),
-            check_ident.to_string().to_uppercase()
-        );
         quote_spanned!(span =>
             #[automatically_derived]
             #[allow(clippy::no_effect_underscore_binding)]
-            impl #ident {
-                const #check_name: () = {
-                    #[automatically_derived]
-                    impl ::modular_bitfield::private::checks::#check_ident for #ident {
-                        #[allow(clippy::cast_lossless)]
-                        type CheckType = [(); (#required_bits #comparator #actual_bits) as usize];
-                    }
-                };
+            impl ::modular_bitfield::private::checks::#check_ident for #ident {
+                #[allow(clippy::cast_lossless)]
+                type CheckType = [(); (#required_bits #comparator #actual_bits) as usize];
             }
         )
     }
@@ -665,26 +646,18 @@ impl BitfieldStruct {
         let bits = self.generate_target_or_actual_bitfield_size(config);
         let next_divisible_by_8 = Self::next_divisible_by_8(&bits, true);
 
-        let check_name =
-            format_ident!("_{}_CHECK_AT_MOST_128", ident.to_string().to_uppercase());
         Some(quote_spanned!(span =>
             #[automatically_derived]
-            #[allow(clippy::no_effect_underscore_binding)]
-            impl #ident {
-                const #check_name: () = {
-                    #[automatically_derived]
-                    impl ::modular_bitfield::private::checks::CheckSpecifierHasAtMost128Bits for #ident {
-                        #[allow(clippy::cast_lossless)]
-                        type CheckType = [(); (#bits <= 128) as usize];
-                    }
-                };
+            impl ::modular_bitfield::private::checks::CheckSpecifierHasAtMost128Bits for #ident {
+                #[allow(clippy::cast_lossless)]
+                type CheckType = [(); (#bits <= 128) as usize];
             }
 
             #[automatically_derived]
             impl ::modular_bitfield::Specifier for #ident {
                 const BITS: usize = #bits;
 
-                type Bytes = <[(); if { #bits } > 128 { 128 } else { #bits }] as ::modular_bitfield::private::SpecifierBytes>::Bytes;
+                type Bytes = <[(); if #bits > 128 { 128 } else { #bits }] as ::modular_bitfield::private::SpecifierBytes>::Bytes;
                 type InOut = Self;
 
                 #[inline]
@@ -755,13 +728,14 @@ impl BitfieldStruct {
     /// Returns a token stream representing the next greater value divisible by 8.
     fn next_divisible_by_8(value: &TokenStream2, times_8: bool) -> TokenStream2 {
         let span = value.span();
+        let expr = quote_spanned!(span => (((#value - 1) / 8) + 1));
         if times_8 {
             quote_spanned!(span => {
-                (((#value - 1) / 8) + 1) * 8
+                #expr * 8
             })
         } else {
             quote_spanned!(span => {
-                ((#value - 1) / 8) + 1
+                #expr
             })
         }
     }
