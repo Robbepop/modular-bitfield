@@ -19,7 +19,7 @@ fn_single_line = false
 where_single_line = false
 imports_indent = "Block"
 imports_layout = "Vertical" # changed
-merge_imports = true # changed
+imports_granularity="Crate"
 reorder_imports = true
 reorder_modules = true
 reorder_impl_items = false
@@ -57,8 +57,6 @@ skip_children = false
 hide_parse_errors = false
 error_on_line_overflow = false
 error_on_unformatted = false
-report_todo = "Always"
-report_fixme = "Always"
 ignore = []
 
 # Below are `rustfmt` internal settings

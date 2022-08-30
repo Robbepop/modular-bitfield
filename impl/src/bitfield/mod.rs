@@ -16,7 +16,7 @@ use syn::{
     parse::Result,
 };
 
-/// Analyzes the given token stream for `#[bitfield]` properties and expands code if valid.
+/// Analyses the given token stream for `#[bitfield]` properties and expands code if valid.
 pub fn analyse_and_expand(args: TokenStream2, input: TokenStream2) -> TokenStream2 {
     match analyse_and_expand_or_error(args, input) {
         Ok(output) => output,
@@ -24,7 +24,7 @@ pub fn analyse_and_expand(args: TokenStream2, input: TokenStream2) -> TokenStrea
     }
 }
 
-/// Analyzes the given token stream for `#[bitfield]` properties and expands code if valid.
+/// Analyses the given token stream for `#[bitfield]` properties and expands code if valid.
 ///
 /// # Errors
 ///
@@ -41,7 +41,7 @@ fn analyse_and_expand_or_error(
     Ok(bitfield.expand(&config))
 }
 
-/// Type used to guide analysis and expansion of `#[bitfield]` structs.
+/// Type used to guide analysis and expansion of `#[bitfield]` structures.
 struct BitfieldStruct {
     /// The input `struct` item.
     item_struct: syn::ItemStruct,

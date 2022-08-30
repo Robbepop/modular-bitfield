@@ -16,7 +16,7 @@ pub struct FieldInfo<'a> {
 
 impl<'a> FieldInfo<'a> {
     /// Creates a new field info.
-    pub fn new(id: usize, field: &'a syn::Field, config: FieldConfig) -> Self {
+    pub const fn new(id: usize, field: &'a syn::Field, config: FieldConfig) -> Self {
         Self {
             index: id,
             field,
@@ -24,7 +24,7 @@ impl<'a> FieldInfo<'a> {
         }
     }
 
-    /// Returns the ident fragment for this field.
+    /// Returns the identifier fragment for this field.
     pub fn ident_frag(&self) -> &dyn quote::IdentFragment {
         match &self.field.ident {
             Some(ident) => ident,
@@ -42,8 +42,7 @@ impl<'a> FieldInfo<'a> {
         field
             .ident
             .as_ref()
-            .map(ToString::to_string)
-            .unwrap_or_else(|| format!("{}", index))
+            .map_or_else(|| format!("{}", index), ToString::to_string)
     }
 }
 

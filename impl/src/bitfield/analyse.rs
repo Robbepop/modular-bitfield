@@ -33,7 +33,7 @@ impl TryFrom<(&mut Config, syn::ItemStruct)> for BitfieldStruct {
 }
 
 impl BitfieldStruct {
-    /// Returns an error if the input struct does not have any fields.
+    /// Returns an error if the input structure does not have any fields.
     fn ensure_has_fields(item_struct: &syn::ItemStruct) -> Result<()> {
         if let unit @ syn::Fields::Unit = &item_struct.fields {
             return Err(format_err_spanned!(
@@ -44,7 +44,7 @@ impl BitfieldStruct {
         Ok(())
     }
 
-    /// Returns an error if the input struct is generic.
+    /// Returns an error if the input structure is generic.
     fn ensure_no_generics(item_struct: &syn::ItemStruct) -> Result<()> {
         if !item_struct.generics.params.is_empty() {
             return Err(format_err_spanned!(
@@ -55,7 +55,7 @@ impl BitfieldStruct {
         Ok(())
     }
 
-    /// Extracts the `#[repr(uN)]` annotations from the given `#[bitfield]` struct.
+    /// Extracts the `#[repr(uN)]` annotations from the given `#[bitfield]` structure.
     fn extract_repr_attribute(attr: &syn::Attribute, config: &mut Config) -> Result<()> {
         let path = &attr.path;
         let args = &attr.tokens;
@@ -76,7 +76,7 @@ impl BitfieldStruct {
                     } else if path.is_ident("u128") {
                         Some(ReprKind::U128)
                     } else {
-                        // If other repr such as `transparent` or `C` have been found we
+                        // If other `repr` such as `transparent` or `C` have been found we
                         // are going to re-expand them into a new `#[repr(..)]` that is
                         // ignored by the rest of this macro.
                         retained_reprs.push(syn::NestedMeta::Meta(syn::Meta::Path(path)));
@@ -91,7 +91,7 @@ impl BitfieldStruct {
         }
         if !retained_reprs.is_empty() {
             // We only push back another re-generated `#[repr(..)]` if its contents
-            // contained some non-bitfield representations and thus is not empty.
+            // contained some non-bit-field representations and thus is not empty.
             let retained_reprs_tokens = quote! {
                 ( #( #retained_reprs ),* )
             };
@@ -106,7 +106,7 @@ impl BitfieldStruct {
         Ok(())
     }
 
-    /// Extracts the `#[derive(Debug)]` annotations from the given `#[bitfield]` struct.
+    /// Extracts the `#[derive(Debug)]` annotations from the given `#[bitfield]` structure.
     fn extract_derive_debug_attribute(
         attr: &syn::Attribute,
         config: &mut Config,
@@ -150,7 +150,7 @@ impl BitfieldStruct {
         Ok(())
     }
 
-    /// Analyses and extracts the `#[repr(uN)]` or other annotations from the given struct.
+    /// Analyses and extracts the `#[repr(uN)]` or other annotations from the given structure.
     fn extract_attributes(
         attributes: &[syn::Attribute],
         config: &mut Config,
@@ -167,7 +167,7 @@ impl BitfieldStruct {
         Ok(())
     }
 
-    /// Analyses and extracts the configuration for all bitfield fields.
+    /// Analyses and extracts the configuration for all bit-field fields.
     fn analyse_config_for_fields(
         item_struct: &syn::ItemStruct,
         config: &mut Config,
@@ -263,7 +263,7 @@ impl BitfieldStruct {
                             config.skip(SkipWhich::Setters, span)?;
                         }
                     }
-                    _ => {
+                    syn::Meta::NameValue(_) => {
                         return Err(format_err!(
                             span,
                             "encountered invalid format for #[skip] field attribute"

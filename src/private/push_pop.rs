@@ -12,7 +12,7 @@ pub struct PopBuffer<T> {
 impl<T> PopBuffer<T> {
     /// Creates a new pop buffer from the given bytes.
     #[inline]
-    pub(super) fn from_bytes(bytes: T) -> Self {
+    pub(super) const fn from_bytes(bytes: T) -> Self {
         Self { bytes }
     }
 }
@@ -24,8 +24,9 @@ impl PopBits for PopBuffer<u8> {
     fn pop_bits(&mut self, amount: u32) -> u8 {
         let Self { bytes } = self;
         let orig_ones = bytes.count_ones();
-        debug_assert!(1 <= amount && amount <= 8);
-        let res = *bytes & ((0x01_u16.wrapping_shl(amount)).wrapping_sub(1) as u8);
+        debug_assert!((1..=8).contains(&amount));
+        let res =
+            *bytes & (((0x01_u16.wrapping_shl(amount)).wrapping_sub(1) & 0xFF) as u8);
         *bytes = bytes.checked_shr(amount).unwrap_or(0);
         debug_assert_eq!(res.count_ones() + bytes.count_ones(), orig_ones);
         res
@@ -35,14 +36,16 @@ impl PopBits for PopBuffer<u8> {
 macro_rules! impl_pop_bits {
     ( $($type:ty),+ ) => {
         $(
+            #[automatically_derived]
             impl Sealed for PopBuffer<$type> {}
 
+            #[automatically_derived]
             impl PopBits for PopBuffer<$type> {
                 #[inline]
                 fn pop_bits(&mut self, amount: u32) -> u8 {
                     let Self { bytes } = self;
                     let orig_ones = bytes.count_ones();
-                    debug_assert!(1 <= amount && amount <= 8);
+                    debug_assert!((1..=8).contains(&amount));
                     let bitmask = 0xFF >> (8 - amount);
                     let res = (*bytes & bitmask) as u8;
                     *bytes = bytes.checked_shr(amount).unwrap_or(0);
@@ -63,6 +66,7 @@ pub struct PushBuffer<T> {
 impl<T> PushBuffer<T> {
     /// Returns the underlying bytes of the push buffer.
     #[inline]
+    #[allow(clippy::missing_const_for_fn)]
     pub(super) fn into_bytes(self) -> T {
         self.bytes
     }
@@ -71,8 +75,10 @@ impl<T> PushBuffer<T> {
 macro_rules! impl_push_bits {
     ( $($type:ty),+ ) => {
         $(
+            #[automatically_derived]
             impl Sealed for PushBuffer<$type> {}
 
+            #[automatically_derived]
             impl Default for PushBuffer<$type> {
                 #[inline]
                 fn default() -> Self {
@@ -80,12 +86,13 @@ macro_rules! impl_push_bits {
                 }
             }
 
+            #[automatically_derived]
             impl PushBits for PushBuffer<$type> {
                 #[inline]
                 fn push_bits(&mut self, amount: u32, bits: u8) {
                     let Self { bytes } = self;
                     let orig_ones = bytes.count_ones();
-                    debug_assert!(1 <= amount && amount <= 8);
+                    debug_assert!((1..=8).contains(&amount));
                     let bitmask = 0xFF >> (8 - amount as u8);
                     *bytes = bytes.wrapping_shl(amount) | ((bits & bitmask) as $type);
                     debug_assert_eq!((bits & bitmask).count_ones() + orig_ones, bytes.count_ones());

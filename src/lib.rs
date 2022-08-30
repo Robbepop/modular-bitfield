@@ -59,7 +59,7 @@
 //! #### Example: Primitive Types
 //!
 //! Any type that implements the `Specifier` trait can be used as a bitfield field.
-//! Besides the already mentioned `B1`, .. `B128` also the `bool`, `u8, `u16, `u32,
+//! Besides the already mentioned `B1`, .. `B128` also the `bool`, `u8, `u16, `u32`,
 //! `u64` or `u128` primitive types can be used from prelude.
 //!
 //! We can use this knowledge to encode our `is_alive` as `bool` type instead of `B1`:
@@ -414,8 +414,14 @@
 
 #![no_std]
 #![forbid(unsafe_code)]
-
-extern crate static_assertions;
+#![deny(
+    warnings,
+    clippy::pedantic,
+    clippy::nursery,
+    clippy::cargo,
+    unused_extern_crates,
+    rust_2021_compatibility
+)]
 
 pub mod error;
 #[doc(hidden)]
@@ -459,7 +465,7 @@ pub trait Specifier {
     /// # Note
     ///
     /// This is the type that is used internally for computations.
-    type Bytes;
+    type Bytes: core::clone::Clone;
 
     /// The interface type of the specifier.
     ///
@@ -467,15 +473,6 @@ pub trait Specifier {
     ///
     /// This is the type that is used for the getters and setters.
     type InOut;
-
-    /// Converts some bytes into the in-out type.
-    ///
-    /// # Errors
-    ///
-    /// If the in-out type is out of bounds. This can for example happen if your
-    /// in-out type is `u8` (for `B7`) but you specified a value that is bigger
-    /// or equal to 128 which exceeds the 7 bits.
-    fn into_bytes(input: Self::InOut) -> Result<Self::Bytes, OutOfBounds>;
 
     /// Converts the given bytes into the in-out type.
     ///
@@ -488,6 +485,15 @@ pub trait Specifier {
     fn from_bytes(
         bytes: Self::Bytes,
     ) -> Result<Self::InOut, InvalidBitPattern<Self::Bytes>>;
+
+    /// Converts some bytes into the in-out type.
+    ///
+    /// # Errors
+    ///
+    /// If the in-out type is out of bounds. This can for example happen if your
+    /// in-out type is `u8` (for `B7`) but you specified a value that is bigger
+    /// or equal to 128 which exceeds the 7 bits.
+    fn into_bytes(input: Self::InOut) -> Result<Self::Bytes, OutOfBounds>;
 }
 
 /// The default set of predefined specifiers.

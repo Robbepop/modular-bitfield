@@ -1,7 +1,13 @@
 #![recursion_limit = "256"]
 #![forbid(unsafe_code)]
-
-extern crate proc_macro;
+#![deny(
+    warnings,
+    clippy::pedantic,
+    clippy::nursery,
+    clippy::cargo,
+    unused_extern_crates,
+    rust_2021_compatibility
+)]
 
 #[macro_use]
 mod errors;
@@ -11,15 +17,15 @@ mod define_specifiers;
 
 use proc_macro::TokenStream;
 
-/// Generates the `B1`, `B2`, ..., `B128` bitfield specifiers.
+/// Generates the `B1`, `B2`, ..., `B128` bit-field specifiers.
 ///
-/// Only of use witihn the `modular_bitfield` crate itself.
+/// Only of use within the `modular_bitfield` crate itself.
 #[proc_macro]
-pub fn define_specifiers(input: TokenStream) -> TokenStream {
-    define_specifiers::generate(input.into()).into()
+pub fn define_specifiers(_input: TokenStream) -> TokenStream {
+    define_specifiers::generate().into()
 }
 
-/// Applicable to structs to turn their fields into compact bitfields.
+/// Applicable to structures to turn their fields into compact bit-fields.
 ///
 /// # Generated API
 ///
@@ -55,8 +61,8 @@ pub fn define_specifiers(input: TokenStream) -> TokenStream {
 ///
 /// - **Conversions:**
 ///
-///     - `from_bytes(bytes)`: Allows to constructor the bitfield type from a fixed array of bytes.
-///     - `into_bytes()`: Allows to convert the bitfield into its underlying byte representation.
+///     - `from_bytes(bytes)`: Allows to constructor the bit-field type from a fixed array of bytes.
+///     - `into_bytes()`: Allows to convert the bit-field into its underlying byte representation.
 ///
 /// # Parameters
 ///
@@ -64,7 +70,7 @@ pub fn define_specifiers(input: TokenStream) -> TokenStream {
 ///
 /// ## Parameter: `bytes = N`
 ///
-/// This ensures at compilation time that the resulting `#[bitfield]` struct consists of
+/// This ensures at compilation time that the resulting `#[bitfield]` structure consists of
 /// exactly `N` bytes. Yield a compilation error if this does not hold true.
 ///
 /// ### Example
@@ -80,8 +86,8 @@ pub fn define_specifiers(input: TokenStream) -> TokenStream {
 ///
 /// ## Parameter: `filled: bool`
 ///
-/// If `filled` is `true` ensures that the `#[bitfield]` struct defines all bits and
-/// therefore has a bitwidth that is divisible by 8. If `filled` is `false` ensures the
+/// If `filled` is `true` ensures that the `#[bitfield]` structure defines all bits and
+/// therefore has a bit width that is divisible by 8. If `filled` is `false` ensures the
 /// exact opposite.
 ///
 /// The default value is: `true`
@@ -101,8 +107,8 @@ pub fn define_specifiers(input: TokenStream) -> TokenStream {
 /// ## Parameter: `bits = N`
 ///
 /// With the `bits: int` parameter it is possible to control the targeted bit width of
-/// a `#[bitfield]` annoated struct. Using `bits = N` guarantees that the resulting bitfield
-/// struct will have a bit width of exactly `N`.
+/// a `#[bitfield]` annotated structure. Using `bits = N` guarantees that the resulting bit-field
+/// structure will have a bit width of exactly `N`.
 ///
 /// ### Example 1
 ///
@@ -119,7 +125,7 @@ pub fn define_specifiers(input: TokenStream) -> TokenStream {
 /// ### Example 2
 ///
 /// The `bits: int` parameter is especially useful when using this in conjunction with
-/// `#[derive(BitfieldSpecifier)] and `filled = false` as shown in the below example.
+/// `#[derive(BitfieldSpecifier)]` and `filled = false` as shown in the below example.
 ///
 /// ```
 /// # use modular_bitfield::prelude::*;
@@ -134,7 +140,7 @@ pub fn define_specifiers(input: TokenStream) -> TokenStream {
 ///
 /// ## Field Parameter: `#[bits = N]`
 ///
-/// To ensure at compile time that a field of a `#[bitfield]` struct has a bit width of exactly
+/// To ensure at compile time that a field of a `#[bitfield]` structure has a bit width of exactly
 /// `N` a user may add `#[bits = N]` to the field in question.
 ///
 /// ### Example
@@ -161,7 +167,7 @@ pub fn define_specifiers(input: TokenStream) -> TokenStream {
 /// It is possible to skip the entire code generation for getters or setters with the `#[skip]`
 /// field attribute.
 /// This is useful if a field just needs to be read or written exclusively. Skipping both
-/// setters and getters is useful if you want to have undefined blocks within your bitfields.
+/// setters and getters is useful if you want to have undefined blocks within your bit-fields.
 ///
 /// ### Example
 ///
@@ -184,8 +190,8 @@ pub fn define_specifiers(input: TokenStream) -> TokenStream {
 ///
 /// ### Trick: Wildcards
 ///
-/// If you are completely uninterested in a field of a bitfield, for example when specifying
-/// some undefined bits in your bitfield you can use double wildcards as their names:
+/// If you are completely uninterested in a field of a bit-field, for example when specifying
+/// some undefined bits in your bit-field you can use double wildcards as their names:
 ///
 /// ```
 /// # use modular_bitfield::prelude::*;
@@ -203,11 +209,11 @@ pub fn define_specifiers(input: TokenStream) -> TokenStream {
 ///
 /// ## Support: `#[derive(BitfieldSpecifier)]`
 ///
-/// If a `#[bitfield]` struct is annotated with a `#[derive(BitfieldSpecifier)]` attribute
+/// If a `#[bitfield]` structure is annotated with a `#[derive(BitfieldSpecifier)]` attribute
 /// an implementation of the `Specifier` trait will be generated for it. This has the effect
-/// that the bitfield struct itself can be used as the type of a field of another bitfield type.
+/// that the bit-field structure itself can be used as the type of a field of another bit-field type.
 ///
-/// This feature is limited to bitfield types that have a total bit width of 128 bit or fewer.
+/// This feature is limited to bit-field types that have a total bit width of 128 bit or fewer.
 /// This restriction is ensured at compile time.
 ///
 /// ### Example
@@ -223,7 +229,7 @@ pub fn define_specifiers(input: TokenStream) -> TokenStream {
 /// }
 /// ```
 ///
-/// Now the above `Header` bitfield type can be used in yet another `#[bitfield]` annotated type:
+/// Now the above `Header` bit-field type can be used in yet another `#[bitfield]` annotated type:
 ///
 /// ```
 /// # use modular_bitfield::prelude::*;
@@ -273,12 +279,12 @@ pub fn define_specifiers(input: TokenStream) -> TokenStream {
 ///
 /// ## Support: `#[repr(uN)]`
 ///
-/// It is possible to additionally annotate a `#[bitfield]` annotated struct with `#[repr(uN)]`
+/// It is possible to additionally annotate a `#[bitfield]` annotated structure with `#[repr(uN)]`
 /// where `uN` is one of `u8`, `u16`, `u32`, `u64` or `u128` in order to make it conveniently
 /// interchangeable with such an unsigned integer value.
 ///
 /// As an effect to the user this implements `From` implementations between the chosen primitive
-/// and the bitfield as well as ensuring at compile time that the bit width of the bitfield struct
+/// and the bit-field as well as ensuring at compile time that the bit width of the bit-field structure
 /// matches the bit width of the primitive.
 ///
 /// ### Example
@@ -304,7 +310,7 @@ pub fn bitfield(args: TokenStream, input: TokenStream) -> TokenStream {
 
 /// Derive macro for Rust `enums` to implement `Specifier` trait.
 ///
-/// This allows such an enum to be used as a field of a `#[bitfield]` struct.
+/// This allows such an enum to be used as a field of a `#[bitfield]` structure.
 /// The annotated enum must not have any variants with associated data and
 /// by default must have a number of variants that is equal to the power of 2.
 ///
@@ -346,7 +352,7 @@ pub fn bitfield(args: TokenStream, input: TokenStream) -> TokenStream {
 /// ## Example: Discriminants
 ///
 /// It is possible to explicitly assign discriminants to some of the days.
-/// In our case this is useful since our week starts at sunday:
+/// In our case this is useful since our week starts at Sunday:
 ///
 /// ```
 /// # use modular_bitfield::prelude::*;
@@ -367,7 +373,7 @@ pub fn bitfield(args: TokenStream, input: TokenStream) -> TokenStream {
 /// ## Example: Use in `#[bitfield]`
 ///
 /// Given the above `Weekday` enum that starts at `Sunday` and uses 3 bits in total
-/// we can now use it in a `#[bitfield]` annotated struct as follows:
+/// we can now use it in a `#[bitfield]` annotated structure as follows:
 ///
 /// ```
 /// # use modular_bitfield::prelude::*;
@@ -393,7 +399,7 @@ pub fn bitfield(args: TokenStream, input: TokenStream) -> TokenStream {
 /// ```
 ///
 /// The above `MeetingTimeSlot` uses exactly 16 bits and defines our `Weekday` enum as
-/// compact `day` bitfield. The `from` and `to` require 6 bits each and finally the
+/// compact `day` bit-field. The `from` and `to` require 6 bits each and finally the
 /// `expired` flag requires a single bit.
 ///
 /// ## Example: Interacting

@@ -13,17 +13,17 @@ use syn::parse::Result;
 /// The configuration for the `#[bitfield]` macro.
 #[derive(Default)]
 pub struct Config {
-    pub bytes: Option<ConfigValue<usize>>,
-    pub bits: Option<ConfigValue<usize>>,
-    pub filled: Option<ConfigValue<bool>>,
-    pub repr: Option<ConfigValue<ReprKind>>,
-    pub derive_debug: Option<ConfigValue<()>>,
-    pub derive_specifier: Option<ConfigValue<()>>,
+    pub bytes: Option<Value<usize>>,
+    pub bits: Option<Value<usize>>,
+    pub filled: Option<Value<bool>>,
+    pub repr: Option<Value<ReprKind>>,
+    pub derive_debug: Option<Value<()>>,
+    pub derive_specifier: Option<Value<()>>,
     pub retained_attributes: Vec<syn::Attribute>,
-    pub field_configs: HashMap<usize, ConfigValue<FieldConfig>>,
+    pub field_configs: HashMap<usize, Value<FieldConfig>>,
 }
 
-/// Kinds of `#[repr(uN)]` annotations for a `#[bitfield]` struct.
+/// Kinds of `#[repr(uN)]` annotations for a `#[bitfield]` structure.
 #[derive(Copy, Clone)]
 pub enum ReprKind {
     /// Found a `#[repr(u8)]` annotation.
@@ -39,8 +39,8 @@ pub enum ReprKind {
 }
 
 impl ReprKind {
-    /// Returns the amount of bits required to have for the bitfield to satisfy the `#[repr(uN)]`.
-    pub fn bits(self) -> usize {
+    /// Returns the amount of bits required to have for the bit-field to satisfy the `#[repr(uN)]`.
+    pub const fn bits(self) -> usize {
         match self {
             Self::U8 => 8,
             Self::U16 => 16,
@@ -59,16 +59,16 @@ impl core::fmt::Debug for ReprKind {
 
 /// A configuration value and its originating span.
 #[derive(Clone)]
-pub struct ConfigValue<T> {
-    /// The actual value of the config.
+pub struct Value<T> {
+    /// The actual value of the configuration.
     pub value: T,
-    /// The originating span of the config.
+    /// The originating span of the configuration.
     pub span: Span,
 }
 
-impl<T> ConfigValue<T> {
-    /// Creates a new config value.
-    pub fn new(value: T, span: Span) -> Self {
+impl<T> Value<T> {
+    /// Creates a new configuration value.
+    pub const fn new(value: T, span: Span) -> Self {
         Self { value, span }
     }
 }
@@ -76,10 +76,7 @@ impl<T> ConfigValue<T> {
 impl Config {
     /// Returns the value of the `filled` parameter if provided and otherwise `true`.
     pub fn filled_enabled(&self) -> bool {
-        self.filled
-            .as_ref()
-            .map(|config| config.value)
-            .unwrap_or(true)
+        self.filled.as_ref().map_or(true, |config| config.value)
     }
 
     fn ensure_no_bits_and_repr_conflict(&self) -> Result<()> {
@@ -106,7 +103,7 @@ impl Config {
 
     fn ensure_no_bits_and_bytes_conflict(&self) -> Result<()> {
         if let (Some(bits), Some(bytes)) = (self.bits.as_ref(), self.bytes.as_ref()) {
-            fn next_div_by_8(value: usize) -> usize {
+            const fn next_div_by_8(value: usize) -> usize {
                 ((value.saturating_sub(1) / 8) + 1) * 8
             }
             if next_div_by_8(bits.value) / 8 != bytes.value {
@@ -132,7 +129,7 @@ impl Config {
     }
 
     pub fn ensure_no_repr_and_filled_conflict(&self) -> Result<()> {
-        if let (Some(repr), Some(filled @ ConfigValue { value: false, .. })) =
+        if let (Some(repr), Some(filled @ Value { value: false, .. })) =
             (self.repr.as_ref(), self.filled.as_ref())
         {
             return Err(format_err!(
@@ -164,11 +161,7 @@ impl Config {
     }
 
     /// Returns an error showing both the duplicate as well as the previous parameters.
-    fn raise_duplicate_error<T>(
-        name: &str,
-        span: Span,
-        previous: &ConfigValue<T>,
-    ) -> syn::Error
+    fn raise_duplicate_error<T>(name: &str, span: Span, previous: &Value<T>) -> syn::Error
     where
         T: core::fmt::Debug + 'static,
     {
@@ -199,7 +192,7 @@ impl Config {
             Some(previous) => {
                 return Err(Self::raise_duplicate_error("bytes", span, previous))
             }
-            None => self.bytes = Some(ConfigValue::new(value, span)),
+            None => self.bytes = Some(Value::new(value, span)),
         }
         Ok(())
     }
@@ -214,7 +207,7 @@ impl Config {
             Some(previous) => {
                 return Err(Self::raise_duplicate_error("bits", span, previous))
             }
-            None => self.bits = Some(ConfigValue::new(value, span)),
+            None => self.bits = Some(Value::new(value, span)),
         }
         Ok(())
     }
@@ -229,7 +222,7 @@ impl Config {
             Some(previous) => {
                 return Err(Self::raise_duplicate_error("filled", span, previous))
             }
-            None => self.filled = Some(ConfigValue::new(value, span)),
+            None => self.filled = Some(Value::new(value, span)),
         }
         Ok(())
     }
@@ -244,7 +237,7 @@ impl Config {
             Some(previous) => {
                 return Err(Self::raise_duplicate_error("#[repr(uN)]", span, previous))
             }
-            None => self.repr = Some(ConfigValue::new(value, span)),
+            None => self.repr = Some(Value::new(value, span)),
         }
         Ok(())
     }
@@ -263,7 +256,7 @@ impl Config {
                     previous,
                 ))
             }
-            None => self.derive_debug = Some(ConfigValue::new((), span)),
+            None => self.derive_debug = Some(Value::new((), span)),
         }
         Ok(())
     }
@@ -282,7 +275,7 @@ impl Config {
                     previous,
                 ))
             }
-            None => self.derive_specifier = Some(ConfigValue::new((), span)),
+            None => self.derive_specifier = Some(Value::new((), span)),
         }
         Ok(())
     }
@@ -315,7 +308,7 @@ impl Config {
                     )))
             }
             Entry::Vacant(vacant) => {
-                vacant.insert(ConfigValue::new(config, span));
+                vacant.insert(Value::new(config, span));
             }
         }
         Ok(())
