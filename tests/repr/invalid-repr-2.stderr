@@ -1,5 +1,7 @@
 error[E0552]: unrecognized representation hint
- --> $DIR/invalid-repr-2.rs:4:43
+ --> tests/repr/invalid-repr-2.rs:4:43
   |
 4 | #[cfg_attr(not(feature = "unknown"), repr(invalid))]
   |                                           ^^^^^^^
+  |
+  = help: valid reprs are `C`, `align`, `packed`, `transparent`, `simd`, `i8`, `u8`, `i16`, `u16`, `i32`, `u32`, `i64`, `u64`, `i128`, `u128`, `isize`, `usize`
