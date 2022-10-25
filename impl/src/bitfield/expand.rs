@@ -328,6 +328,7 @@ impl BitfieldStruct {
             {
                 /// Returns an instance with zero initialized data.
                 #[allow(clippy::identity_op)]
+                #[allow(dead_code)]
                 pub const fn new() -> Self {
                     Self {
                         bytes: [0u8; #next_divisible_by_8 / 8usize],
@@ -412,6 +413,7 @@ impl BitfieldStruct {
                     /// Converts the given bytes directly into the bitfield struct.
                     #[inline]
                     #[allow(clippy::identity_op)]
+                    #[allow(dead_code)]
                     pub const fn from_bytes(bytes: [::core::primitive::u8; #next_divisible_by_8 / 8usize]) -> Self {
                         Self { bytes }
                     }
@@ -426,6 +428,7 @@ impl BitfieldStruct {
                     /// If the given bytes contain bits at positions that are undefined for `Self`.
                     #[inline]
                     #[allow(clippy::identity_op)]
+                    #[allow(dead_code)]
                     pub fn from_bytes(
                         bytes: [::core::primitive::u8; #next_divisible_by_8 / 8usize]
                     ) -> ::core::result::Result<Self, ::modular_bitfield::error::OutOfBounds> {
@@ -447,6 +450,7 @@ impl BitfieldStruct {
                 /// [here](https://docs.rs/modular-bitfield/#generated-structure).
                 #[inline]
                 #[allow(clippy::identity_op)]
+                #[allow(dead_code)]
                 pub const fn into_bytes(self) -> [::core::primitive::u8; #next_divisible_by_8 / 8usize] {
                     self.bytes
                 }
