@@ -1,6 +1,9 @@
+use std::convert::TryInto;
+
 use proc_macro2::TokenStream as TokenStream2;
-use quote::quote_spanned;
+use quote::{quote, quote_spanned};
 use syn::spanned::Spanned as _;
+use crate::bitfield::Endian;
 
 pub fn generate(input: TokenStream2) -> TokenStream2 {
     match generate_or_error(input) {
@@ -39,7 +42,7 @@ fn generate_or_error(input: TokenStream2) -> syn::Result<TokenStream2> {
 }
 struct Attributes {
     bits: Option<usize>,
-    endian: Option<usize>, // TODO switch to enum
+    endian: Option<Endian>,
 }
 
 fn parse_attrs(attrs: &[syn::Attribute]) -> syn::Result<Attributes> {
@@ -80,9 +83,9 @@ fn parse_attrs(attrs: &[syn::Attribute]) -> syn::Result<Attributes> {
             let meta = attr.parse_meta()?;
             attributes.endian = match meta {
                 syn::Meta::NameValue(syn::MetaNameValue {
-                    lit: syn::Lit::Int(lit),
+                    lit: syn::Lit::Str(lit),
                     ..
-                }) => Some(lit.base10_parse::<usize>()?),
+                }) => Some(lit.value().try_into()?),
                 _ => {
                     return Err(format_err_spanned!(
                         attr,
@@ -126,8 +129,8 @@ fn generate_enum(input: syn::ItemEnum) -> syn::Result<TokenStream2> {
     };
 
     let endian = match attributes.endian {
-        Some(endian) => endian, // 1 big, 2 little
-        None => 0, // Default to host endian
+        Some(endian) => endian,
+        None => Endian::Native // Default to host endian
     };
 
     println!("{} endian {}", enum_ident, endian);
@@ -160,6 +163,19 @@ fn generate_enum(input: syn::ItemEnum) -> syn::Result<TokenStream2> {
         )
     });
 
+    let endian_to = match endian {
+        Endian::Big => quote!{ (input as Self::Bytes).to_be() },
+        Endian::Little => quote!{ (input as Self::Bytes).to_le() },
+        _ => quote!{ (input as Self::Bytes)},
+    };
+
+
+    let endian_from = match endian {
+        Endian::Big => quote!{ Self::Bytes::from_be(bytes) },
+        Endian::Little => quote!{ Self::Bytes::from_le(bytes) },
+        _ => quote!{ bytes },
+    };
+
     Ok(quote_spanned!(span=>
         #( #check_discriminants )*
 
@@ -170,21 +186,13 @@ fn generate_enum(input: syn::ItemEnum) -> syn::Result<TokenStream2> {
 
             #[inline]
             fn into_bytes(input: Self::InOut) -> ::core::result::Result<Self::Bytes, ::modular_bitfield::error::OutOfBounds> {
-                let bytes = match #endian {
-                    1 => (input as Self::Bytes).to_be(),
-                    2 => (input as Self::Bytes).to_le(),
-                    _ => input as Self::Bytes,
-                };
+                let bytes = #endian_to;
                 return ::core::result::Result::Ok(bytes);
             }
 
             #[inline]
             fn from_bytes(bytes: Self::Bytes) -> ::core::result::Result<Self::InOut, ::modular_bitfield::error::InvalidBitPattern<Self::Bytes>> {
-                let bytes = match #endian {
-                    1 => Self::Bytes::from_be(bytes),
-                    2 => Self::Bytes::from_le(bytes),
-                    _ => bytes,
-                };
+                let bytes = #endian_from;
 
                 match bytes {
                     #( #from_bytes_arms ),*
