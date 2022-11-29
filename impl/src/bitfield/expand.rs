@@ -126,7 +126,7 @@ impl BitfieldStruct {
                     #invalid_bit_pattern
 
                     if invalid_bit_pattern {
-                        return ::core::result::Result::Err(::modular_bitfield_msb::error::InvalidBitPattern::new(bytes))
+                        return ::core::result::Result::Err(::modular_bitfield::error::InvalidBitPattern::new(bytes))
                     }
 
                     ::core::result::Result::Ok(Self {
@@ -594,7 +594,7 @@ impl BitfieldStruct {
 
         let bf_read_be = quote_spanned!(span=>
             let __bf_read: <#ty as ::modular_bitfield::Specifier>::Bytes = {
-                ::modular_bitfield::private::read_specifier::<#ty>(&self.bytes[..], #offset)
+                ::modular_bitfield::private::read_specifier_be::<#ty>(&self.bytes[..], #offset)
             };
         );
 
@@ -603,7 +603,7 @@ impl BitfieldStruct {
                 let __bf_base_bits: ::core::primitive::usize = 8usize * ::core::mem::size_of::<<#ty as ::modular_bitfield::Specifier>::Bytes>();
                 let __bf_spec_bits: ::core::primitive::usize = <#ty as ::modular_bitfield::Specifier>::BITS;
                 let __bf_read: <#ty as ::modular_bitfield::Specifier>::Bytes = {
-                    ::modular_bitfield::private::read_specifier::<#ty>(&self.bytes[..], #offset)
+                    ::modular_bitfield::private::read_specifier_le::<#ty>(&self.bytes[..], #offset)
                 } << if <#ty as ::modular_bitfield::Specifier>::STRUCT { __bf_base_bits - __bf_spec_bits } else { 0 };
                 __bf_read
             };
@@ -736,6 +736,24 @@ impl BitfieldStruct {
             }, None => bf_raw_val_native
         };
 
+        let write_specifier_be = quote_spanned!(span=> ::modular_bitfield::private::write_specifier_be::<#ty>(&mut self.bytes[..], #offset, __bf_raw_val););
+        let write_specifier_le = quote_spanned!(span=> ::modular_bitfield::private::write_specifier_le::<#ty>(&mut self.bytes[..], #offset, __bf_raw_val););
+        let write_specifier_native = quote_spanned!(span =>
+            #[cfg(target_endian = "big")]
+            #write_specifier_be
+
+            #[cfg(target_endian = "little")]
+            #write_specifier_le
+        );
+
+        let write_specifier = match &config.endian {
+            Some(value) => match value.value {
+                Endian::Big => write_specifier_be,
+                Endian::Little => write_specifier_le,
+                Endian::Native => write_specifier_native
+            }, None => write_specifier_native
+        };
+
         let setters = quote_spanned!(span=>
             #[doc = #with_docs]
             #[inline]
@@ -790,7 +808,7 @@ impl BitfieldStruct {
                     return ::core::result::Result::Err(::modular_bitfield::error::OutOfBounds)
                 }
 
-                ::modular_bitfield::private::write_specifier::<#ty>(&mut self.bytes[..], #offset, __bf_raw_val);
+                #write_specifier
                 ::core::result::Result::Ok(())
             }
         );

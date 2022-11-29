@@ -20,14 +20,12 @@ where
 
 #[doc(hidden)]
 #[inline]
-pub fn read_specifier<T>(bytes: &[u8], offset: usize) -> <T as Specifier>::Bytes
+pub fn read_specifier_le<T>(bytes: &[u8], offset: usize) -> <T as Specifier>::Bytes
 where
     T: Specifier,
     PushBuffer<T::Bytes>: Default + PushBits,
 {
     let end = offset + <T as Specifier>::BITS;
-    // LSB
-
     let ls_byte = offset / 8; // compile-time
     let ms_byte = (end - 1) / 8; // compile-time
     let lsb_offset = offset % 8; // compile-time
@@ -59,8 +57,17 @@ where
         }
     }
 
-    // MSB
+    buffer.into_bytes()
+}
 
+#[doc(hidden)]
+#[inline]
+pub fn read_specifier_be<T>(bytes: &[u8], offset: usize) -> <T as Specifier>::Bytes
+where
+    T: Specifier,
+    PushBuffer<T::Bytes>: Default + PushBits,
+{
+    let end = offset + <T as Specifier>::BITS;
     let ms_byte = offset / 8; // compile-time
     let ls_byte = (end - 1) / 8; // compile-time
     let msb_offset = offset % 8; // compile-time
@@ -91,14 +98,12 @@ where
             buffer.push_bits(lsb_offset as u32, bytes[ls_byte] >> (8 - lsb_offset));
         }
     }
-    // END
-    
     buffer.into_bytes()
 }
 
 #[doc(hidden)]
 #[inline]
-pub fn write_specifier<T>(
+pub fn write_specifier_le<T>(
     bytes: &mut [u8],
     offset: usize,
     new_val: <T as Specifier>::Bytes,
@@ -151,7 +156,20 @@ pub fn write_specifier<T>(
             }
         }
     }
-    // MSB
+}
+
+
+#[doc(hidden)]
+#[inline]
+pub fn write_specifier_be<T>(
+    bytes: &mut [u8],
+    offset: usize,
+    new_val: <T as Specifier>::Bytes,
+) where
+    T: Specifier,
+    PopBuffer<T::Bytes>: PopBits,
+{
+    let end = offset + <T as Specifier>::BITS;
     let ms_byte = offset / 8; // compile-time
     let ls_byte = (end - 1) / 8; // compile-time
     let msb_offset = offset % 8; // compile-time
@@ -197,7 +215,4 @@ pub fn write_specifier<T>(
             bytes[ms_byte] = stays_same | overwrite;
         }
     }
-
-    // END
-
 }
