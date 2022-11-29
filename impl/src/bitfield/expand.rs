@@ -4,7 +4,7 @@ use super::{
         ReprKind,
     },
     field_info::FieldInfo,
-    BitfieldStruct,
+    BitfieldStruct, Endian,
 };
 use proc_macro2::TokenStream as TokenStream2;
 use quote::{
@@ -57,6 +57,39 @@ impl BitfieldStruct {
         let ident = &self.item_struct.ident;
         let bits = self.generate_target_or_actual_bitfield_size(config);
         let next_divisible_by_8 = Self::next_divisible_by_8(&bits);
+
+        let invalid_bit_pattern_le = quote_spanned!(span =>
+            let invalid_bit_pattern = {
+                let __bf_max_value: Self::Bytes = (0x01 as Self::Bytes)
+                    .checked_shl(Self::BITS as ::core::primitive::u32)
+                    .unwrap_or(<Self::Bytes>::MAX);
+                bytes > __bf_max_value
+            }
+        );
+
+        let invalid_bit_pattern_be = quote_spanned!(span =>
+            let invalid_bit_pattern = {
+                let __bf_reject_mask = ((0x01 << (#next_divisible_by_8 - Self::BITS)) - 1) as Self::Bytes;
+                bytes & __bf_reject_mask != 0
+            }
+        );
+
+        let invalid_bit_pattern_native = quote_spanned!(span =>
+            #[cfg(target_endian = "big")]
+            #invalid_bit_pattern_be
+
+            #[cfg(target_endian = "little")]
+            #invalid_bit_pattern_le
+        );
+
+        let invalid_bit_pattern = match &config.endian {
+            Some(value) => match value.value {
+                Endian::Big => invalid_bit_pattern_be,
+                Endian::Little => invalid_bit_pattern_le,
+                Endian::Native => invalid_bit_pattern_native
+            }, None => invalid_bit_pattern_native
+        };
+
         Some(quote_spanned!(span =>
             #[allow(clippy::identity_op)]
             const _: () = {
@@ -68,6 +101,7 @@ impl BitfieldStruct {
             #[allow(clippy::identity_op)]
             impl ::modular_bitfield::Specifier for #ident {
                 const BITS: usize = #bits;
+                const STRUCT: bool = true;
 
                 #[allow(unused_braces)]
                 type Bytes = <[(); if { #bits } > 128 { 128 } else { #bits }] as ::modular_bitfield::private::SpecifierBytes>::Bytes;
@@ -89,13 +123,12 @@ impl BitfieldStruct {
                     bytes: Self::Bytes,
                 ) -> ::core::result::Result<Self::InOut, ::modular_bitfield::error::InvalidBitPattern<Self::Bytes>>
                 {
-                    let __bf_max_value: Self::Bytes = (0x01 as Self::Bytes)
-                        .checked_shl(Self::BITS as ::core::primitive::u32)
-                        .unwrap_or(<Self::Bytes>::MAX);
-                    if bytes > __bf_max_value {
-                        return ::core::result::Result::Err(::modular_bitfield::error::InvalidBitPattern::new(bytes))
+                    #invalid_bit_pattern
+
+                    if invalid_bit_pattern {
+                        return ::core::result::Result::Err(::modular_bitfield_msb::error::InvalidBitPattern::new(bytes))
                     }
-                    let __bf_bytes = bytes.to_le_bytes();
+
                     ::core::result::Result::Ok(Self {
                         bytes: <[(); #next_divisible_by_8] as ::modular_bitfield::private::ArrayBytesConversion>::bytes_into_array(bytes)
                     })
@@ -383,7 +416,7 @@ impl BitfieldStruct {
                 {
                     #[inline]
                     fn from(__bf_prim: #prim) -> Self {
-                        Self { bytes: <#prim>::to_le_bytes(__bf_prim) }
+                        Self { bytes: <#prim>::to_be_bytes(__bf_prim) }
                     }
                 }
 
@@ -393,7 +426,7 @@ impl BitfieldStruct {
                 {
                     #[inline]
                     fn from(__bf_bitfield: #ident) -> Self {
-                        <Self>::from_le_bytes(__bf_bitfield.bytes)
+                        <Self>::from_be_bytes(__bf_bitfield.bytes)
                     }
                 }
             )
@@ -413,11 +446,38 @@ impl BitfieldStruct {
                     #[inline]
                     #[allow(clippy::identity_op)]
                     pub const fn from_bytes(bytes: [::core::primitive::u8; #next_divisible_by_8 / 8usize]) -> Self {
+
+
                         Self { bytes }
                     }
                 )
             }
             false => {
+
+                let bounds_check_be = quote_spanned!(span=>
+                    let out_of_bounds = bytes[(#next_divisible_by_8 / 8usize) - 1] >= (0x01 << (8 - (#next_divisible_by_8 - #size)));
+                );
+
+                let bounds_check_le = quote_spanned!(span =>
+                    let out_of_bounds = bytes[(#next_divisible_by_8 / 8usize) - 1] & ( (0x01 << (#next_divisible_by_8 - #size)) - 1) != 0;
+                );
+
+                let bounds_check_native = quote_spanned!(span =>
+                    #[cfg(target_endian = "big")]
+                    #bounds_check_be
+
+                    #[cfg(target_endian = "little")]
+                    #bounds_check_le
+                );
+
+                let bounds_check = match &config.endian {
+                    Some(value) => match value.value {
+                        Endian::Big => bounds_check_be,
+                        Endian::Little => bounds_check_le,
+                        Endian::Native => bounds_check_native
+                    }, None => bounds_check_native
+                };
+
                 quote_spanned!(span=>
                     /// Converts the given bytes directly into the bitfield struct.
                     ///
@@ -429,9 +489,12 @@ impl BitfieldStruct {
                     pub fn from_bytes(
                         bytes: [::core::primitive::u8; #next_divisible_by_8 / 8usize]
                     ) -> ::core::result::Result<Self, ::modular_bitfield::error::OutOfBounds> {
-                        if bytes[(#next_divisible_by_8 / 8usize) - 1] >= (0x01 << (8 - (#next_divisible_by_8 - #size))) {
+
+                        #bounds_check
+                        if out_of_bounds {
                             return ::core::result::Result::Err(::modular_bitfield::error::OutOfBounds)
                         }
+
                         ::core::result::Result::Ok(Self { bytes })
                     }
                 )
@@ -528,6 +591,40 @@ impl BitfieldStruct {
              If the returned value contains an invalid bit pattern for {}.",
             name, name,
         );
+
+        let bf_read_be = quote_spanned!(span=>
+            let __bf_read: <#ty as ::modular_bitfield::Specifier>::Bytes = {
+                ::modular_bitfield::private::read_specifier::<#ty>(&self.bytes[..], #offset)
+            };
+        );
+
+        let bf_read_le = quote_spanned!(span=>
+            let __bf_read: <#ty as ::modular_bitfield::Specifier>::Bytes = {
+                let __bf_base_bits: ::core::primitive::usize = 8usize * ::core::mem::size_of::<<#ty as ::modular_bitfield::Specifier>::Bytes>();
+                let __bf_spec_bits: ::core::primitive::usize = <#ty as ::modular_bitfield::Specifier>::BITS;
+                let __bf_read: <#ty as ::modular_bitfield::Specifier>::Bytes = {
+                    ::modular_bitfield::private::read_specifier::<#ty>(&self.bytes[..], #offset)
+                } << if <#ty as ::modular_bitfield::Specifier>::STRUCT { __bf_base_bits - __bf_spec_bits } else { 0 };
+                __bf_read
+            };
+        );
+
+        let bf_read_native = quote_spanned!(span =>
+            #[cfg(target_endian = "big")]
+            #bf_read_be
+
+            #[cfg(target_endian = "little")]
+            #bf_read_le
+        );
+
+        let bf_read = match &config.endian {
+            Some(value) => match value.value {
+                Endian::Big => bf_read_be,
+                Endian::Little => bf_read_le,
+                Endian::Native => bf_read_native
+            }, None => bf_read_native
+        };
+
         let getters = quote_spanned!(span=>
             #[doc = #getter_docs]
             #[inline]
@@ -546,9 +643,9 @@ impl BitfieldStruct {
                 <#ty as ::modular_bitfield::Specifier>::InOut,
                 ::modular_bitfield::error::InvalidBitPattern<<#ty as ::modular_bitfield::Specifier>::Bytes>
             > {
-                let __bf_read: <#ty as ::modular_bitfield::Specifier>::Bytes = {
-                    ::modular_bitfield::private::read_specifier::<#ty>(&self.bytes[..], #offset)
-                };
+
+                #bf_read
+
                 <#ty as ::modular_bitfield::Specifier>::from_bytes(__bf_read)
             }
         );
@@ -610,6 +707,35 @@ impl BitfieldStruct {
              If the given value is out of bounds for {}.",
             name, name,
         );
+
+        let bf_raw_val_be = quote_spanned!(span=>
+            let __bf_raw_val: <#ty as ::modular_bitfield::Specifier>::Bytes = {
+                <#ty as ::modular_bitfield::Specifier>::into_bytes(new_val)
+            }?;
+        );
+
+        let bf_raw_val_le = quote_spanned!(span=>
+            let __bf_raw_val: <#ty as ::modular_bitfield::Specifier>::Bytes = {
+                <#ty as ::modular_bitfield::Specifier>::into_bytes(new_val)
+            }? >> if <#ty as ::modular_bitfield::Specifier>::STRUCT { __bf_base_bits - __bf_spec_bits } else { 0 };
+        );
+
+        let bf_raw_val_native = quote_spanned!(span =>
+            #[cfg(target_endian = "big")]
+            #bf_raw_val_be
+
+            #[cfg(target_endian = "little")]
+            #bf_raw_val_le
+        );
+
+        let bf_raw_val = match &config.endian {
+            Some(value) => match value.value {
+                Endian::Big => bf_raw_val_be,
+                Endian::Little => bf_raw_val_le,
+                Endian::Native => bf_raw_val_native
+            }, None => bf_raw_val_native
+        };
+
         let setters = quote_spanned!(span=>
             #[doc = #with_docs]
             #[inline]
@@ -655,14 +781,15 @@ impl BitfieldStruct {
                     !0 >> (__bf_base_bits - <#ty as ::modular_bitfield::Specifier>::BITS)
                 };
                 let __bf_spec_bits: ::core::primitive::usize = <#ty as ::modular_bitfield::Specifier>::BITS;
-                let __bf_raw_val: <#ty as ::modular_bitfield::Specifier>::Bytes = {
-                    <#ty as ::modular_bitfield::Specifier>::into_bytes(new_val)
-                }?;
+
+                #bf_raw_val
+
                 // We compare base bits with spec bits to drop this condition
                 // if there cannot be invalid inputs.
                 if !(__bf_base_bits == __bf_spec_bits || __bf_raw_val <= __bf_max_value) {
                     return ::core::result::Result::Err(::modular_bitfield::error::OutOfBounds)
                 }
+
                 ::modular_bitfield::private::write_specifier::<#ty>(&mut self.bytes[..], #offset, __bf_raw_val);
                 ::core::result::Result::Ok(())
             }
@@ -698,6 +825,7 @@ impl BitfieldStruct {
             offset.push(syn::parse_quote! { 0usize });
             offset
         };
+
         let bits_checks = self
             .field_infos(config)
             .map(|field_info| self.expand_bits_checks_for_field(field_info));

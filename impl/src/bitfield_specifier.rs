@@ -186,12 +186,15 @@ fn generate_enum(input: syn::ItemEnum) -> syn::Result<TokenStream2> {
 
             #[inline]
             fn into_bytes(input: Self::InOut) -> ::core::result::Result<Self::Bytes, ::modular_bitfield::error::OutOfBounds> {
+                
+                // MSB: might not be needed to do conversion here
                 let bytes = #endian_to;
                 return ::core::result::Result::Ok(bytes);
             }
 
             #[inline]
             fn from_bytes(bytes: Self::Bytes) -> ::core::result::Result<Self::InOut, ::modular_bitfield::error::InvalidBitPattern<Self::Bytes>> {
+                // MSB: might not be needed to do conversion here
                 let bytes = #endian_from;
 
                 match bytes {
