@@ -64,14 +64,14 @@ impl BitfieldStruct {
                     .checked_shl(Self::BITS as ::core::primitive::u32)
                     .unwrap_or(<Self::Bytes>::MAX);
                 bytes > __bf_max_value
-            }
+            };
         );
 
         let invalid_bit_pattern_be = quote_spanned!(span =>
             let invalid_bit_pattern = {
                 let __bf_reject_mask = ((0x01 << (#next_divisible_by_8 - Self::BITS)) - 1) as Self::Bytes;
                 bytes & __bf_reject_mask != 0
-            }
+            };
         );
 
         let invalid_bit_pattern_native = quote_spanned!(span =>
