@@ -69,12 +69,15 @@ impl BitfieldStruct {
         config: &'b Config,
     ) -> impl Iterator<Item = FieldInfo<'a>> {
         Self::fields(&self.item_struct).map(move |(n, field)| {
-            let field_config = config
+            let mut field_config = config
                 .field_configs
                 .get(&n)
-                .map(|config| &config.value)
+                .map(|fconfig| &fconfig.value)
                 .cloned()
                 .unwrap_or_default();
+            if field_config.endian.is_none() {
+                field_config.endian = config.endian.clone();
+            }
             FieldInfo::new(n, field, field_config)
         })
     }
