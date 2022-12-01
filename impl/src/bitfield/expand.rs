@@ -4,7 +4,8 @@ use super::{
         ReprKind,
     },
     field_info::FieldInfo,
-    BitfieldStruct, Endian,
+    BitfieldStruct,
+    Endian,
 };
 use proc_macro2::TokenStream as TokenStream2;
 use quote::{
@@ -58,6 +59,7 @@ impl BitfieldStruct {
         let bits = self.generate_target_or_actual_bitfield_size(config);
         let next_divisible_by_8 = Self::next_divisible_by_8(&bits);
 
+        // ENDIAN
         let invalid_bit_pattern_le = quote_spanned!(span =>
             let invalid_bit_pattern = {
                 let __bf_max_value: Self::Bytes = (0x01 as Self::Bytes)
@@ -82,13 +84,37 @@ impl BitfieldStruct {
             #invalid_bit_pattern_le
         );
 
-        let invalid_bit_pattern = match &config.endian {
-            Some(value) => match value.value {
-                Endian::Big => invalid_bit_pattern_be,
-                Endian::Little => invalid_bit_pattern_le,
-                Endian::Native => invalid_bit_pattern_native
-            }, None => invalid_bit_pattern_native
+        let endian = match &config.endian {
+            Some(value) => value.value,
+            None => Endian::Native,
         };
+
+        let invalid_bit_pattern = match endian {
+            Endian::Big => invalid_bit_pattern_be,
+            Endian::Little => invalid_bit_pattern_le,
+            Endian::Native => invalid_bit_pattern_native,
+        };
+
+        // let to_bytes_le = quote_spanned!(span =>
+        //     let __bf_bytes = bytes.to_le_bytes();
+        // );
+
+        // let to_bytes_be = quote_spanned!(span =>
+        //     let __bf_bytes = bytes.to_be_bytes();
+        // );
+
+        // let to_bytes_native = quote_spanned!(span =>
+        //     #[cfg(target_endian = "big")]
+        //     #to_bytes_be
+
+        //     #[cfg(target_endian = "little")]
+        //     #to_bytes_le
+        // );
+        // let to_bytes = match endian {
+        //         Endian::Big => to_bytes_be,
+        //         Endian::Little => to_bytes_le,
+        //         Endian::Native => to_bytes_native
+        // };
 
         Some(quote_spanned!(span =>
             #[allow(clippy::identity_op)]
@@ -126,8 +152,10 @@ impl BitfieldStruct {
                     #invalid_bit_pattern
 
                     if invalid_bit_pattern {
-                        return ::core::result::Result::Err(::modular_bitfield::error::InvalidBitPattern::new(bytes))
+                       return ::core::result::Result::Err(::modular_bitfield::error::InvalidBitPattern::new(bytes))
                     }
+
+                    //#to_bytes
 
                     ::core::result::Result::Ok(Self {
                         bytes: <[(); #next_divisible_by_8] as ::modular_bitfield::private::ArrayBytesConversion>::bytes_into_array(bytes)
@@ -416,7 +444,8 @@ impl BitfieldStruct {
                 {
                     #[inline]
                     fn from(__bf_prim: #prim) -> Self {
-                        Self { bytes: <#prim>::to_be_bytes(__bf_prim) }
+// TODO: ENDIAN
+                        Self { bytes: <#prim>::to_le_bytes(__bf_prim) }
                     }
                 }
 
@@ -426,7 +455,8 @@ impl BitfieldStruct {
                 {
                     #[inline]
                     fn from(__bf_bitfield: #ident) -> Self {
-                        <Self>::from_be_bytes(__bf_bitfield.bytes)
+// TODO: ENDIAN
+                        <Self>::from_le_bytes(__bf_bitfield.bytes)
                     }
                 }
             )
@@ -446,19 +476,16 @@ impl BitfieldStruct {
                     #[inline]
                     #[allow(clippy::identity_op)]
                     pub const fn from_bytes(bytes: [::core::primitive::u8; #next_divisible_by_8 / 8usize]) -> Self {
-
-
                         Self { bytes }
                     }
                 )
             }
             false => {
-
-                let bounds_check_be = quote_spanned!(span=>
+                let bounds_check_le = quote_spanned!(span=>
                     let out_of_bounds = bytes[(#next_divisible_by_8 / 8usize) - 1] >= (0x01 << (8 - (#next_divisible_by_8 - #size)));
                 );
 
-                let bounds_check_le = quote_spanned!(span =>
+                let bounds_check_be = quote_spanned!(span =>
                     let out_of_bounds = bytes[(#next_divisible_by_8 / 8usize) - 1] & ( (0x01 << (#next_divisible_by_8 - #size)) - 1) != 0;
                 );
 
@@ -470,12 +497,15 @@ impl BitfieldStruct {
                     #bounds_check_le
                 );
 
-                let bounds_check = match &config.endian {
-                    Some(value) => match value.value {
-                        Endian::Big => bounds_check_be,
-                        Endian::Little => bounds_check_le,
-                        Endian::Native => bounds_check_native
-                    }, None => bounds_check_native
+                let endian = match &config.endian {
+                    Some(value) => value.value,
+                    None => Endian::Native,
+                };
+
+                let bounds_check = match endian {
+                    Endian::Big => bounds_check_be,
+                    Endian::Little => bounds_check_le,
+                    Endian::Native => bounds_check_native,
                 };
 
                 quote_spanned!(span=>
@@ -491,8 +521,9 @@ impl BitfieldStruct {
                     ) -> ::core::result::Result<Self, ::modular_bitfield::error::OutOfBounds> {
 
                         #bounds_check
+
                         if out_of_bounds {
-                            return ::core::result::Result::Err(::modular_bitfield::error::OutOfBounds)
+                           return ::core::result::Result::Err(::modular_bitfield::error::OutOfBounds)
                         }
 
                         ::core::result::Result::Ok(Self { bytes })
@@ -592,18 +623,18 @@ impl BitfieldStruct {
             name, name,
         );
 
-        let bf_read_be = quote_spanned!(span=>
+        let bf_read_le = quote_spanned!(span=>
             let __bf_read: <#ty as ::modular_bitfield::Specifier>::Bytes = {
-                ::modular_bitfield::private::read_specifier_be::<#ty>(&self.bytes[..], #offset)
+                ::modular_bitfield::private::read_specifier_le::<#ty>(&self.bytes[..], #offset)
             };
         );
 
-        let bf_read_le = quote_spanned!(span=>
+        let bf_read_be = quote_spanned!(span=>
             let __bf_read: <#ty as ::modular_bitfield::Specifier>::Bytes = {
                 let __bf_base_bits: ::core::primitive::usize = 8usize * ::core::mem::size_of::<<#ty as ::modular_bitfield::Specifier>::Bytes>();
                 let __bf_spec_bits: ::core::primitive::usize = <#ty as ::modular_bitfield::Specifier>::BITS;
                 let __bf_read: <#ty as ::modular_bitfield::Specifier>::Bytes = {
-                    ::modular_bitfield::private::read_specifier_le::<#ty>(&self.bytes[..], #offset)
+                    ::modular_bitfield::private::read_specifier_be::<#ty>(&self.bytes[..], #offset)
                 } << if <#ty as ::modular_bitfield::Specifier>::STRUCT { __bf_base_bits - __bf_spec_bits } else { 0 };
                 __bf_read
             };
@@ -617,12 +648,14 @@ impl BitfieldStruct {
             #bf_read_le
         );
 
-        let bf_read = match &config.endian {
-            Some(value) => match value.value {
-                Endian::Big => bf_read_be,
-                Endian::Little => bf_read_le,
-                Endian::Native => bf_read_native
-            }, None => bf_read_native
+        let endian = match &config.endian {
+            Some(value) => value.value,
+            None => Endian::Native,
+        };
+        let bf_read = match endian {
+            Endian::Big => bf_read_be,
+            Endian::Little => bf_read_le,
+            Endian::Native => bf_read_native,
         };
 
         let getters = quote_spanned!(span=>
@@ -708,13 +741,18 @@ impl BitfieldStruct {
             name, name,
         );
 
-        let bf_raw_val_be = quote_spanned!(span=>
+        let endian = match &config.endian {
+            Some(value) => value.value,
+            None => Endian::Native,
+        };
+
+        let bf_raw_val_le = quote_spanned!(span=>
             let __bf_raw_val: <#ty as ::modular_bitfield::Specifier>::Bytes = {
                 <#ty as ::modular_bitfield::Specifier>::into_bytes(new_val)
             }?;
         );
 
-        let bf_raw_val_le = quote_spanned!(span=>
+        let bf_raw_val_be = quote_spanned!(span=>
             let __bf_raw_val: <#ty as ::modular_bitfield::Specifier>::Bytes = {
                 <#ty as ::modular_bitfield::Specifier>::into_bytes(new_val)
             }? >> if <#ty as ::modular_bitfield::Specifier>::STRUCT { __bf_base_bits - __bf_spec_bits } else { 0 };
@@ -728,12 +766,10 @@ impl BitfieldStruct {
             #bf_raw_val_le
         );
 
-        let bf_raw_val = match &config.endian {
-            Some(value) => match value.value {
-                Endian::Big => bf_raw_val_be,
-                Endian::Little => bf_raw_val_le,
-                Endian::Native => bf_raw_val_native
-            }, None => bf_raw_val_native
+        let bf_raw_val = match endian {
+            Endian::Big => bf_raw_val_be,
+            Endian::Little => bf_raw_val_le,
+            Endian::Native => bf_raw_val_native,
         };
 
         let write_specifier_be = quote_spanned!(span=> ::modular_bitfield::private::write_specifier_be::<#ty>(&mut self.bytes[..], #offset, __bf_raw_val););
@@ -746,12 +782,10 @@ impl BitfieldStruct {
             #write_specifier_le
         );
 
-        let write_specifier = match &config.endian {
-            Some(value) => match value.value {
-                Endian::Big => write_specifier_be,
-                Endian::Little => write_specifier_le,
-                Endian::Native => write_specifier_native
-            }, None => write_specifier_native
+        let write_specifier = match endian {
+            Endian::Big => write_specifier_be,
+            Endian::Little => write_specifier_le,
+            Endian::Native => write_specifier_native,
         };
 
         let setters = quote_spanned!(span=>
@@ -809,6 +843,7 @@ impl BitfieldStruct {
                 }
 
                 #write_specifier
+
                 ::core::result::Result::Ok(())
             }
         );
@@ -843,7 +878,6 @@ impl BitfieldStruct {
             offset.push(syn::parse_quote! { 0usize });
             offset
         };
-
         let bits_checks = self
             .field_infos(config)
             .map(|field_info| self.expand_bits_checks_for_field(field_info));

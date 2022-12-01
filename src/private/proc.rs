@@ -113,7 +113,6 @@ pub fn write_specifier_le<T>(
 {
     let end = offset + <T as Specifier>::BITS;
 
-    // LSB
     let ls_byte = offset / 8; // compile-time
     let ms_byte = (end - 1) / 8; // compile-time
     let lsb_offset = offset % 8; // compile-time

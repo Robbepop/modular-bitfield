@@ -130,10 +130,8 @@ fn generate_enum(input: syn::ItemEnum) -> syn::Result<TokenStream2> {
 
     let endian = match attributes.endian {
         Some(endian) => endian,
-        None => Endian::Native // Default to host endian
+        None => Endian::Native
     };
-
-    println!("{} endian {}", enum_ident, endian);
 
     let variants = input
         .variants
@@ -187,16 +185,17 @@ fn generate_enum(input: syn::ItemEnum) -> syn::Result<TokenStream2> {
 
             #[inline]
             fn into_bytes(input: Self::InOut) -> ::core::result::Result<Self::Bytes, ::modular_bitfield::error::OutOfBounds> {
-                
+                ::core::result::Result::Ok(input as Self::Bytes)
+
                 // MSB: might not be needed to do conversion here
-                let bytes = #endian_to;
-                return ::core::result::Result::Ok(bytes);
+                // let bytes = #endian_to;
+                // return ::core::result::Result::Ok(bytes);
             }
 
             #[inline]
             fn from_bytes(bytes: Self::Bytes) -> ::core::result::Result<Self::InOut, ::modular_bitfield::error::InvalidBitPattern<Self::Bytes>> {
                 // MSB: might not be needed to do conversion here
-                let bytes = #endian_from;
+                //let bytes = #endian_from;
 
                 match bytes {
                     #( #from_bytes_arms ),*

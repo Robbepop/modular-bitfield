@@ -33,7 +33,6 @@ fn generate_specifier_for(bits: usize) -> TokenStream2 {
     } else {
         quote! {{ ((0x01 as #in_out) << #bits) - 1 }}
     };
-
     quote! {
         #[doc = #doc_comment]
         #[derive(Copy, Clone)]
