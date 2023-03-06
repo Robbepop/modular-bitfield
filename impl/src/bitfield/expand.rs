@@ -344,7 +344,7 @@ impl BitfieldStruct {
             let bytes = config.value;
             quote_spanned!(config.span=>
                 const _: () = {
-                    struct ExpectedBytes { __bf_unused: [::core::primitive::u8; #bytes] };
+                    struct ExpectedBytes { __bf_unused: [::core::primitive::u8; #bytes] }
 
                     ::modular_bitfield::private::static_assertions::assert_eq_size!(
                         ExpectedBytes,
