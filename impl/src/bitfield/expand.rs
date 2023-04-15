@@ -327,7 +327,7 @@ impl BitfieldStruct {
             impl #ident
             {
                 /// Returns an instance with zero initialized data.
-                #[allow(clippy::identity_op)]
+                #[allow(clippy::identity_op, dead_code)]
                 pub const fn new() -> Self {
                     Self {
                         bytes: [0u8; #next_divisible_by_8 / 8usize],
@@ -446,7 +446,7 @@ impl BitfieldStruct {
                 /// The returned byte array is layed out in the same way as described
                 /// [here](https://docs.rs/modular-bitfield/#generated-structure).
                 #[inline]
-                #[allow(clippy::identity_op)]
+                #[allow(clippy::identity_op, dead_code)]
                 pub const fn into_bytes(self) -> [::core::primitive::u8; #next_divisible_by_8 / 8usize] {
                     self.bytes
                 }
