@@ -13,6 +13,7 @@ pub use self::{
     proc::{
         read_specifier,
         write_specifier,
+        const_max,
     },
     push_pop::{
         PopBuffer,

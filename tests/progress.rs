@@ -33,6 +33,9 @@ fn tests() {
     t.pass("tests/derive-bitfield-specifier/07-optional-discriminant.rs");
     t.compile_fail("tests/derive-bitfield-specifier/08-non-power-of-two.rs");
     t.compile_fail("tests/derive-bitfield-specifier/09-variant-out-of-range.rs");
+    t.pass("tests/derive-bitfield-specifier/adts.rs");
+    t.compile_fail("tests/derive-bitfield-specifier/adt_errors.rs");
+    t.compile_fail("tests/derive-bitfield-specifier/adt_tag_missing.rs");
 
     // Tests for regressions found in published versions:
     t.pass("tests/regressions/no-implicit-prelude.rs");

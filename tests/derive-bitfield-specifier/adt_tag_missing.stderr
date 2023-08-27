@@ -1,0 +1,17 @@
+error[E0599]: no variant or associated item named `Third` found for enum `Tag` in the current scope
+  --> tests/derive-bitfield-specifier/adt_tag_missing.rs:24:5
+   |
+12 | pub enum Tag {
+   | ------------ variant or associated item `Third` not found here
+...
+24 |     Third,
+   |     ^^^^^ variant or associated item not found in `Tag`
+
+error[E0599]: no variant or associated item named `Fourth` found for enum `Tag` in the current scope
+  --> tests/derive-bitfield-specifier/adt_tag_missing.rs:25:5
+   |
+12 | pub enum Tag {
+   | ------------ variant or associated item `Fourth` not found here
+...
+25 |     Fourth,
+   |     ^^^^^^ variant or associated item not found in `Tag`

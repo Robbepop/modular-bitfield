@@ -113,3 +113,8 @@ pub fn write_specifier<T>(
         }
     }
 }
+
+#[doc(hidden)]
+pub const fn const_max(a: usize, b: usize) -> usize {
+    if a > b { a } else { b }
+}
