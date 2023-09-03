@@ -69,8 +69,7 @@ impl BitfieldStruct {
             impl ::modular_bitfield::Specifier for #ident {
                 const BITS: usize = #bits;
 
-                #[allow(unused_braces)]
-                type Bytes = <[(); if { #bits } > 128 { 128 } else { #bits }] as ::modular_bitfield::private::SpecifierBytes>::Bytes;
+                type Bytes = <[(); if #bits  > 128 { 128 } else { #bits }] as ::modular_bitfield::private::SpecifierBytes>::Bytes;
                 type InOut = Self;
 
                 #[inline]
@@ -169,14 +168,14 @@ impl BitfieldStruct {
     ///
     /// ```
     /// # use modular_bitfield::prelude::*;
-    /// {
-    ///     0usize +
-    ///     <B8 as ::modular_bitfield::Specifier>::BITS +
-    ///     <B8 as ::modular_bitfield::Specifier>::BITS +
-    ///     <B8 as ::modular_bitfield::Specifier>::BITS +
-    ///     <bool as ::modular_bitfield::Specifier>::BITS +
-    ///     <B7 as ::modular_bitfield::Specifier>::BITS
-    /// }
+    ///
+    /// 0usize +
+    /// <B8 as ::modular_bitfield::Specifier>::BITS +
+    /// <B8 as ::modular_bitfield::Specifier>::BITS +
+    /// <B8 as ::modular_bitfield::Specifier>::BITS +
+    /// <bool as ::modular_bitfield::Specifier>::BITS +
+    /// <B7 as ::modular_bitfield::Specifier>::BITS
+    ///
     /// # ;
     /// ```
     ///
@@ -200,7 +199,7 @@ impl BitfieldStruct {
                 )
             });
         quote_spanned!(span=>
-            { #sum }
+            #sum
         )
     }
 
@@ -265,7 +264,7 @@ impl BitfieldStruct {
             #[allow(clippy::identity_op)]
             const _: () = {
                 impl ::modular_bitfield::private::checks::#check_ident for #ident {
-                    type Size = ::modular_bitfield::private::checks::TotalSize<[(); #actual_bits % 8usize]>;
+                    type Size = ::modular_bitfield::private::checks::TotalSize<[(); (#actual_bits) % 8usize]>;
                 }
             };
         )
@@ -291,9 +290,9 @@ impl BitfieldStruct {
     /// Returns a token stream representing the next greater value divisible by 8.
     fn next_divisible_by_8(value: &TokenStream2) -> TokenStream2 {
         let span = value.span();
-        quote_spanned!(span=> {
+        quote_spanned!(span=>
             (((#value - 1) / 8) + 1) * 8
-        })
+        )
     }
 
     /// Generates the actual item struct definition for the `#[bitfield]`.
@@ -429,7 +428,7 @@ impl BitfieldStruct {
                     pub fn from_bytes(
                         bytes: [::core::primitive::u8; #next_divisible_by_8 / 8usize]
                     ) -> ::core::result::Result<Self, ::modular_bitfield::error::OutOfBounds> {
-                        if bytes[(#next_divisible_by_8 / 8usize) - 1] >= (0x01 << (8 - (#next_divisible_by_8 - #size))) {
+                        if bytes[(#next_divisible_by_8 / 8usize) - 1] >= (0x01 << (8 - (#next_divisible_by_8 - (#size)))) {
                             return ::core::result::Result::Err(::modular_bitfield::error::OutOfBounds)
                         }
                         ::core::result::Result::Ok(Self { bytes })
