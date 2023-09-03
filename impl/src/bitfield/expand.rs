@@ -377,6 +377,7 @@ impl BitfieldStruct {
                 ReprKind::U128 => quote! { IsU128Compatible },
             };
             quote_spanned!(span=>
+                #[allow(clippy::identity_op)]
                 impl ::core::convert::From<#prim> for #ident
                 where
                     [(); #actual_bits]: ::modular_bitfield::private::#trait_check_ident,
@@ -387,6 +388,7 @@ impl BitfieldStruct {
                     }
                 }
 
+                #[allow(clippy::identity_op)]
                 impl ::core::convert::From<#ident> for #prim
                 where
                     [(); #actual_bits]: ::modular_bitfield::private::#trait_check_ident,
