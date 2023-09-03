@@ -1,3 +1,5 @@
+use std::convert::TryInto;
+
 use super::config::Config;
 use proc_macro2::Span;
 use syn::{
@@ -112,6 +114,28 @@ impl Config {
         Ok(())
     }
 
+    /// Feeds am `endian: string` parameter to the `#[bitfield]` configuration.
+    fn feed_endian_param(&mut self, name_value: syn::MetaNameValue) -> Result<()> {
+        assert!(name_value.path.is_ident("endian"));
+        match &name_value.lit {
+            syn::Lit::Str(lit_str) => {
+                let endian = match lit_str.value().try_into() {
+                    Ok(endian) => endian,
+                    Err(err) => return Err(err),
+                };
+
+                self.endian(endian, name_value.span())?;
+            }
+            invalid => {
+                return Err(format_err!(
+                invalid,
+                "encountered invalid value argument for #[bitfield] `endian` parameter",
+            ))
+            }
+        }
+        Ok(())
+    }
+
     /// Feeds the given parameters to the `#[bitfield]` configuration.
     ///
     /// # Errors
@@ -132,6 +156,8 @@ impl Config {
                                 self.feed_bits_param(name_value)?;
                             } else if name_value.path.is_ident("filled") {
                                 self.feed_filled_param(name_value)?;
+                            } else if name_value.path.is_ident("endian") {
+                                self.feed_endian_param(name_value)?;
                             } else {
                                 return Err(unsupported_argument(name_value))
                             }

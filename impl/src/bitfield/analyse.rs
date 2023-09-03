@@ -12,7 +12,7 @@ use super::{
 use crate::errors::CombineError;
 use core::convert::TryFrom;
 use quote::quote;
-use std::collections::HashMap;
+use std::{collections::HashMap, convert::TryInto};
 use syn::{
     self,
     parse::Result,
@@ -201,7 +201,24 @@ impl BitfieldStruct {
                         ))
                     }
                 }
-            } else if attr.path.is_ident("skip") {
+            } else if attr.path.is_ident("endian") {
+                let path = &attr.path;
+                let args = &attr.tokens;
+                let name_value: syn::MetaNameValue =
+                    syn::parse2::<_>(quote! { #path #args })?;
+                let span = name_value.span();
+                match name_value.lit {
+                    syn::Lit::Str(lit_str) => {
+                        config.endian(lit_str.value().try_into()?, span)?;
+                    }
+                    _ => {
+                        return Err(format_err!(
+                            span,
+                            "encountered invalid value type for #[endian = Endian]"
+                        ))
+                    }
+                }
+            }else if attr.path.is_ident("skip") {
                 let path = &attr.path;
                 let args = &attr.tokens;
                 let meta: syn::Meta = syn::parse2::<_>(quote! { #path #args })?;

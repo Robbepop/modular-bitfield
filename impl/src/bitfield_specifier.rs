@@ -1,6 +1,9 @@
+use std::convert::TryInto;
+
 use proc_macro2::TokenStream as TokenStream2;
-use quote::quote_spanned;
+use quote::{quote, quote_spanned};
 use syn::spanned::Spanned as _;
+use crate::bitfield::Endian;
 
 pub fn generate(input: TokenStream2) -> TokenStream2 {
     match generate_or_error(input) {
@@ -39,38 +42,60 @@ fn generate_or_error(input: TokenStream2) -> syn::Result<TokenStream2> {
 }
 struct Attributes {
     bits: Option<usize>,
+    endian: Option<Endian>,
 }
 
 fn parse_attrs(attrs: &[syn::Attribute]) -> syn::Result<Attributes> {
-    let attributes = attrs
-        .iter()
-        .filter(|attr| attr.path.is_ident("bits"))
-        .fold(
-            Ok(Attributes { bits: None }),
-            |acc: syn::Result<Attributes>, attr| {
-                let mut acc = acc?;
-                if acc.bits.is_some() {
+    let mut attributes = Attributes { bits: None, endian: None };
+
+    for attr in attrs {
+        if attr.path.is_ident("bits") {
+            if attributes.bits.is_some() {
+                return Err(format_err_spanned!(
+                    attr,
+                    "More than one 'bits' attributes is not permitted",
+                ))
+            }
+
+            let meta = attr.parse_meta()?;
+            attributes.bits = match meta {
+                syn::Meta::NameValue(syn::MetaNameValue {
+                    lit: syn::Lit::Int(lit),
+                    ..
+                }) => Some(lit.base10_parse::<usize>()?),
+                _ => {
                     return Err(format_err_spanned!(
                         attr,
-                        "More than one 'bits' attributes is not permitted",
+                        "could not parse 'bits' attribute",
                     ))
                 }
-                let meta = attr.parse_meta()?;
-                acc.bits = match meta {
-                    syn::Meta::NameValue(syn::MetaNameValue {
-                        lit: syn::Lit::Int(lit),
-                        ..
-                    }) => Some(lit.base10_parse::<usize>()?),
-                    _ => {
-                        return Err(format_err_spanned!(
-                            attr,
-                            "could not parse 'bits' attribute",
-                        ))
-                    }
-                };
-                Ok(acc)
-            },
-        )?;
+            };
+        }
+
+        if attr.path.is_ident("endian") {
+            if attributes.endian.is_some() {
+                return Err(format_err_spanned!(
+                    attr,
+                    "More than one 'endian' attributes is not permitted",
+                ))
+            }
+
+            let meta = attr.parse_meta()?;
+            attributes.endian = match meta {
+                syn::Meta::NameValue(syn::MetaNameValue {
+                    lit: syn::Lit::Str(lit),
+                    ..
+                }) => Some(lit.value().try_into()?),
+                _ => {
+                    return Err(format_err_spanned!(
+                        attr,
+                        "could not parse 'endian' attribute",
+                    ))
+                }
+            };
+        }
+    }
+
     Ok(attributes)
 }
 
@@ -103,6 +128,11 @@ fn generate_enum(input: syn::ItemEnum) -> syn::Result<TokenStream2> {
         }
     };
 
+    let endian = match attributes.endian {
+        Some(endian) => endian,
+        None => Endian::Native
+    };
+
     let variants = input
         .variants
         .iter()
@@ -131,21 +161,42 @@ fn generate_enum(input: syn::ItemEnum) -> syn::Result<TokenStream2> {
         )
     });
 
+    let endian_to = match endian {
+        Endian::Big => quote!{ (input as Self::Bytes).to_be() },
+        Endian::Little => quote!{ (input as Self::Bytes).to_le() },
+        _ => quote!{ (input as Self::Bytes)},
+    };
+
+
+    let endian_from = match endian {
+        Endian::Big => quote!{ Self::Bytes::from_be(bytes) },
+        Endian::Little => quote!{ Self::Bytes::from_le(bytes) },
+        _ => quote!{ bytes },
+    };
+
     Ok(quote_spanned!(span=>
         #( #check_discriminants )*
 
         impl ::modular_bitfield::Specifier for #enum_ident {
             const BITS: usize = #bits;
+            const STRUCT: bool = false;
             type Bytes = <[(); #bits] as ::modular_bitfield::private::SpecifierBytes>::Bytes;
             type InOut = Self;
 
             #[inline]
             fn into_bytes(input: Self::InOut) -> ::core::result::Result<Self::Bytes, ::modular_bitfield::error::OutOfBounds> {
                 ::core::result::Result::Ok(input as Self::Bytes)
+
+                // MSB: might not be needed to do conversion here
+                // let bytes = #endian_to;
+                // return ::core::result::Result::Ok(bytes);
             }
 
             #[inline]
             fn from_bytes(bytes: Self::Bytes) -> ::core::result::Result<Self::InOut, ::modular_bitfield::error::InvalidBitPattern<Self::Bytes>> {
+                // MSB: might not be needed to do conversion here
+                //let bytes = #endian_from;
+
                 match bytes {
                     #( #from_bytes_arms ),*
                     invalid_bytes => {

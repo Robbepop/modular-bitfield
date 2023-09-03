@@ -453,6 +453,7 @@ pub mod prelude {
 pub trait Specifier {
     /// The amount of bits used by the specifier.
     const BITS: usize;
+    const STRUCT: bool;
 
     /// The base type of the specifier.
     ///

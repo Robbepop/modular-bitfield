@@ -8,6 +8,7 @@ use crate::{
 
 impl Specifier for bool {
     const BITS: usize = 1;
+    const STRUCT: bool = false;
     type Bytes = u8;
     type InOut = bool;
 
@@ -33,6 +34,7 @@ macro_rules! impl_specifier_for_primitive {
         $(
             impl Specifier for $prim {
                 const BITS: usize = $bits;
+                const STRUCT: bool = false;
                 type Bytes = $prim;
                 type InOut = $prim;
 

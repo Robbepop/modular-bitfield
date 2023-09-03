@@ -11,8 +11,10 @@ pub mod static_assertions {
 pub use self::{
     array_bytes_conv::ArrayBytesConversion,
     proc::{
-        read_specifier,
-        write_specifier,
+        read_specifier_be,
+        write_specifier_be,
+        read_specifier_le,
+        write_specifier_le,
     },
     push_pop::{
         PopBuffer,

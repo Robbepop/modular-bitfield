@@ -4,9 +4,12 @@ use super::field_config::FieldConfig;
 use crate::errors::CombineError;
 use core::any::TypeId;
 use proc_macro2::Span;
-use std::collections::{
-    hash_map::Entry,
-    HashMap,
+use std::{
+    collections::{
+        hash_map::Entry,
+        HashMap,
+    },
+    convert::TryFrom, fmt,
 };
 use syn::parse::Result;
 
@@ -16,6 +19,7 @@ pub struct Config {
     pub bytes: Option<ConfigValue<usize>>,
     pub bits: Option<ConfigValue<usize>>,
     pub filled: Option<ConfigValue<bool>>,
+    pub endian: Option<ConfigValue<Endian>>,
     pub repr: Option<ConfigValue<ReprKind>>,
     pub derive_debug: Option<ConfigValue<()>>,
     pub derive_specifier: Option<ConfigValue<()>>,
@@ -54,6 +58,42 @@ impl ReprKind {
 impl core::fmt::Debug for ReprKind {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
         write!(f, "#[repr(u{})]", self.bits())
+    }
+}
+
+/// Types of endiannes for a `#[bitfield]` struct.
+#[derive(Debug, Copy, Clone)]
+pub enum Endian {
+    Little,
+    Big,
+    Native,
+}
+
+impl TryFrom<String> for Endian {
+    type Error = ::syn::Error;
+
+    fn try_from(value: String) -> std::result::Result<Self, Self::Error> {
+        match value.as_str() {
+            "big" => Ok(Endian::Big),
+            "little" => Ok(Endian::Little),
+            "native" => Ok(Endian::Native),
+            invalid => {
+                Err(format_err!(
+                invalid,
+                "encountered invalid value argument for #[bitfield] `endian` parameter",
+                ))
+            }
+        }
+    }
+}
+
+impl fmt::Display for Endian {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", match self {
+            Endian::Big => "big",
+            Endian::Little => "little",
+            Endian::Native => "native"
+        })
     }
 }
 
@@ -230,6 +270,21 @@ impl Config {
                 return Err(Self::raise_duplicate_error("filled", span, previous))
             }
             None => self.filled = Some(ConfigValue::new(value, span)),
+        }
+        Ok(())
+    }
+
+    /// Sets the `endian: str` #[bitfield] parameter to the given value.
+    ///
+    /// # Errors
+    ///
+    /// If the specifier has already been set.
+    pub fn endian(&mut self, value: Endian, span: Span) -> Result<()> {
+        match &self.endian {
+            Some(previous) => {
+                return Err(Self::raise_duplicate_error("endian", span, previous))
+            }
+            None => self.endian = Some(ConfigValue::new(value, span)),
         }
         Ok(())
     }
