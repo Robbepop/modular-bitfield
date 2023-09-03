@@ -39,38 +39,60 @@ fn generate_or_error(input: TokenStream2) -> syn::Result<TokenStream2> {
 }
 struct Attributes {
     bits: Option<usize>,
+    endian: Option<usize>, // TODO switch to enum
 }
 
 fn parse_attrs(attrs: &[syn::Attribute]) -> syn::Result<Attributes> {
-    let attributes = attrs
-        .iter()
-        .filter(|attr| attr.path.is_ident("bits"))
-        .fold(
-            Ok(Attributes { bits: None }),
-            |acc: syn::Result<Attributes>, attr| {
-                let mut acc = acc?;
-                if acc.bits.is_some() {
+    let mut attributes = Attributes { bits: None, endian: None };
+
+    for attr in attrs {
+        if attr.path.is_ident("bits") {
+            if attributes.bits.is_some() {
+                return Err(format_err_spanned!(
+                    attr,
+                    "More than one 'bits' attributes is not permitted",
+                ))
+            }
+
+            let meta = attr.parse_meta()?;
+            attributes.bits = match meta {
+                syn::Meta::NameValue(syn::MetaNameValue {
+                    lit: syn::Lit::Int(lit),
+                    ..
+                }) => Some(lit.base10_parse::<usize>()?),
+                _ => {
                     return Err(format_err_spanned!(
                         attr,
-                        "More than one 'bits' attributes is not permitted",
+                        "could not parse 'bits' attribute",
                     ))
                 }
-                let meta = attr.parse_meta()?;
-                acc.bits = match meta {
-                    syn::Meta::NameValue(syn::MetaNameValue {
-                        lit: syn::Lit::Int(lit),
-                        ..
-                    }) => Some(lit.base10_parse::<usize>()?),
-                    _ => {
-                        return Err(format_err_spanned!(
-                            attr,
-                            "could not parse 'bits' attribute",
-                        ))
-                    }
-                };
-                Ok(acc)
-            },
-        )?;
+            };
+        }
+
+        if attr.path.is_ident("endian") {
+            if attributes.endian.is_some() {
+                return Err(format_err_spanned!(
+                    attr,
+                    "More than one 'endian' attributes is not permitted",
+                ))
+            }
+
+            let meta = attr.parse_meta()?;
+            attributes.endian = match meta {
+                syn::Meta::NameValue(syn::MetaNameValue {
+                    lit: syn::Lit::Int(lit),
+                    ..
+                }) => Some(lit.base10_parse::<usize>()?),
+                _ => {
+                    return Err(format_err_spanned!(
+                        attr,
+                        "could not parse 'endian' attribute",
+                    ))
+                }
+            };
+        }
+    }
+
     Ok(attributes)
 }
 
@@ -102,6 +124,13 @@ fn generate_enum(input: syn::ItemEnum) -> syn::Result<TokenStream2> {
             }
         }
     };
+
+    let endian = match attributes.endian {
+        Some(endian) => endian, // 1 big, 2 little
+        None => 0, // Default to host endian
+    };
+
+    println!("{} endian {}", enum_ident, endian);
 
     let variants = input
         .variants
@@ -141,11 +170,22 @@ fn generate_enum(input: syn::ItemEnum) -> syn::Result<TokenStream2> {
 
             #[inline]
             fn into_bytes(input: Self::InOut) -> ::core::result::Result<Self::Bytes, ::modular_bitfield::error::OutOfBounds> {
-                ::core::result::Result::Ok(input as Self::Bytes)
+                let bytes = match #endian {
+                    1 => (input as Self::Bytes).to_be(),
+                    2 => (input as Self::Bytes).to_le(),
+                    _ => input as Self::Bytes,
+                };
+                return ::core::result::Result::Ok(bytes);
             }
 
             #[inline]
             fn from_bytes(bytes: Self::Bytes) -> ::core::result::Result<Self::InOut, ::modular_bitfield::error::InvalidBitPattern<Self::Bytes>> {
+                let bytes = match #endian {
+                    1 => Self::Bytes::from_be(bytes),
+                    2 => Self::Bytes::from_le(bytes),
+                    _ => bytes,
+                };
+
                 match bytes {
                     #( #from_bytes_arms ),*
                     invalid_bytes => {

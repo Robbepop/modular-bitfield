@@ -432,7 +432,7 @@ pub fn bitfield(args: TokenStream, input: TokenStream) -> TokenStream {
 /// assert_eq!(slot.to(), 15);
 /// assert!(!slot.expired());
 /// ```
-#[proc_macro_derive(BitfieldSpecifier, attributes(bits))]
+#[proc_macro_derive(BitfieldSpecifier, attributes(bits, endian))]
 pub fn bitfield_specifier(input: TokenStream) -> TokenStream {
     bitfield_specifier::generate(input.into()).into()
 }
