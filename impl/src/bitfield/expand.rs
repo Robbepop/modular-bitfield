@@ -521,11 +521,11 @@ impl BitfieldStruct {
             struct_ident, name
         );
 
-        let getter_docs = format!("Returns the value of {}.", name);
+        let getter_docs = format!("Returns the value of `{}`.", name);
         let checked_getter_docs = format!(
-            "Returns the value of {}.\n\n\
+            "Returns the value of `{}`.\n\n\
              # Errors\n\n\
-             If the returned value contains an invalid bit pattern for {}.",
+             If the returned value contains an invalid bit pattern for `{}`.",
             name, name,
         );
         let getters = quote_spanned!(span=>
@@ -585,29 +585,29 @@ impl BitfieldStruct {
         let set_assert_msg =
             format!("value out of bounds for field {}.{}", struct_ident, name);
         let setter_docs = format!(
-            "Sets the value of {} to the given value.\n\n\
+            "Sets the value of `{}` to the given value.\n\n\
              # Panics\n\n\
-             If the given value is out of bounds for {}.",
+             If the given value is out of bounds for `{}`.",
             name, name,
         );
         let checked_setter_docs = format!(
-            "Sets the value of {} to the given value.\n\n\
+            "Sets the value of `{}` to the given value.\n\n\
              # Errors\n\n\
-             If the given value is out of bounds for {}.",
+             If the given value is out of bounds for `{}`.",
             name, name,
         );
         let with_docs = format!(
-            "Returns a copy of the bitfield with the value of {} \
+            "Returns a copy of the bitfield with the value of `{}` \
              set to the given value.\n\n\
              # Panics\n\n\
-             If the given value is out of bounds for {}.",
+             If the given value is out of bounds for `{}`.",
             name, name,
         );
         let checked_with_docs = format!(
-            "Returns a copy of the bitfield with the value of {} \
+            "Returns a copy of the bitfield with the value of `{}` \
              set to the given value.\n\n\
              # Errors\n\n\
-             If the given value is out of bounds for {}.",
+             If the given value is out of bounds for `{}`.",
             name, name,
         );
         let setters = quote_spanned!(span=>
