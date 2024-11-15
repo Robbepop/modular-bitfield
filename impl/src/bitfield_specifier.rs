@@ -2,6 +2,8 @@ use proc_macro2::TokenStream as TokenStream2;
 use quote::quote_spanned;
 use syn::spanned::Spanned as _;
 
+use crate::adt_specifier;
+
 pub fn generate(input: TokenStream2) -> TokenStream2 {
     match generate_or_error(input) {
         Ok(output) => output,
@@ -12,29 +14,23 @@ pub fn generate(input: TokenStream2) -> TokenStream2 {
 fn generate_or_error(input: TokenStream2) -> syn::Result<TokenStream2> {
     let input = syn::parse::<syn::DeriveInput>(input.into())?;
     match input.data {
-        syn::Data::Enum(data_enum) => {
-            generate_enum(syn::ItemEnum {
-                attrs: input.attrs,
-                vis: input.vis,
-                enum_token: data_enum.enum_token,
-                ident: input.ident,
-                generics: input.generics,
-                brace_token: data_enum.brace_token,
-                variants: data_enum.variants,
-            })
-        }
-        syn::Data::Struct(_) => {
-            Err(format_err!(
-                input,
-                "structs are not supported as bitfield specifiers",
-            ))
-        }
-        syn::Data::Union(_) => {
-            Err(format_err!(
-                input,
-                "unions are not supported as bitfield specifiers",
-            ))
-        }
+        syn::Data::Enum(data_enum) => generate_enum(syn::ItemEnum {
+            attrs: input.attrs,
+            vis: input.vis,
+            enum_token: data_enum.enum_token,
+            ident: input.ident,
+            generics: input.generics,
+            brace_token: data_enum.brace_token,
+            variants: data_enum.variants,
+        }),
+        syn::Data::Struct(_) => Err(format_err!(
+            input,
+            "structs are not supported as bitfield specifiers",
+        )),
+        syn::Data::Union(_) => Err(format_err!(
+            input,
+            "unions are not supported as bitfield specifiers",
+        )),
     }
 }
 struct Attributes {
@@ -53,7 +49,7 @@ fn parse_attrs(attrs: &[syn::Attribute]) -> syn::Result<Attributes> {
                     return Err(format_err_spanned!(
                         attr,
                         "More than one 'bits' attributes is not permitted",
-                    ))
+                    ));
                 }
                 let meta = attr.parse_meta()?;
                 acc.bits = match meta {
@@ -74,10 +70,23 @@ fn parse_attrs(attrs: &[syn::Attribute]) -> syn::Result<Attributes> {
     Ok(attributes)
 }
 
-fn generate_enum(input: syn::ItemEnum) -> syn::Result<TokenStream2> {
+pub(super) fn generate_enum(input: syn::ItemEnum) -> syn::Result<TokenStream2> {
     let span = input.span();
     let attributes = parse_attrs(&input.attrs)?;
     let enum_ident = &input.ident;
+
+    let variants = input
+        .variants
+        .iter()
+        .filter_map(|variant| match &variant.fields {
+            syn::Fields::Unit => Some(&variant.ident),
+            _ => None,
+        })
+        .collect::<Vec<_>>();
+
+    if variants.len() < input.variants.len() {
+        return adt_specifier::generate_adt(input);
+    }
 
     let bits = match attributes.bits {
         Some(bits) => bits,
@@ -88,7 +97,7 @@ fn generate_enum(input: syn::ItemEnum) -> syn::Result<TokenStream2> {
                     span,
                     "BitfieldSpecifier expected a number of variants which is a power of 2, specify #[bits = {}] if that was your intent",
                     count_variants.next_power_of_two().trailing_zeros(),
-                ))
+                ));
             }
             // We can take `trailing_zeros` returns type as the required amount of bits.
             match count_variants.checked_next_power_of_two() {
@@ -102,17 +111,6 @@ fn generate_enum(input: syn::ItemEnum) -> syn::Result<TokenStream2> {
             }
         }
     };
-
-    let variants = input
-        .variants
-        .iter()
-        .filter_map(|variant| {
-            match &variant.fields {
-                syn::Fields::Unit => Some(&variant.ident),
-                _ => None,
-            }
-        })
-        .collect::<Vec<_>>();
 
     let check_discriminants = variants.iter().map(|ident| {
         let span = ident.span();
