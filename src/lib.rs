@@ -59,7 +59,7 @@
 //! #### Example: Primitive Types
 //!
 //! Any type that implements the `Specifier` trait can be used as a bitfield field.
-//! Besides the already mentioned `B1`, .. `B128` also the `bool`, `u8, `u16, `u32,
+//! Besides the already mentioned `B1`, .. `B128` also the `bool`, `u8`, `u16`, `u32`,
 //! `u64` or `u128` primitive types can be used from prelude.
 //!
 //! We can use this knowledge to encode our `is_alive` as `bool` type instead of `B1`:
