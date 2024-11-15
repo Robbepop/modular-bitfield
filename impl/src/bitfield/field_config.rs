@@ -1,4 +1,4 @@
-use super::config::ConfigValue;
+use super::{config::ConfigValue, Endian};
 use crate::errors::CombineError;
 use proc_macro2::Span;
 
@@ -10,6 +10,8 @@ pub struct FieldConfig {
     pub bits: Option<ConfigValue<usize>>,
     /// An encountered `#[skip]` attribute on a field.
     pub skip: Option<ConfigValue<SkipWhich>>,
+    /// An encountered `#[endian]` attribute on a field.
+    pub endian: Option<ConfigValue<Endian>>,
 }
 
 /// Controls which parts of the code generation to skip.
@@ -154,5 +156,29 @@ impl FieldConfig {
             .map(|config| config.value)
             .map(SkipWhich::skip_getters)
             .unwrap_or(false)
+    }
+
+    /// Sets the `#[endian]` if found for a `#[bitfield]` annotated field.
+    ///
+    /// # Errors
+    ///
+    /// If previously already registered a `#[endian = Endian]`.
+    pub fn endian(&mut self, endian: Endian, span: Span) -> Result<(), syn::Error> {
+        match self.endian {
+            Some(ref previous) => {
+                return Err(format_err!(
+                    span,
+                    "encountered duplicate `#[endian = N]` attribute for field"
+                )
+                .into_combine(format_err!(previous.span, "duplicate `#[bits = M]` here")))
+            }
+            None => {
+                self.endian = Some(ConfigValue {
+                    value: endian,
+                    span,
+                })
+            }
+        }
+        Ok(())
     }
 }

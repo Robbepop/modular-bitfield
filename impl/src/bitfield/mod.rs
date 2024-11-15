@@ -16,6 +16,8 @@ use syn::{
     parse::Result,
 };
 
+pub use config::Endian;
+
 /// Analyzes the given token stream for `#[bitfield]` properties and expands code if valid.
 pub fn analyse_and_expand(args: TokenStream2, input: TokenStream2) -> TokenStream2 {
     match analyse_and_expand_or_error(args, input) {
