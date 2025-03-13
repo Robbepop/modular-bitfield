@@ -69,6 +69,12 @@ impl BitfieldStruct {
             impl ::modular_bitfield::Specifier for #ident {
                 const BITS: usize = #bits;
 
+                // `#bits` may contain 'unused' braces because the same
+                // generator is used at multiple different sites and some of
+                // them require those 'unused' braces for the emitted code to
+                // be well-formed. It is easier to suppress the lint here than
+                // it is to modify the generator to conditionally avoid adding
+                // the extra braces.
                 #[allow(unused_braces)]
                 type Bytes = <[(); if { #bits } > 128 { 128 } else { #bits }] as ::modular_bitfield::private::SpecifierBytes>::Bytes;
                 type InOut = Self;
@@ -377,6 +383,13 @@ impl BitfieldStruct {
                 ReprKind::U128 => quote! { IsU128Compatible },
             };
             quote_spanned!(span=>
+                // `#actual_bits` may contain 'unused' braces because the same
+                // generator is used at multiple different sites and some of
+                // them require those 'unused' braces for the emitted code to
+                // be well-formed. It is easier to suppress the lint here than
+                // it is to modify the generator to conditionally avoid adding
+                // the extra braces.
+                #[allow(unused_braces)]
                 impl ::core::convert::From<#prim> for #ident
                 where
                     [(); #actual_bits]: ::modular_bitfield::private::#trait_check_ident,
@@ -387,6 +400,7 @@ impl BitfieldStruct {
                     }
                 }
 
+                #[allow(unused_braces)]
                 impl ::core::convert::From<#ident> for #prim
                 where
                     [(); #actual_bits]: ::modular_bitfield::private::#trait_check_ident,
