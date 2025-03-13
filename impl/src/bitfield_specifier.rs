@@ -44,7 +44,7 @@ struct Attributes {
 fn parse_attrs(attrs: &[syn::Attribute]) -> syn::Result<Attributes> {
     let attributes = attrs
         .iter()
-        .filter(|attr| attr.path.is_ident("bits"))
+        .filter(|attr| attr.path().is_ident("bits"))
         .fold(
             Ok(Attributes { bits: None }),
             |acc: syn::Result<Attributes>, attr| {
@@ -55,18 +55,18 @@ fn parse_attrs(attrs: &[syn::Attribute]) -> syn::Result<Attributes> {
                         "More than one 'bits' attributes is not permitted",
                     ))
                 }
-                let meta = attr.parse_meta()?;
-                acc.bits = match meta {
-                    syn::Meta::NameValue(syn::MetaNameValue {
-                        lit: syn::Lit::Int(lit),
-                        ..
-                    }) => Some(lit.base10_parse::<usize>()?),
-                    _ => {
-                        return Err(format_err_spanned!(
-                            attr,
-                            "could not parse 'bits' attribute",
-                        ))
-                    }
+                let meta = attr.meta.require_name_value()?;
+                acc.bits = if let syn::Expr::Lit(syn::ExprLit {
+                    lit: syn::Lit::Int(lit),
+                    ..
+                }) = &meta.value
+                {
+                    Some(lit.base10_parse::<usize>()?)
+                } else {
+                    return Err(format_err_spanned!(
+                        attr,
+                        "could not parse 'bits' attribute",
+                    ));
                 };
                 Ok(acc)
             },
