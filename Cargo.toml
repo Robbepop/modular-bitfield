@@ -16,8 +16,8 @@ autotests = false
 
 [dev-dependencies]
 trybuild = "1.0"
-criterion = "0.3"
-bitfield = "0.13"
+criterion = "0.5"
+bitfield = "0.19"
 
 [[test]]
 name = "tests"
