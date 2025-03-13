@@ -45,10 +45,9 @@ fn parse_attrs(attrs: &[syn::Attribute]) -> syn::Result<Attributes> {
     let attributes = attrs
         .iter()
         .filter(|attr| attr.path().is_ident("bits"))
-        .fold(
-            Ok(Attributes { bits: None }),
-            |acc: syn::Result<Attributes>, attr| {
-                let mut acc = acc?;
+        .try_fold(
+            Attributes { bits: None },
+            |mut acc, attr| {
                 if acc.bits.is_some() {
                     return Err(format_err_spanned!(
                         attr,

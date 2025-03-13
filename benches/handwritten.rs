@@ -53,6 +53,7 @@ pub struct Handwritten {
 
 impl Handwritten {
     /// Creates a new hand-written struct initialized with all zeros.
+    #[allow(clippy::new_without_default)]
     pub fn new() -> Self {
         Self { data: [0x00; 8] }
     }
@@ -86,7 +87,7 @@ impl Handwritten {
         let mut res = 0;
         res |= (self.data[1] >> 7) as u16;
         res |= (self.data[2] as u16) << 1;
-        res |= (((self.data[3] & 0b0000_1111) as u16) << 9) as u16;
+        res |= ((self.data[3] & 0b0000_1111) as u16) << 9;
         res
     }
 

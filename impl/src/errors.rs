@@ -13,7 +13,7 @@
 /// On stable Rust this might yield higher quality error span information to the user
 /// than [`format_err`].
 /// - Source:
-/// [`syn::Error::new_spanned`](https://docs.rs/syn/1.0.33/syn/struct.Error.html#method.new_spanned)
+///   [`syn::Error::new_spanned`](https://docs.rs/syn/1.0.33/syn/struct.Error.html#method.new_spanned)
 /// - Tracking issue: [`#54725`](https://github.com/rust-lang/rust/issues/54725)
 macro_rules! format_err_spanned {
     ( $tokens:expr, $($msg:tt)* ) => {{
@@ -38,7 +38,7 @@ macro_rules! format_err_spanned {
 /// On stable Rust this might yield worse error span information to the user
 /// than [`format_err_spanned`].
 /// - Source:
-/// [`syn::Error::new_spanned`](https://docs.rs/syn/1.0.33/syn/struct.Error.html#method.new_spanned)
+///   [`syn::Error::new_spanned`](https://docs.rs/syn/1.0.33/syn/struct.Error.html#method.new_spanned)
 /// - Tracking issue: [`#54725`](https://github.com/rust-lang/rust/issues/54725)
 macro_rules! format_err {
     ( $spanned:expr, $($msg:tt)* ) => {{

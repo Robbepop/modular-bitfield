@@ -334,6 +334,7 @@ impl BitfieldStruct {
             {
                 /// Returns an instance with zero initialized data.
                 #[allow(clippy::identity_op)]
+                #[allow(clippy::new_without_default)]
                 pub const fn new() -> Self {
                     Self {
                         bytes: [0u8; #next_divisible_by_8 / 8usize],

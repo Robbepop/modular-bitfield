@@ -58,7 +58,6 @@ impl BitfieldStruct {
             .fields
             .iter()
             .enumerate()
-            .map(|(n, field)| (n, field))
     }
 
     /// Returns an iterator over the names of the fields.
