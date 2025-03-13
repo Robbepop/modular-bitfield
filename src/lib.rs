@@ -421,23 +421,12 @@ pub mod error;
 #[doc(hidden)]
 pub mod private;
 
-use self::error::{
-    InvalidBitPattern,
-    OutOfBounds,
-};
-pub use modular_bitfield_impl::{
-    bitfield,
-    BitfieldSpecifier,
-};
+use self::error::{InvalidBitPattern, OutOfBounds};
+pub use modular_bitfield_impl::{bitfield, BitfieldSpecifier};
 
 /// The prelude: `use modular_bitfield::prelude::*;`
 pub mod prelude {
-    pub use super::{
-        bitfield,
-        specifiers::*,
-        BitfieldSpecifier,
-        Specifier,
-    };
+    pub use super::{bitfield, specifiers::*, BitfieldSpecifier, Specifier};
 }
 
 /// Trait implemented by all bitfield specifiers.
@@ -485,9 +474,7 @@ pub trait Specifier {
     /// This can happen for example for enums that have a number of variants which
     /// is not equal to the power of two and therefore yields some invalid bit
     /// patterns.
-    fn from_bytes(
-        bytes: Self::Bytes,
-    ) -> Result<Self::InOut, InvalidBitPattern<Self::Bytes>>;
+    fn from_bytes(bytes: Self::Bytes) -> Result<Self::InOut, InvalidBitPattern<Self::Bytes>>;
 }
 
 /// The default set of predefined specifiers.

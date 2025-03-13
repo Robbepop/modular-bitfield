@@ -8,12 +8,7 @@ mod handwritten;
 mod utils;
 
 use bitfield::bitfield as bitfield_crate;
-use criterion::{
-    black_box,
-    criterion_group,
-    criterion_main,
-    Criterion,
-};
+use criterion::{black_box, criterion_group, criterion_main, Criterion};
 use modular_bitfield::prelude::*;
 use utils::repeat;
 

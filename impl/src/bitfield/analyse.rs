@@ -1,23 +1,13 @@
 use super::{
-    config::{
-        Config,
-        ReprKind,
-    },
-    field_config::{
-        FieldConfig,
-        SkipWhich,
-    },
+    config::{Config, ReprKind},
+    field_config::{FieldConfig, SkipWhich},
     BitfieldStruct,
 };
 use crate::errors::CombineError;
 use core::convert::TryFrom;
 use quote::quote;
 use std::collections::HashMap;
-use syn::{
-    self,
-    parse::Result,
-    spanned::Spanned as _,
-};
+use syn::{self, parse::Result, spanned::Spanned as _};
 
 impl TryFrom<(&mut Config, syn::ItemStruct)> for BitfieldStruct {
     type Error = syn::Error;
@@ -39,7 +29,7 @@ impl BitfieldStruct {
             return Err(format_err_spanned!(
                 unit,
                 "encountered invalid bitfield struct without fields"
-            ))
+            ));
         }
         Ok(())
     }
@@ -50,7 +40,7 @@ impl BitfieldStruct {
             return Err(format_err_spanned!(
                 item_struct,
                 "encountered invalid generic bitfield struct"
-            ))
+            ));
         }
         Ok(())
     }
@@ -104,10 +94,7 @@ impl BitfieldStruct {
     }
 
     /// Extracts the `#[derive(Debug)]` annotations from the given `#[bitfield]` struct.
-    fn extract_derive_debug_attribute(
-        attr: &syn::Attribute,
-        config: &mut Config,
-    ) -> Result<()> {
+    fn extract_derive_debug_attribute(attr: &syn::Attribute, config: &mut Config) -> Result<()> {
         let list = attr.meta.require_list()?;
         let mut retained_derives = vec![];
         attr.parse_nested_meta(|meta| {
@@ -144,10 +131,7 @@ impl BitfieldStruct {
     }
 
     /// Analyses and extracts the `#[repr(uN)]` or other annotations from the given struct.
-    fn extract_attributes(
-        attributes: &[syn::Attribute],
-        config: &mut Config,
-    ) -> Result<()> {
+    fn extract_attributes(attributes: &[syn::Attribute], config: &mut Config) -> Result<()> {
         for attr in attributes {
             if attr.path().is_ident("repr") {
                 Self::extract_repr_attribute(attr, config)?;
@@ -161,10 +145,7 @@ impl BitfieldStruct {
     }
 
     /// Analyses and extracts the configuration for all bitfield fields.
-    fn analyse_config_for_fields(
-        item_struct: &syn::ItemStruct,
-        config: &mut Config,
-    ) -> Result<()> {
+    fn analyse_config_for_fields(item_struct: &syn::ItemStruct, config: &mut Config) -> Result<()> {
         for (index, field) in Self::fields(item_struct) {
             let span = field.span();
             let field_config = Self::extract_field_config(field)?;
@@ -208,30 +189,28 @@ impl BitfieldStruct {
                                 if let Some(previous) =
                                     which.insert(SkipWhich::Getters, path.span())
                                 {
-                                    return Err(meta.error(
-                                        "encountered duplicate #[skip(getters)]"
-                                    )
-                                    .into_combine(format_err!(
-                                        previous,
-                                        "previous found here"
-                                    )))
+                                    return Err(meta
+                                        .error("encountered duplicate #[skip(getters)]")
+                                        .into_combine(format_err!(
+                                            previous,
+                                            "previous found here"
+                                        )));
                                 }
                             } else if path.is_ident("setters") {
                                 if let Some(previous) =
                                     which.insert(SkipWhich::Setters, path.span())
                                 {
-                                    return Err(meta.error(
-                                        "encountered duplicate #[skip(setters)]"
-                                    )
-                                    .into_combine(format_err!(
-                                        previous,
-                                        "previous found here"
-                                    )))
+                                    return Err(meta
+                                        .error("encountered duplicate #[skip(setters)]")
+                                        .into_combine(format_err!(
+                                            previous,
+                                            "previous found here"
+                                        )));
                                 }
                             } else {
                                 return Err(meta.error(
-                                    "encountered unknown or unsupported #[skip(..)] specifier"
-                                ))
+                                    "encountered unknown or unsupported #[skip(..)] specifier",
+                                ));
                             }
                             Ok(())
                         })?;

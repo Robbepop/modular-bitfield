@@ -1,23 +1,11 @@
 use super::{
-    config::{
-        Config,
-        ReprKind,
-    },
+    config::{Config, ReprKind},
     field_info::FieldInfo,
     BitfieldStruct,
 };
 use proc_macro2::TokenStream as TokenStream2;
-use quote::{
-    format_ident,
-    quote,
-    quote_spanned,
-};
-use syn::{
-    self,
-    punctuated::Punctuated,
-    spanned::Spanned as _,
-    Token,
-};
+use quote::{format_ident, quote, quote_spanned};
+use syn::{self, punctuated::Punctuated, spanned::Spanned as _, Token};
 
 impl BitfieldStruct {
     /// Expands the given `#[bitfield]` struct into an actual bitfield definition.
@@ -122,7 +110,7 @@ impl BitfieldStruct {
                 config,
             } = &info;
             if config.skip_getters() {
-                return None
+                return None;
             }
             let field_span = field.span();
             let field_name = info.name();
@@ -511,7 +499,7 @@ impl BitfieldStruct {
             config,
         } = &info;
         if config.skip_getters() {
-            return None
+            return None;
         }
         let struct_ident = &self.item_struct.ident;
         let span = field.span();
@@ -581,7 +569,7 @@ impl BitfieldStruct {
             config,
         } = &info;
         if config.skip_setters() {
-            return None
+            return None;
         }
         let struct_ident = &self.item_struct.ident;
         let span = field.span();
@@ -597,8 +585,7 @@ impl BitfieldStruct {
         let with_ident = format_ident!("with_{}", ident);
         let with_checked_ident = format_ident!("with_{}_checked", ident);
 
-        let set_assert_msg =
-            format!("value out of bounds for field {}.{}", struct_ident, name);
+        let set_assert_msg = format!("value out of bounds for field {}.{}", struct_ident, name);
         let setter_docs = format!(
             "Sets the value of `{}` to the given value.\n\n\
              # Panics\n\n\
@@ -716,9 +703,9 @@ impl BitfieldStruct {
         let bits_checks = self
             .field_infos(config)
             .map(|field_info| self.expand_bits_checks_for_field(field_info));
-        let setters_and_getters = self.field_infos(config).map(|field_info| {
-            self.expand_getters_and_setters_for_field(&mut offset, field_info)
-        });
+        let setters_and_getters = self
+            .field_infos(config)
+            .map(|field_info| self.expand_getters_and_setters_for_field(&mut offset, field_info));
         quote_spanned!(span=>
             const _: () = {
                 #( #bits_checks )*

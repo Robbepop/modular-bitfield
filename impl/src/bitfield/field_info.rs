@@ -1,8 +1,4 @@
-use super::{
-    field_config::FieldConfig,
-    BitfieldStruct,
-    Config,
-};
+use super::{field_config::FieldConfig, BitfieldStruct, Config};
 
 /// Compactly stores all shared and useful information about a single `#[bitfield]` field.
 pub struct FieldInfo<'a> {
@@ -51,13 +47,8 @@ impl BitfieldStruct {
     /// Returns an iterator over the names of the fields.
     ///
     /// If a field has no name it is replaced by its field number.
-    pub fn fields(
-        item_struct: &syn::ItemStruct,
-    ) -> impl Iterator<Item = (usize, &syn::Field)> {
-        item_struct
-            .fields
-            .iter()
-            .enumerate()
+    pub fn fields(item_struct: &syn::ItemStruct) -> impl Iterator<Item = (usize, &syn::Field)> {
+        item_struct.fields.iter().enumerate()
     }
 
     /// Returns an iterator over the names of the fields.

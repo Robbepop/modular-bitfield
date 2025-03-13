@@ -1,8 +1,4 @@
-use crate::private::{
-    checks::private::Sealed,
-    PopBits,
-    PushBits,
-};
+use crate::private::{checks::private::Sealed, PopBits, PushBits};
 
 /// A bit buffer that allows to pop bits from it.
 pub struct PopBuffer<T> {

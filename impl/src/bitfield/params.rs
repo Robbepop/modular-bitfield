@@ -1,9 +1,6 @@
 use super::config::Config;
 use proc_macro2::Span;
-use syn::{
-    parse::Result,
-    spanned::Spanned,
-};
+use syn::{parse::Result, spanned::Spanned};
 
 /// Raises an unsupported argument compile time error.
 fn unsupported_argument<T>(arg: T) -> syn::Error
@@ -33,8 +30,7 @@ pub struct ParamArgs {
 
 impl syn::parse::Parse for ParamArgs {
     fn parse(input: syn::parse::ParseStream) -> Result<Self> {
-        let punctuated =
-            <syn::punctuated::Punctuated<_, syn::Token![,]>>::parse_terminated(input)?;
+        let punctuated = <syn::punctuated::Punctuated<_, syn::Token![,]>>::parse_terminated(input)?;
         Ok(Self {
             args: punctuated.into_iter().collect(),
         })
@@ -52,11 +48,7 @@ impl IntoIterator for ParamArgs {
 
 impl Config {
     /// Feeds a parameter that takes an integer value to the `#[bitfield]` configuration.
-    fn feed_int_param<F>(
-        name_value: syn::MetaNameValue,
-        name: &str,
-        on_success: F,
-    ) -> Result<()>
+    fn feed_int_param<F>(name_value: syn::MetaNameValue, name: &str, on_success: F) -> Result<()>
     where
         F: FnOnce(usize, Span) -> Result<()>,
     {
@@ -110,9 +102,9 @@ impl Config {
             }
             invalid => {
                 return Err(format_err!(
-                invalid,
-                "encountered invalid value argument for #[bitfield] `filled` parameter",
-            ))
+                    invalid,
+                    "encountered invalid value argument for #[bitfield] `filled` parameter",
+                ))
             }
         }
         Ok(())

@@ -1,10 +1,5 @@
 use crate::{
-    private::{
-        PopBits,
-        PopBuffer,
-        PushBits,
-        PushBuffer,
-    },
+    private::{PopBits, PopBuffer, PushBits, PushBuffer},
     Specifier,
 };
 
@@ -61,11 +56,8 @@ where
 
 #[doc(hidden)]
 #[inline]
-pub fn write_specifier<T>(
-    bytes: &mut [u8],
-    offset: usize,
-    new_val: <T as Specifier>::Bytes,
-) where
+pub fn write_specifier<T>(bytes: &mut [u8], offset: usize, new_val: <T as Specifier>::Bytes)
+where
     T: Specifier,
     PopBuffer<T::Bytes>: PopBits,
 {
