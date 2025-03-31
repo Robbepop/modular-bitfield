@@ -2,27 +2,10 @@
 
 mod utils;
 
-use criterion::{
-    black_box,
-    criterion_group,
-    criterion_main,
-    Criterion,
-};
+use criterion::{black_box, criterion_group, criterion_main, Criterion};
 use modular_bitfield::{
     bitfield,
-    specifiers::{
-        B12,
-        B13,
-        B16,
-        B3,
-        B32,
-        B36,
-        B4,
-        B6,
-        B7,
-        B8,
-        B9,
-    },
+    specifiers::{B12, B13, B16, B3, B32, B36, B4, B6, B7, B8, B9},
 };
 use utils::repeat;
 

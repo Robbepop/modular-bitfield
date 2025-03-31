@@ -1,8 +1,5 @@
 use crate::{
-    error::{
-        InvalidBitPattern,
-        OutOfBounds,
-    },
+    error::{InvalidBitPattern, OutOfBounds},
     Specifier,
 };
 
@@ -17,9 +14,7 @@ impl Specifier for bool {
     }
 
     #[inline]
-    fn from_bytes(
-        bytes: Self::Bytes,
-    ) -> Result<Self::InOut, InvalidBitPattern<Self::Bytes>> {
+    fn from_bytes(bytes: Self::Bytes) -> Result<Self::InOut, InvalidBitPattern<Self::Bytes>> {
         match bytes {
             0 => Ok(false),
             1 => Ok(true),

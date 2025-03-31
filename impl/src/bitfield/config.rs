@@ -4,10 +4,7 @@ use super::field_config::FieldConfig;
 use crate::errors::CombineError;
 use core::any::TypeId;
 use proc_macro2::Span;
-use std::collections::{
-    hash_map::Entry,
-    HashMap,
-};
+use std::collections::{hash_map::Entry, HashMap};
 use syn::parse::Result;
 
 /// The configuration for the `#[bitfield]` macro.
@@ -93,12 +90,8 @@ impl Config {
                 )
                 .into_combine(
                     format_err!(bits.span, "conflicting `bits = {}` here", bits.value,)
-                        .into_combine(format_err!(
-                            repr.span,
-                            "conflicting {:?} here",
-                            repr.value
-                        )),
-                ))
+                        .into_combine(format_err!(repr.span, "conflicting {:?} here", repr.value)),
+                ));
             }
         }
         Ok(())
@@ -125,7 +118,7 @@ impl Config {
                     bytes.span,
                     "conflicting `bytes = {}` here",
                     bytes.value,
-                )))
+                )));
             }
         }
         Ok(())
@@ -150,7 +143,7 @@ impl Config {
                 filled.span,
                 "conflicting `filled = {}` here",
                 filled.value,
-            )))
+            )));
         }
         Ok(())
     }
@@ -164,11 +157,7 @@ impl Config {
     }
 
     /// Returns an error showing both the duplicate as well as the previous parameters.
-    fn raise_duplicate_error<T>(
-        name: &str,
-        span: Span,
-        previous: &ConfigValue<T>,
-    ) -> syn::Error
+    fn raise_duplicate_error<T>(name: &str, span: Span, previous: &ConfigValue<T>) -> syn::Error
     where
         T: core::fmt::Debug + 'static,
     {
@@ -196,9 +185,7 @@ impl Config {
     /// If the specifier has already been set.
     pub fn bytes(&mut self, value: usize, span: Span) -> Result<()> {
         match &self.bytes {
-            Some(previous) => {
-                return Err(Self::raise_duplicate_error("bytes", span, previous))
-            }
+            Some(previous) => return Err(Self::raise_duplicate_error("bytes", span, previous)),
             None => self.bytes = Some(ConfigValue::new(value, span)),
         }
         Ok(())
@@ -211,9 +198,7 @@ impl Config {
     /// If the specifier has already been set.
     pub fn bits(&mut self, value: usize, span: Span) -> Result<()> {
         match &self.bits {
-            Some(previous) => {
-                return Err(Self::raise_duplicate_error("bits", span, previous))
-            }
+            Some(previous) => return Err(Self::raise_duplicate_error("bits", span, previous)),
             None => self.bits = Some(ConfigValue::new(value, span)),
         }
         Ok(())
@@ -226,9 +211,7 @@ impl Config {
     /// If the specifier has already been set.
     pub fn filled(&mut self, value: bool, span: Span) -> Result<()> {
         match &self.filled {
-            Some(previous) => {
-                return Err(Self::raise_duplicate_error("filled", span, previous))
-            }
+            Some(previous) => return Err(Self::raise_duplicate_error("filled", span, previous)),
             None => self.filled = Some(ConfigValue::new(value, span)),
         }
         Ok(())
@@ -300,19 +283,11 @@ impl Config {
     /// # Errors
     ///
     /// If duplicate field configurations have been found for a field.
-    pub fn field_config(
-        &mut self,
-        index: usize,
-        span: Span,
-        config: FieldConfig,
-    ) -> Result<()> {
+    pub fn field_config(&mut self, index: usize, span: Span, config: FieldConfig) -> Result<()> {
         match self.field_configs.entry(index) {
             Entry::Occupied(occupied) => {
                 return Err(format_err!(span, "encountered duplicate config for field")
-                    .into_combine(format_err!(
-                        occupied.get().span,
-                        "previous config here"
-                    )))
+                    .into_combine(format_err!(occupied.get().span, "previous config here")))
             }
             Entry::Vacant(vacant) => {
                 vacant.insert(ConfigValue::new(config, span));

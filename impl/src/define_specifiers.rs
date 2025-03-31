@@ -1,8 +1,5 @@
 use proc_macro2::TokenStream as TokenStream2;
-use quote::{
-    format_ident,
-    quote,
-};
+use quote::{format_ident, quote};
 
 pub fn generate(_input: TokenStream2) -> TokenStream2 {
     let specifiers = (1usize..=128).map(generate_specifier_for);

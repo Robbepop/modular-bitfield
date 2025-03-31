@@ -10,22 +10,10 @@ pub mod static_assertions {
 }
 pub use self::{
     array_bytes_conv::ArrayBytesConversion,
-    proc::{
-        read_specifier,
-        write_specifier,
-    },
-    push_pop::{
-        PopBuffer,
-        PushBuffer,
-    },
+    proc::{read_specifier, write_specifier},
+    push_pop::{PopBuffer, PushBuffer},
     traits::{
-        IsU128Compatible,
-        IsU16Compatible,
-        IsU32Compatible,
-        IsU64Compatible,
-        IsU8Compatible,
-        PopBits,
-        PushBits,
-        SpecifierBytes,
+        IsU128Compatible, IsU16Compatible, IsU32Compatible, IsU64Compatible, IsU8Compatible,
+        PopBits, PushBits, SpecifierBytes,
     },
 };

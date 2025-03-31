@@ -1,7 +1,7 @@
 use modular_bitfield::prelude::*;
 
 #[bitfield]
-#[cfg_attr(not(feature = "unknown"), repr(invalid))]
+#[cfg_attr(all(), repr(invalid))]
 pub struct SignedInt {
     sign: bool,
     value: B31,

@@ -1,23 +1,11 @@
 use super::{
-    config::{
-        Config,
-        ReprKind,
-    },
+    config::{Config, ReprKind},
     field_info::FieldInfo,
     BitfieldStruct,
 };
 use proc_macro2::TokenStream as TokenStream2;
-use quote::{
-    format_ident,
-    quote,
-    quote_spanned,
-};
-use syn::{
-    self,
-    punctuated::Punctuated,
-    spanned::Spanned as _,
-    Token,
-};
+use quote::{format_ident, quote, quote_spanned};
+use syn::{self, punctuated::Punctuated, spanned::Spanned as _, Token};
 
 impl BitfieldStruct {
     /// Expands the given `#[bitfield]` struct into an actual bitfield definition.
@@ -69,6 +57,12 @@ impl BitfieldStruct {
             impl ::modular_bitfield::Specifier for #ident {
                 const BITS: usize = #bits;
 
+                // `#bits` may contain 'unused' braces because the same
+                // generator is used at multiple different sites and some of
+                // them require those 'unused' braces for the emitted code to
+                // be well-formed. It is easier to suppress the lint here than
+                // it is to modify the generator to conditionally avoid adding
+                // the extra braces.
                 #[allow(unused_braces)]
                 type Bytes = <[(); if { #bits } > 128 { 128 } else { #bits }] as ::modular_bitfield::private::SpecifierBytes>::Bytes;
                 type InOut = Self;
@@ -116,7 +110,7 @@ impl BitfieldStruct {
                 config,
             } = &info;
             if config.skip_getters() {
-                return None
+                return None;
             }
             let field_span = field.span();
             let field_name = info.name();
@@ -328,6 +322,7 @@ impl BitfieldStruct {
             {
                 /// Returns an instance with zero initialized data.
                 #[allow(clippy::identity_op)]
+                #[allow(clippy::new_without_default)]
                 pub const fn new() -> Self {
                     Self {
                         bytes: [0u8; #next_divisible_by_8 / 8usize],
@@ -377,6 +372,13 @@ impl BitfieldStruct {
                 ReprKind::U128 => quote! { IsU128Compatible },
             };
             quote_spanned!(span=>
+                // `#actual_bits` may contain 'unused' braces because the same
+                // generator is used at multiple different sites and some of
+                // them require those 'unused' braces for the emitted code to
+                // be well-formed. It is easier to suppress the lint here than
+                // it is to modify the generator to conditionally avoid adding
+                // the extra braces.
+                #[allow(unused_braces)]
                 impl ::core::convert::From<#prim> for #ident
                 where
                     [(); #actual_bits]: ::modular_bitfield::private::#trait_check_ident,
@@ -387,6 +389,7 @@ impl BitfieldStruct {
                     }
                 }
 
+                #[allow(unused_braces)]
                 impl ::core::convert::From<#ident> for #prim
                 where
                     [(); #actual_bits]: ::modular_bitfield::private::#trait_check_ident,
@@ -429,7 +432,7 @@ impl BitfieldStruct {
                     pub fn from_bytes(
                         bytes: [::core::primitive::u8; #next_divisible_by_8 / 8usize]
                     ) -> ::core::result::Result<Self, ::modular_bitfield::error::OutOfBounds> {
-                        if bytes[(#next_divisible_by_8 / 8usize) - 1] >= (0x01 << (8 - (#next_divisible_by_8 - #size))) {
+                        if bytes[(#next_divisible_by_8 / 8usize) - 1] as ::core::primitive::u16 >= (0x01 << (8 - (#next_divisible_by_8 - #size))) {
                             return ::core::result::Result::Err(::modular_bitfield::error::OutOfBounds)
                         }
                         ::core::result::Result::Ok(Self { bytes })
@@ -496,7 +499,7 @@ impl BitfieldStruct {
             config,
         } = &info;
         if config.skip_getters() {
-            return None
+            return None;
         }
         let struct_ident = &self.item_struct.ident;
         let span = field.span();
@@ -566,7 +569,7 @@ impl BitfieldStruct {
             config,
         } = &info;
         if config.skip_setters() {
-            return None
+            return None;
         }
         let struct_ident = &self.item_struct.ident;
         let span = field.span();
@@ -582,8 +585,7 @@ impl BitfieldStruct {
         let with_ident = format_ident!("with_{}", ident);
         let with_checked_ident = format_ident!("with_{}_checked", ident);
 
-        let set_assert_msg =
-            format!("value out of bounds for field {}.{}", struct_ident, name);
+        let set_assert_msg = format!("value out of bounds for field {}.{}", struct_ident, name);
         let setter_docs = format!(
             "Sets the value of `{}` to the given value.\n\n\
              # Panics\n\n\
@@ -701,9 +703,9 @@ impl BitfieldStruct {
         let bits_checks = self
             .field_infos(config)
             .map(|field_info| self.expand_bits_checks_for_field(field_info));
-        let setters_and_getters = self.field_infos(config).map(|field_info| {
-            self.expand_getters_and_setters_for_field(&mut offset, field_info)
-        });
+        let setters_and_getters = self
+            .field_infos(config)
+            .map(|field_info| self.expand_getters_and_setters_for_field(&mut offset, field_info));
         quote_spanned!(span=>
             const _: () = {
                 #( #bits_checks )*

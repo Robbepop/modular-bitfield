@@ -5,16 +5,10 @@ mod field_config;
 mod field_info;
 mod params;
 
-use self::{
-    config::Config,
-    params::ParamArgs,
-};
+use self::{config::Config, params::ParamArgs};
 use core::convert::TryFrom;
 use proc_macro2::TokenStream as TokenStream2;
-use syn::{
-    self,
-    parse::Result,
-};
+use syn::{self, parse::Result};
 
 /// Analyzes the given token stream for `#[bitfield]` properties and expands code if valid.
 pub fn analyse_and_expand(args: TokenStream2, input: TokenStream2) -> TokenStream2 {
@@ -29,10 +23,7 @@ pub fn analyse_and_expand(args: TokenStream2, input: TokenStream2) -> TokenStrea
 /// # Errors
 ///
 /// If the given token stream does not yield a valid `#[bitfield]` specifier.
-fn analyse_and_expand_or_error(
-    args: TokenStream2,
-    input: TokenStream2,
-) -> Result<TokenStream2> {
+fn analyse_and_expand_or_error(args: TokenStream2, input: TokenStream2) -> Result<TokenStream2> {
     let input = syn::parse::<syn::ItemStruct>(input.into())?;
     let params = syn::parse::<ParamArgs>(args.into())?;
     let mut config = Config::default();

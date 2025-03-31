@@ -14,16 +14,8 @@
 mod handwritten;
 mod utils;
 
-use criterion::{
-    black_box,
-    criterion_group,
-    criterion_main,
-    Criterion,
-};
-use handwritten::{
-    Generated,
-    Handwritten,
-};
+use criterion::{black_box, criterion_group, criterion_main, Criterion};
+use handwritten::{Generated, Handwritten};
 use utils::repeat;
 
 criterion_group!(

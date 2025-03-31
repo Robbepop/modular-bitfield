@@ -114,17 +114,15 @@ impl FieldConfig {
                 match which {
                     SkipWhich::All => return Err(raise_skip_error("", span, previous)),
                     SkipWhich::Getters => {
-                        if previous.value == SkipWhich::Getters
-                            || previous.value == SkipWhich::All
+                        if previous.value == SkipWhich::Getters || previous.value == SkipWhich::All
                         {
-                            return Err(raise_skip_error("(getters)", span, previous))
+                            return Err(raise_skip_error("(getters)", span, previous));
                         }
                     }
                     SkipWhich::Setters => {
-                        if previous.value == SkipWhich::Setters
-                            || previous.value == SkipWhich::All
+                        if previous.value == SkipWhich::Setters || previous.value == SkipWhich::All
                         {
-                            return Err(raise_skip_error("(setters)", span, previous))
+                            return Err(raise_skip_error("(setters)", span, previous));
                         }
                     }
                 }
