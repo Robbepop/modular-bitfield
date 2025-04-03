@@ -1,5 +1,5 @@
 use super::{
-    config::{Config, ReprKind},
+    config::{Config, ReprKind, SkipMethod},
     field_info::FieldInfo,
     BitfieldStruct,
 };
@@ -306,6 +306,10 @@ impl BitfieldStruct {
 
     /// Generates the constructor for the bitfield that initializes all bytes to zero.
     fn generate_constructor(&self, config: &Config) -> TokenStream2 {
+        if config.skip.contains_key(&SkipMethod::New) {
+            return <_>::default();
+        }
+
         let span = self.item_struct.span();
         let ident = &self.item_struct.ident;
         let (impl_generics, ty_generics, where_clause) = self.item_struct.generics.split_for_impl();
@@ -403,8 +407,10 @@ impl BitfieldStruct {
         let (impl_generics, ty_generics, where_clause) = self.item_struct.generics.split_for_impl();
         let size = self.generate_target_or_actual_bitfield_size(config);
         let next_divisible_by_8 = Self::next_divisible_by_8(&size);
-        let from_bytes = if config.filled_enabled() {
-            quote_spanned!(span=>
+        let from_bytes = if config.skip.contains_key(&SkipMethod::FromBytes) {
+            None
+        } else if config.filled_enabled() {
+            Some(quote_spanned!(span=>
                 /// Converts the given bytes directly into the bitfield struct.
                 #[inline]
                 #[allow(clippy::identity_op)]
@@ -412,9 +418,9 @@ impl BitfieldStruct {
                 pub const fn from_bytes(bytes: [::core::primitive::u8; #next_divisible_by_8 / 8usize]) -> Self {
                     Self { bytes }
                 }
-            )
+            ))
         } else {
-            quote_spanned!(span=>
+            Some(quote_spanned!(span=>
                 /// Converts the given bytes directly into the bitfield struct.
                 ///
                 /// # Errors
@@ -430,10 +436,10 @@ impl BitfieldStruct {
                     }
                     ::core::result::Result::Ok(Self { bytes })
                 }
-            )
+            ))
         };
-        quote_spanned!(span=>
-            impl #impl_generics #ident #ty_generics #where_clause {
+        let into_bytes = (!config.skip.contains_key(&SkipMethod::IntoBytes)).then(|| {
+            quote_spanned!(span=>
                 /// Returns the underlying bits.
                 ///
                 /// # Layout
@@ -445,10 +451,19 @@ impl BitfieldStruct {
                 pub const fn into_bytes(self) -> [::core::primitive::u8; #next_divisible_by_8 / 8usize] {
                     self.bytes
                 }
+            )
+        });
 
-                #from_bytes
-            }
-        )
+        if into_bytes.is_some() || from_bytes.is_some() {
+            quote_spanned!(span=>
+                impl #impl_generics #ident #ty_generics #where_clause {
+                    #into_bytes
+                    #from_bytes
+                }
+            )
+        } else {
+            <_>::default()
+        }
     }
 
     /// Generates code to check for the bit size arguments of bitfields.

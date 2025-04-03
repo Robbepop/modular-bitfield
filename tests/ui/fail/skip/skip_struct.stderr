@@ -1,0 +1,47 @@
+error: encountered duplicate `#[skip(new)]`
+ --> tests/ui/fail/skip/skip_struct.rs:3:22
+  |
+3 | #[bitfield(skip(new, new))]
+  |                      ^^^
+
+error: duplicate `#[skip(new)]` here
+ --> tests/ui/fail/skip/skip_struct.rs:3:17
+  |
+3 | #[bitfield(skip(new, new))]
+  |                 ^^^
+
+error: encountered duplicate `#[skip(from_bytes)]`
+ --> tests/ui/fail/skip/skip_struct.rs:8:34
+  |
+8 | #[bitfield(skip(from_bytes, new, from_bytes))]
+  |                                  ^^^^^^^^^^
+
+error: duplicate `#[skip(from_bytes)]` here
+ --> tests/ui/fail/skip/skip_struct.rs:8:17
+  |
+8 | #[bitfield(skip(from_bytes, new, from_bytes))]
+  |                 ^^^^^^^^^^
+
+error: encountered duplicate `#[skip(into_bytes)]`
+  --> tests/ui/fail/skip/skip_struct.rs:13:34
+   |
+13 | #[bitfield(skip(new, into_bytes, into_bytes))]
+   |                                  ^^^^^^^^^^
+
+error: duplicate `#[skip(into_bytes)]` here
+  --> tests/ui/fail/skip/skip_struct.rs:13:22
+   |
+13 | #[bitfield(skip(new, into_bytes, into_bytes))]
+   |                      ^^^^^^^^^^
+
+error: encountered unknown or unsupported #[skip(..)] specifier
+  --> tests/ui/fail/skip/skip_struct.rs:18:17
+   |
+18 | #[bitfield(skip(invalid))]
+   |                 ^^^^^^^
+
+error: expected attribute arguments in parentheses: `skip(...)`
+  --> tests/ui/fail/skip/skip_struct.rs:23:12
+   |
+23 | #[bitfield(skip)]
+   |            ^^^^

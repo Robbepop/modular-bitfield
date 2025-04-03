@@ -3,7 +3,6 @@ use super::{
     field_config::{FieldConfig, SkipWhich},
     raise_skip_error, BitfieldStruct,
 };
-use crate::errors::CombineError;
 use core::convert::TryFrom;
 use quote::quote;
 use std::collections::HashMap;

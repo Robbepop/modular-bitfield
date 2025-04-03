@@ -74,7 +74,7 @@ jobs:
       - name: Run tests
         # UI tests are compiler-version-sensitive so can only run on one
         # toolchain
-        run: cargo test ${{ matrix.rust.name != 'stable' && '-- --skip ui_trybuild' || '' }}
+        run: cargo test ${{ matrix.rust.name != 'stable' && '-- --skip ui::' || '' }}
 
   coverage:
     name: Code coverage
@@ -98,7 +98,7 @@ jobs:
       # tries?), so skip them. They will get passed through runtime-macros
       # instead
       - name: Generate coverage data
-        run: cargo llvm-cov test --no-report -- --skip ui_trybuild
+        run: cargo llvm-cov test --no-report -- --skip 'ui::'
       - name: Show coverage results
         run: >
           cargo llvm-cov report
