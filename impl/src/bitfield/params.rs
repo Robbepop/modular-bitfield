@@ -93,7 +93,14 @@ impl Config {
     fn feed_skip_param(&mut self, meta_list: &syn::MetaList) -> Result<()> {
         meta_list.parse_nested_meta(|meta| {
             let path = &meta.path;
-            if path.is_ident("new") {
+            if path.is_ident("all") {
+                self.skip(SkipMethod::New, path.span())?;
+                self.skip(SkipMethod::FromBytes, path.span())?;
+                self.skip(SkipMethod::IntoBytes, path.span())
+            } else if path.is_ident("convert") {
+                self.skip(SkipMethod::FromBytes, path.span())?;
+                self.skip(SkipMethod::IntoBytes, path.span())
+            } else if path.is_ident("new") {
                 self.skip(SkipMethod::New, path.span())
             } else if path.is_ident("from_bytes") {
                 self.skip(SkipMethod::FromBytes, path.span())

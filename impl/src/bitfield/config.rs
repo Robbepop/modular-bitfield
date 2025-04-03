@@ -58,11 +58,11 @@ impl core::fmt::Debug for ReprKind {
 /// Kinds of `#[skip(..)]` annotations for a `#[bitfield]` struct.
 #[derive(PartialEq, Eq, Hash, Copy, Clone)]
 pub enum SkipMethod {
-    /// Found a `#[skip(new)]` annotation.
+    /// Skip code generation of the `new` method.
     New,
-    /// Found a `#[skip(from_bytes)]` annotation.
+    /// Skip code generation of the `from_bytes` method.
     FromBytes,
-    /// Found a `#[skip(into_bytes)]` annotation.
+    /// Skip code generation of the `into_bytes` method.
     IntoBytes,
 }
 

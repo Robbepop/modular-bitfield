@@ -25,4 +25,28 @@ struct E {
     f: u8,
 }
 
-fn main() {}
+#[bitfield]
+struct F {
+    _implicit_skip: u8,
+}
+
+#[bitfield(skip(all, convert))]
+struct G {
+    f: u8,
+}
+
+#[bitfield(skip(all, new))]
+struct H {
+    f: u8,
+}
+
+#[bitfield(skip(convert, from_bytes, into_bytes))]
+struct I {
+    f: u8,
+}
+
+fn main() {
+    let f = F::new();
+    f.implicit_skip();
+    f._implicit_skip();
+}
