@@ -14,7 +14,7 @@ impl TryFrom<(&mut Config, syn::ItemStruct)> for BitfieldStruct {
 
     fn try_from((config, item_struct): (&mut Config, syn::ItemStruct)) -> Result<Self> {
         Self::ensure_has_fields(&item_struct)?;
-        Self::ensure_no_generics(&item_struct)?;
+        Self::ensure_valid_generics(&item_struct)?;
         Self::extract_attributes(&item_struct.attrs, config)?;
         Self::analyse_config_for_fields(&item_struct, config)?;
         config.ensure_no_conflicts()?;
@@ -25,21 +25,27 @@ impl TryFrom<(&mut Config, syn::ItemStruct)> for BitfieldStruct {
 impl BitfieldStruct {
     /// Returns an error if the input struct does not have any fields.
     fn ensure_has_fields(item_struct: &syn::ItemStruct) -> Result<()> {
-        if let unit @ syn::Fields::Unit = &item_struct.fields {
+        if matches!(&item_struct.fields, syn::Fields::Unit)
+            || matches!(&item_struct.fields, syn::Fields::Unnamed(f) if f.unnamed.is_empty())
+            || matches!(&item_struct.fields, syn::Fields::Named(f) if f.named.is_empty())
+        {
             return Err(format_err_spanned!(
-                unit,
+                item_struct,
                 "encountered invalid bitfield struct without fields"
             ));
         }
         Ok(())
     }
 
-    /// Returns an error if the input struct is generic.
-    fn ensure_no_generics(item_struct: &syn::ItemStruct) -> Result<()> {
-        if !item_struct.generics.params.is_empty() {
+    /// Returns an error if the input struct contains generics that cannot be
+    /// used in a const expression.
+    fn ensure_valid_generics(item_struct: &syn::ItemStruct) -> Result<()> {
+        if item_struct.generics.type_params().next().is_some()
+            || item_struct.generics.lifetimes().next().is_some()
+        {
             return Err(format_err_spanned!(
-                item_struct,
-                "encountered invalid generic bitfield struct"
+                item_struct.generics,
+                "bitfield structs can only use const generics"
             ));
         }
         Ok(())
@@ -107,7 +113,7 @@ impl BitfieldStruct {
                 // Other derives are going to be re-expanded them into a new
                 // `#[derive(..)]` that is ignored by the rest of this macro.
                 retained_derives.push(path.clone());
-            };
+            }
             Ok(())
         })?;
         if !retained_derives.is_empty() {
@@ -225,7 +231,7 @@ impl BitfieldStruct {
                             config.skip(SkipWhich::Setters, meta_list.path.span())?;
                         }
                     }
-                    meta => {
+                    meta @ syn::Meta::NameValue(..) => {
                         return Err(format_err!(
                             meta.span(),
                             "encountered invalid format for #[skip] field attribute"
