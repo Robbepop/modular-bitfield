@@ -1,5 +1,5 @@
 use super::{
-    config::{Config, ReprKind},
+    config::{Config, ReprKind, SkipMethod},
     field_info::FieldInfo,
     BitfieldStruct,
 };
@@ -43,28 +43,22 @@ impl BitfieldStruct {
         config.derive_specifier.as_ref()?;
         let span = self.item_struct.span();
         let ident = &self.item_struct.ident;
+        let (impl_generics, ty_generics, where_clause) = self.item_struct.generics.split_for_impl();
         let bits = self.generate_target_or_actual_bitfield_size(config);
         let next_divisible_by_8 = Self::next_divisible_by_8(&bits);
         Some(quote_spanned!(span =>
             #[allow(clippy::identity_op)]
             const _: () = {
-                impl ::modular_bitfield::private::checks::CheckSpecifierHasAtMost128Bits for #ident {
+                impl #impl_generics ::modular_bitfield::private::checks::CheckSpecifierHasAtMost128Bits for #ident #ty_generics #where_clause {
                     type CheckType = [(); (#bits <= 128) as ::core::primitive::usize];
                 }
             };
 
             #[allow(clippy::identity_op)]
-            impl ::modular_bitfield::Specifier for #ident {
+            impl #impl_generics ::modular_bitfield::Specifier for #ident #ty_generics #where_clause {
                 const BITS: usize = #bits;
 
-                // `#bits` may contain 'unused' braces because the same
-                // generator is used at multiple different sites and some of
-                // them require those 'unused' braces for the emitted code to
-                // be well-formed. It is easier to suppress the lint here than
-                // it is to modify the generator to conditionally avoid adding
-                // the extra braces.
-                #[allow(unused_braces)]
-                type Bytes = <[(); if { #bits } > 128 { 128 } else { #bits }] as ::modular_bitfield::private::SpecifierBytes>::Bytes;
+                type Bytes = <[(); if #bits > 128 { 128 } else { #bits }] as ::modular_bitfield::private::SpecifierBytes>::Bytes;
                 type InOut = Self;
 
                 #[inline]
@@ -83,8 +77,9 @@ impl BitfieldStruct {
                     bytes: Self::Bytes,
                 ) -> ::core::result::Result<Self::InOut, ::modular_bitfield::error::InvalidBitPattern<Self::Bytes>>
                 {
+                    use ::core::convert::TryFrom;
                     let __bf_max_value: Self::Bytes = (0x01 as Self::Bytes)
-                        .checked_shl(Self::BITS as ::core::primitive::u32)
+                        .checked_shl(u32::try_from(Self::BITS).unwrap())
                         .unwrap_or(<Self::Bytes>::MAX);
                     if bytes > __bf_max_value {
                         return ::core::result::Result::Err(::modular_bitfield::error::InvalidBitPattern::new(bytes))
@@ -98,11 +93,12 @@ impl BitfieldStruct {
         ))
     }
 
-    /// Generates the core::fmt::Debug impl if `#[derive(Debug)]` is included.
+    /// Generates the `core::fmt::Debug` impl if `#[derive(Debug)]` is included.
     pub fn generate_debug_impl(&self, config: &Config) -> Option<TokenStream2> {
         config.derive_debug.as_ref()?;
         let span = self.item_struct.span();
         let ident = &self.item_struct.ident;
+        let (impl_generics, ty_generics, where_clause) = self.item_struct.generics.split_for_impl();
         let fields = self.field_infos(config).map(|info| {
             let FieldInfo {
                 index: _,
@@ -115,23 +111,24 @@ impl BitfieldStruct {
             let field_span = field.span();
             let field_name = info.name();
             let field_ident = info.ident_frag();
-            let field_getter = field
-                .ident
-                .as_ref()
-                .map(|_| format_ident!("{}_or_err", field_ident))
-                .unwrap_or_else(|| format_ident!("get_{}_or_err", field_ident));
+            let field_getter = field.ident.as_ref().map_or_else(
+                || format_ident!("get_{}_or_err", field_ident),
+                |_| format_ident!("{}_or_err", field_ident),
+            );
             Some(quote_spanned!(field_span=>
                 .field(
                     #field_name,
                     self.#field_getter()
                         .as_ref()
-                        .map(|__bf_field| __bf_field as &dyn (::core::fmt::Debug))
-                        .unwrap_or_else(|__bf_err| __bf_err as &dyn (::core::fmt::Debug))
+                        .map_or_else(
+                            |__bf_err| __bf_err as &dyn (::core::fmt::Debug),
+                            |__bf_field| __bf_field as &dyn (::core::fmt::Debug)
+                        )
                 )
             ))
         });
         Some(quote_spanned!(span=>
-            impl ::core::fmt::Debug for #ident {
+            impl #impl_generics ::core::fmt::Debug for #ident #ty_generics #where_clause {
                 fn fmt(&self, __bf_f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
                     __bf_f.debug_struct(::core::stringify!(#ident))
                         #( #fields )*
@@ -147,8 +144,7 @@ impl BitfieldStruct {
     ///
     /// For the following struct:
     ///
-    /// ```
-    /// # use modular_bitfield::prelude::*;
+    /// ```no_compile
     /// #[bitfield]
     /// pub struct Color {
     ///     r: B8,
@@ -161,24 +157,19 @@ impl BitfieldStruct {
     ///
     /// We generate the following tokens:
     ///
-    /// ```
-    /// # use modular_bitfield::prelude::*;
-    /// {
-    ///     0usize +
-    ///     <B8 as ::modular_bitfield::Specifier>::BITS +
-    ///     <B8 as ::modular_bitfield::Specifier>::BITS +
-    ///     <B8 as ::modular_bitfield::Specifier>::BITS +
-    ///     <bool as ::modular_bitfield::Specifier>::BITS +
-    ///     <B7 as ::modular_bitfield::Specifier>::BITS
-    /// }
-    /// # ;
+    /// ```no_compile
+    /// 0usize +
+    /// <B8 as ::modular_bitfield::Specifier>::BITS +
+    /// <B8 as ::modular_bitfield::Specifier>::BITS +
+    /// <B8 as ::modular_bitfield::Specifier>::BITS +
+    /// <bool as ::modular_bitfield::Specifier>::BITS +
+    /// <B7 as ::modular_bitfield::Specifier>::BITS
     /// ```
     ///
     /// Which is a compile time evaluatable expression.
     fn generate_bitfield_size(&self) -> TokenStream2 {
         let span = self.item_struct.span();
-        let sum = self
-            .item_struct
+        self.item_struct
             .fields
             .iter()
             .map(|field| {
@@ -192,25 +183,21 @@ impl BitfieldStruct {
                 quote_spanned!(span =>
                     #lhs + #rhs
                 )
-            });
-        quote_spanned!(span=>
-            { #sum }
-        )
+            })
     }
 
     /// Generates the expression denoting the actual configured or implied bit width.
     fn generate_target_or_actual_bitfield_size(&self, config: &Config) -> TokenStream2 {
-        config
-            .bits
-            .as_ref()
-            .map(|bits_config| {
+        config.bits.as_ref().map_or_else(
+            || self.generate_bitfield_size(),
+            |bits_config| {
                 let span = bits_config.span;
                 let value = bits_config.value;
                 quote_spanned!(span=>
                     #value
                 )
-            })
-            .unwrap_or_else(|| self.generate_bitfield_size())
+            },
+        )
     }
 
     /// Generates a check in case `bits = N` is unset to verify that the actual amount of bits is either
@@ -224,19 +211,22 @@ impl BitfieldStruct {
     ) -> TokenStream2 {
         let span = self.item_struct.span();
         let ident = &self.item_struct.ident;
+        let (impl_generics, ty_generics, where_clause) = self.item_struct.generics.split_for_impl();
         let actual_bits = self.generate_bitfield_size();
-        let check_ident = match config.filled_enabled() {
-            true => quote_spanned!(span => CheckFillsUnalignedBits),
-            false => quote_spanned!(span => CheckDoesNotFillUnalignedBits),
+        let check_ident = if config.filled_enabled() {
+            quote_spanned!(span => CheckFillsUnalignedBits)
+        } else {
+            quote_spanned!(span => CheckDoesNotFillUnalignedBits)
         };
-        let comparator = match config.filled_enabled() {
-            true => quote! { == },
-            false => quote! { > },
+        let comparator = if config.filled_enabled() {
+            quote! { == }
+        } else {
+            quote! { > }
         };
         quote_spanned!(span=>
             #[allow(clippy::identity_op)]
             const _: () = {
-                impl ::modular_bitfield::private::checks::#check_ident for #ident {
+                impl #impl_generics ::modular_bitfield::private::checks::#check_ident for #ident #ty_generics #where_clause {
                     type CheckType = [(); (#required_bits #comparator #actual_bits) as usize];
                 }
             };
@@ -250,16 +240,18 @@ impl BitfieldStruct {
     fn generate_filled_check_for_aligned_bits(&self, config: &Config) -> TokenStream2 {
         let span = self.item_struct.span();
         let ident = &self.item_struct.ident;
+        let (impl_generics, ty_generics, where_clause) = self.item_struct.generics.split_for_impl();
         let actual_bits = self.generate_bitfield_size();
-        let check_ident = match config.filled_enabled() {
-            true => quote_spanned!(span => CheckTotalSizeMultipleOf8),
-            false => quote_spanned!(span => CheckTotalSizeIsNotMultipleOf8),
+        let check_ident = if config.filled_enabled() {
+            quote_spanned!(span => CheckTotalSizeMultipleOf8)
+        } else {
+            quote_spanned!(span => CheckTotalSizeIsNotMultipleOf8)
         };
         quote_spanned!(span=>
             #[allow(clippy::identity_op)]
             const _: () = {
-                impl ::modular_bitfield::private::checks::#check_ident for #ident {
-                    type Size = ::modular_bitfield::private::checks::TotalSize<[(); #actual_bits % 8usize]>;
+                impl #impl_generics ::modular_bitfield::private::checks::#check_ident for #ident #ty_generics #where_clause {
+                    type Size = ::modular_bitfield::private::checks::TotalSize<[(); (#actual_bits) % 8usize]>;
                 }
             };
         )
@@ -268,11 +260,11 @@ impl BitfieldStruct {
     /// Generate check for either of the following two cases:
     ///
     /// - `filled = true`: Check if the total number of required bits is
-    ///         - ... the same as `N` if `bits = N` was provided or
-    ///         - ... a multiple of 8, otherwise
+    ///   - ... the same as `N` if `bits = N` was provided or
+    ///   - ... a multiple of 8, otherwise
     /// - `filled = false`: Check if the total number of required bits is
-    ///         - ... smaller than `N` if `bits = N` was provided or
-    ///         - ... NOT a multiple of 8, otherwise
+    ///   - ... smaller than `N` if `bits = N` was provided or
+    ///   - ... NOT a multiple of 8, otherwise
     fn generate_check_for_filled(&self, config: &Config) -> TokenStream2 {
         match config.bits.as_ref() {
             Some(bits_config) => {
@@ -285,9 +277,9 @@ impl BitfieldStruct {
     /// Returns a token stream representing the next greater value divisible by 8.
     fn next_divisible_by_8(value: &TokenStream2) -> TokenStream2 {
         let span = value.span();
-        quote_spanned!(span=> {
+        quote_spanned!(span=>
             (((#value - 1) / 8) + 1) * 8
-        })
+        )
     }
 
     /// Generates the actual item struct definition for the `#[bitfield]`.
@@ -299,12 +291,13 @@ impl BitfieldStruct {
         let attrs = &config.retained_attributes;
         let vis = &self.item_struct.vis;
         let ident = &self.item_struct.ident;
+        let generics = &self.item_struct.generics;
         let size = self.generate_target_or_actual_bitfield_size(config);
         let next_divisible_by_8 = Self::next_divisible_by_8(&size);
         quote_spanned!(span=>
             #( #attrs )*
             #[allow(clippy::identity_op)]
-            #vis struct #ident
+            #vis struct #ident #generics
             {
                 bytes: [::core::primitive::u8; #next_divisible_by_8 / 8usize],
             }
@@ -313,16 +306,22 @@ impl BitfieldStruct {
 
     /// Generates the constructor for the bitfield that initializes all bytes to zero.
     fn generate_constructor(&self, config: &Config) -> TokenStream2 {
+        if config.skip.contains_key(&SkipMethod::New) {
+            return <_>::default();
+        }
+
         let span = self.item_struct.span();
         let ident = &self.item_struct.ident;
+        let (impl_generics, ty_generics, where_clause) = self.item_struct.generics.split_for_impl();
         let size = self.generate_target_or_actual_bitfield_size(config);
         let next_divisible_by_8 = Self::next_divisible_by_8(&size);
         quote_spanned!(span=>
-            impl #ident
+            impl #impl_generics #ident #ty_generics #where_clause
             {
                 /// Returns an instance with zero initialized data.
                 #[allow(clippy::identity_op)]
                 #[allow(clippy::new_without_default)]
+                #[must_use]
                 pub const fn new() -> Self {
                     Self {
                         bytes: [0u8; #next_divisible_by_8 / 8usize],
@@ -353,6 +352,8 @@ impl BitfieldStruct {
     /// Generates `From` impls for a `#[repr(uN)]` annotated #[bitfield] struct.
     fn expand_repr_from_impls_and_checks(&self, config: &Config) -> Option<TokenStream2> {
         let ident = &self.item_struct.ident;
+        let (impl_generics, ty_generics, where_clause) = self.item_struct.generics.split_for_impl();
+        let where_predicates = where_clause.map(|w| &w.predicates);
         config.repr.as_ref().map(|repr| {
             let kind = &repr.value;
             let span = repr.span;
@@ -372,16 +373,11 @@ impl BitfieldStruct {
                 ReprKind::U128 => quote! { IsU128Compatible },
             };
             quote_spanned!(span=>
-                // `#actual_bits` may contain 'unused' braces because the same
-                // generator is used at multiple different sites and some of
-                // them require those 'unused' braces for the emitted code to
-                // be well-formed. It is easier to suppress the lint here than
-                // it is to modify the generator to conditionally avoid adding
-                // the extra braces.
-                #[allow(unused_braces)]
-                impl ::core::convert::From<#prim> for #ident
+                #[allow(clippy::identity_op)]
+                impl #impl_generics ::core::convert::From<#prim> for #ident #ty_generics
                 where
                     [(); #actual_bits]: ::modular_bitfield::private::#trait_check_ident,
+                    #where_predicates
                 {
                     #[inline]
                     fn from(__bf_prim: #prim) -> Self {
@@ -389,10 +385,11 @@ impl BitfieldStruct {
                     }
                 }
 
-                #[allow(unused_braces)]
-                impl ::core::convert::From<#ident> for #prim
+                #[allow(clippy::identity_op)]
+                impl #impl_generics ::core::convert::From<#ident #ty_generics> for #prim
                 where
                     [(); #actual_bits]: ::modular_bitfield::private::#trait_check_ident,
+                    #where_predicates
                 {
                     #[inline]
                     fn from(__bf_bitfield: #ident) -> Self {
@@ -407,41 +404,42 @@ impl BitfieldStruct {
     fn expand_byte_conversion_impls(&self, config: &Config) -> TokenStream2 {
         let span = self.item_struct.span();
         let ident = &self.item_struct.ident;
+        let (impl_generics, ty_generics, where_clause) = self.item_struct.generics.split_for_impl();
         let size = self.generate_target_or_actual_bitfield_size(config);
         let next_divisible_by_8 = Self::next_divisible_by_8(&size);
-        let from_bytes = match config.filled_enabled() {
-            true => {
-                quote_spanned!(span=>
-                    /// Converts the given bytes directly into the bitfield struct.
-                    #[inline]
-                    #[allow(clippy::identity_op)]
-                    pub const fn from_bytes(bytes: [::core::primitive::u8; #next_divisible_by_8 / 8usize]) -> Self {
-                        Self { bytes }
+        let from_bytes = if config.skip.contains_key(&SkipMethod::FromBytes) {
+            None
+        } else if config.filled_enabled() {
+            Some(quote_spanned!(span=>
+                /// Converts the given bytes directly into the bitfield struct.
+                #[inline]
+                #[allow(clippy::identity_op)]
+                #[must_use]
+                pub const fn from_bytes(bytes: [::core::primitive::u8; #next_divisible_by_8 / 8usize]) -> Self {
+                    Self { bytes }
+                }
+            ))
+        } else {
+            Some(quote_spanned!(span=>
+                /// Converts the given bytes directly into the bitfield struct.
+                ///
+                /// # Errors
+                ///
+                /// If the given bytes contain bits at positions that are undefined for `Self`.
+                #[inline]
+                #[allow(clippy::identity_op)]
+                pub fn from_bytes(
+                    bytes: [::core::primitive::u8; #next_divisible_by_8 / 8usize]
+                ) -> ::core::result::Result<Self, ::modular_bitfield::error::OutOfBounds> {
+                    if ::core::primitive::u16::from(bytes[(#next_divisible_by_8 / 8usize) - 1]) >= (0x01 << (8 - (#next_divisible_by_8 - (#size)))) {
+                        return ::core::result::Result::Err(::modular_bitfield::error::OutOfBounds)
                     }
-                )
-            }
-            false => {
-                quote_spanned!(span=>
-                    /// Converts the given bytes directly into the bitfield struct.
-                    ///
-                    /// # Errors
-                    ///
-                    /// If the given bytes contain bits at positions that are undefined for `Self`.
-                    #[inline]
-                    #[allow(clippy::identity_op)]
-                    pub fn from_bytes(
-                        bytes: [::core::primitive::u8; #next_divisible_by_8 / 8usize]
-                    ) -> ::core::result::Result<Self, ::modular_bitfield::error::OutOfBounds> {
-                        if bytes[(#next_divisible_by_8 / 8usize) - 1] as ::core::primitive::u16 >= (0x01 << (8 - (#next_divisible_by_8 - #size))) {
-                            return ::core::result::Result::Err(::modular_bitfield::error::OutOfBounds)
-                        }
-                        ::core::result::Result::Ok(Self { bytes })
-                    }
-                )
-            }
+                    ::core::result::Result::Ok(Self { bytes })
+                }
+            ))
         };
-        quote_spanned!(span=>
-            impl #ident {
+        let into_bytes = (!config.skip.contains_key(&SkipMethod::IntoBytes)).then(|| {
+            quote_spanned!(span=>
                 /// Returns the underlying bits.
                 ///
                 /// # Layout
@@ -453,14 +451,23 @@ impl BitfieldStruct {
                 pub const fn into_bytes(self) -> [::core::primitive::u8; #next_divisible_by_8 / 8usize] {
                     self.bytes
                 }
+            )
+        });
 
-                #from_bytes
-            }
-        )
+        if into_bytes.is_some() || from_bytes.is_some() {
+            quote_spanned!(span=>
+                impl #impl_generics #ident #ty_generics #where_clause {
+                    #into_bytes
+                    #from_bytes
+                }
+            )
+        } else {
+            <_>::default()
+        }
     }
 
     /// Generates code to check for the bit size arguments of bitfields.
-    fn expand_bits_checks_for_field(&self, field_info: FieldInfo<'_>) -> TokenStream2 {
+    fn expand_bits_checks_for_field(field_info: FieldInfo<'_>) -> TokenStream2 {
         let FieldInfo {
             index: _,
             field,
@@ -497,7 +504,7 @@ impl BitfieldStruct {
             index: _,
             field,
             config,
-        } = &info;
+        } = info;
         if config.skip_getters() {
             return None;
         }
@@ -509,31 +516,27 @@ impl BitfieldStruct {
         let retained_attrs = &config.retained_attrs;
         let get_ident = field
             .ident
-            .as_ref()
-            .cloned()
+            .clone()
             .unwrap_or_else(|| format_ident!("get_{}", ident));
-        let get_checked_ident = field
-            .ident
-            .as_ref()
-            .map(|_| format_ident!("{}_or_err", ident))
-            .unwrap_or_else(|| format_ident!("get_{}_or_err", ident));
+        let get_checked_ident = field.ident.as_ref().map_or_else(
+            || format_ident!("get_{}_or_err", ident),
+            |_| format_ident!("{}_or_err", ident),
+        );
         let ty = &field.ty;
         let vis = &field.vis;
-        let get_assert_msg = format!(
-            "value contains invalid bit pattern for field {}.{}",
-            struct_ident, name
-        );
+        let get_assert_msg =
+            format!("value contains invalid bit pattern for field {struct_ident}.{name}");
 
-        let getter_docs = format!("Returns the value of `{}`.", name);
+        let getter_docs = format!("Returns the value of `{name}`.");
         let checked_getter_docs = format!(
-            "Returns the value of `{}`.\n\n\
+            "Returns the value of `{name}`.\n\n\
              # Errors\n\n\
-             If the returned value contains an invalid bit pattern for `{}`.",
-            name, name,
+             If the returned value contains an invalid bit pattern for `{name}`.",
         );
         let getters = quote_spanned!(span=>
             #[doc = #getter_docs]
             #[inline]
+            #[must_use]
             #( #retained_attrs )*
             #vis fn #get_ident(&self) -> <#ty as ::modular_bitfield::Specifier>::InOut {
                 self.#get_checked_ident().expect(#get_assert_msg)
@@ -567,7 +570,7 @@ impl BitfieldStruct {
             index: _,
             field,
             config,
-        } = &info;
+        } = info;
         if config.skip_setters() {
             return None;
         }
@@ -585,37 +588,34 @@ impl BitfieldStruct {
         let with_ident = format_ident!("with_{}", ident);
         let with_checked_ident = format_ident!("with_{}_checked", ident);
 
-        let set_assert_msg = format!("value out of bounds for field {}.{}", struct_ident, name);
+        let set_assert_msg = format!("value out of bounds for field {struct_ident}.{name}");
         let setter_docs = format!(
-            "Sets the value of `{}` to the given value.\n\n\
+            "Sets the value of `{name}` to the given value.\n\n\
              # Panics\n\n\
-             If the given value is out of bounds for `{}`.",
-            name, name,
+             If the given value is out of bounds for `{name}`.",
         );
         let checked_setter_docs = format!(
-            "Sets the value of `{}` to the given value.\n\n\
+            "Sets the value of `{name}` to the given value.\n\n\
              # Errors\n\n\
-             If the given value is out of bounds for `{}`.",
-            name, name,
+             If the given value is out of bounds for `{name}`.",
         );
         let with_docs = format!(
-            "Returns a copy of the bitfield with the value of `{}` \
+            "Returns a copy of the bitfield with the value of `{name}` \
              set to the given value.\n\n\
              # Panics\n\n\
-             If the given value is out of bounds for `{}`.",
-            name, name,
+             If the given value is out of bounds for `{name}`.",
         );
         let checked_with_docs = format!(
-            "Returns a copy of the bitfield with the value of `{}` \
+            "Returns a copy of the bitfield with the value of `{name}` \
              set to the given value.\n\n\
              # Errors\n\n\
-             If the given value is out of bounds for `{}`.",
-            name, name,
+             If the given value is out of bounds for `{name}`.",
         );
         let setters = quote_spanned!(span=>
             #[doc = #with_docs]
             #[inline]
             #[allow(dead_code)]
+            #[must_use]
             #( #retained_attrs )*
             #vis fn #with_ident(
                 mut self,
@@ -675,26 +675,25 @@ impl BitfieldStruct {
     fn expand_getters_and_setters_for_field(
         &self,
         offset: &mut Punctuated<syn::Expr, syn::Token![+]>,
-        info: FieldInfo<'_>,
-    ) -> Option<TokenStream2> {
-        let FieldInfo {
-            index: _, field, ..
-        } = &info;
+        info: &FieldInfo<'_>,
+    ) -> TokenStream2 {
+        let field = info.field;
         let span = field.span();
         let ty = &field.ty;
-        let getters = self.expand_getters_for_field(offset, &info);
-        let setters = self.expand_setters_for_field(offset, &info);
+        let getters = self.expand_getters_for_field(offset, info);
+        let setters = self.expand_setters_for_field(offset, info);
         let getters_and_setters = quote_spanned!(span=>
             #getters
             #setters
         );
         offset.push(syn::parse_quote! { <#ty as ::modular_bitfield::Specifier>::BITS });
-        Some(getters_and_setters)
+        getters_and_setters
     }
 
     fn expand_getters_and_setters(&self, config: &Config) -> TokenStream2 {
         let span = self.item_struct.span();
         let ident = &self.item_struct.ident;
+        let (impl_generics, ty_generics, where_clause) = self.item_struct.generics.split_for_impl();
         let mut offset = {
             let mut offset = Punctuated::<syn::Expr, Token![+]>::new();
             offset.push(syn::parse_quote! { 0usize });
@@ -702,16 +701,16 @@ impl BitfieldStruct {
         };
         let bits_checks = self
             .field_infos(config)
-            .map(|field_info| self.expand_bits_checks_for_field(field_info));
+            .map(|field_info| Self::expand_bits_checks_for_field(field_info));
         let setters_and_getters = self
             .field_infos(config)
-            .map(|field_info| self.expand_getters_and_setters_for_field(&mut offset, field_info));
+            .map(|field_info| self.expand_getters_and_setters_for_field(&mut offset, &field_info));
         quote_spanned!(span=>
             const _: () = {
                 #( #bits_checks )*
             };
 
-            impl #ident {
+            impl #impl_generics #ident #ty_generics #where_clause {
                 #( #setters_and_getters )*
             }
         )

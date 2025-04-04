@@ -18,6 +18,7 @@ pub struct Config {
     pub derive_specifier: Option<ConfigValue<()>>,
     pub retained_attributes: Vec<syn::Attribute>,
     pub field_configs: HashMap<usize, ConfigValue<FieldConfig>>,
+    pub skip: HashMap<SkipMethod, Span>,
 }
 
 /// Kinds of `#[repr(uN)]` annotations for a `#[bitfield]` struct.
@@ -49,9 +50,20 @@ impl ReprKind {
 }
 
 impl core::fmt::Debug for ReprKind {
-    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         write!(f, "#[repr(u{})]", self.bits())
     }
+}
+
+/// Kinds of `#[skip(..)]` annotations for a `#[bitfield]` struct.
+#[derive(PartialEq, Eq, Hash, Copy, Clone)]
+pub enum SkipMethod {
+    /// Skip code generation of the `new` method.
+    New,
+    /// Skip code generation of the `from_bytes` method.
+    FromBytes,
+    /// Skip code generation of the `into_bytes` method.
+    IntoBytes,
 }
 
 /// A configuration value and its originating span.
@@ -73,10 +85,7 @@ impl<T> ConfigValue<T> {
 impl Config {
     /// Returns the value of the `filled` parameter if provided and otherwise `true`.
     pub fn filled_enabled(&self) -> bool {
-        self.filled
-            .as_ref()
-            .map(|config| config.value)
-            .unwrap_or(true)
+        self.filled.as_ref().map_or(true, |config| config.value)
     }
 
     fn ensure_no_bits_and_repr_conflict(&self) -> Result<()> {
@@ -215,6 +224,22 @@ impl Config {
             None => self.filled = Some(ConfigValue::new(value, span)),
         }
         Ok(())
+    }
+
+    /// Registers a `#[skip(..)]` attribute for the #[bitfield] macro.
+    ///
+    /// # Errors
+    ///
+    /// If a `#[skip(..)]` attribute of the same kind has already been found.
+    pub fn skip(&mut self, value: SkipMethod, span: Span) -> Result<()> {
+        self.skip.insert(value, span).map_or(Ok(()), |previous| {
+            let name = match value {
+                SkipMethod::New => "(new)",
+                SkipMethod::FromBytes => "(from_bytes)",
+                SkipMethod::IntoBytes => "(into_bytes)",
+            };
+            super::raise_skip_error(name, span, previous)
+        })
     }
 
     /// Registers the `#[repr(uN)]` attribute for the #[bitfield] macro.

@@ -1,0 +1,5 @@
+error: expected a value for this attribute: `bits = ...`
+ --> tests/ui/fail/bits_param/missing_param_value.rs:3:12
+  |
+3 | #[bitfield(bits)]
+  |            ^^^^

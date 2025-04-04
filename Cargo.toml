@@ -1,55 +1,62 @@
-[package]
-name = "modular-bitfield"
-version = "0.11.2"
-edition = "2021"
-authors = ["Robin Freyler <robinfreyler@web.de>"]
-license = "MIT OR Apache-2.0"
-readme = "README.md"
-
-repository = "https://github.com/robbepop/modular-bitfield"
-documentation = "https://docs.rs/modular-bitfield"
-description = "Allows to easily define bitfield types with modular building blocks."
-categories = ["data-structures", "no-std"]
-keywords   = ["bitfield", "bit", "bitfields"]
-
-autotests = false
-
-[dev-dependencies]
-trybuild = "1.0"
-criterion = "0.5"
-bitfield = "0.19"
-
-[[test]]
-name = "tests"
-path = "tests/progress.rs"
-
-[[bench]]
-name = "benchmarks"
-path = "benches/benchmarks.rs"
-harness = false
-
-[[bench]]
-name = "cmp_handwritten"
-path = "benches/cmp_handwritten.rs"
-harness = false
-
-[[bench]]
-name = "cmp_bitfield_crate"
-path = "benches/cmp_bitfield_crate.rs"
-harness = false
-
-[[bin]]
-name = "playground"
-path = "playground.rs"
-
-[dependencies]
-modular-bitfield-impl = { path = "impl", version = "0.11.2" }
-static_assertions = "1.1"
-
-[profile.bench]
-codegen-units = 1
-
 [workspace]
 members = [
     "impl"
 ]
+default-members = ["", "impl"]
+resolver = "2"
+
+[workspace.package]
+authors = ["Robin Freyler <robinfreyler@web.de>"]
+edition = "2021"
+license = "MIT OR Apache-2.0"
+publish = false # Use `release.sh`
+documentation = "https://docs.rs/modular-bitfield"
+repository = "https://github.com/Robbepop/modular-bitfield"
+rust-version = "1.70.0"
+version = "0.12.0-pre"
+
+[package]
+name = "modular-bitfield"
+description = "Easily define bitfield types with modular building blocks."
+categories = ["data-structures", "no-std"]
+keywords = ["bitfield", "bit", "bitfields"]
+readme = "README.md"
+authors.workspace = true
+documentation.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+version.workspace = true
+
+[dependencies]
+modular-bitfield-impl = { path = "impl", version = "0.12.0-pre" }
+static_assertions = "1.1"
+
+[dev-dependencies]
+bitfield = "0.19"
+tiny-bench = "0.4"
+trybuild = "1.0"
+
+[lints.rust]
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(coverage)'] }
+
+[[bench]]
+name = "benchmarks"
+harness = false
+
+[[bench]]
+name = "cmp_handwritten"
+harness = false
+
+[[bench]]
+name = "cmp_bitfield_crate"
+harness = false
+
+[[test]]
+name = "benches_handwritten"
+path = "benches/utils/handwritten.rs"
+
+[profile.bench]
+codegen-units = 1

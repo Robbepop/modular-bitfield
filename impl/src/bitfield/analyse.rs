@@ -1,12 +1,10 @@
 use super::{
     config::{Config, ReprKind},
     field_config::{FieldConfig, SkipWhich},
-    BitfieldStruct,
+    raise_skip_error, BitfieldStruct,
 };
-use crate::errors::CombineError;
 use core::convert::TryFrom;
 use quote::quote;
-use std::collections::HashMap;
 use syn::{self, parse::Result, spanned::Spanned as _};
 
 impl TryFrom<(&mut Config, syn::ItemStruct)> for BitfieldStruct {
@@ -14,7 +12,7 @@ impl TryFrom<(&mut Config, syn::ItemStruct)> for BitfieldStruct {
 
     fn try_from((config, item_struct): (&mut Config, syn::ItemStruct)) -> Result<Self> {
         Self::ensure_has_fields(&item_struct)?;
-        Self::ensure_no_generics(&item_struct)?;
+        Self::ensure_valid_generics(&item_struct)?;
         Self::extract_attributes(&item_struct.attrs, config)?;
         Self::analyse_config_for_fields(&item_struct, config)?;
         config.ensure_no_conflicts()?;
@@ -25,21 +23,27 @@ impl TryFrom<(&mut Config, syn::ItemStruct)> for BitfieldStruct {
 impl BitfieldStruct {
     /// Returns an error if the input struct does not have any fields.
     fn ensure_has_fields(item_struct: &syn::ItemStruct) -> Result<()> {
-        if let unit @ syn::Fields::Unit = &item_struct.fields {
+        if matches!(&item_struct.fields, syn::Fields::Unit)
+            || matches!(&item_struct.fields, syn::Fields::Unnamed(f) if f.unnamed.is_empty())
+            || matches!(&item_struct.fields, syn::Fields::Named(f) if f.named.is_empty())
+        {
             return Err(format_err_spanned!(
-                unit,
+                item_struct,
                 "encountered invalid bitfield struct without fields"
             ));
         }
         Ok(())
     }
 
-    /// Returns an error if the input struct is generic.
-    fn ensure_no_generics(item_struct: &syn::ItemStruct) -> Result<()> {
-        if !item_struct.generics.params.is_empty() {
+    /// Returns an error if the input struct contains generics that cannot be
+    /// used in a const expression.
+    fn ensure_valid_generics(item_struct: &syn::ItemStruct) -> Result<()> {
+        if item_struct.generics.type_params().next().is_some()
+            || item_struct.generics.lifetimes().next().is_some()
+        {
             return Err(format_err_spanned!(
-                item_struct,
-                "encountered invalid generic bitfield struct"
+                item_struct.generics,
+                "bitfield structs can only use const generics"
             ));
         }
         Ok(())
@@ -107,7 +111,7 @@ impl BitfieldStruct {
                 // Other derives are going to be re-expanded them into a new
                 // `#[derive(..)]` that is ignored by the rest of this macro.
                 retained_derives.push(path.clone());
-            };
+            }
             Ok(())
         })?;
         if !retained_derives.is_empty() {
@@ -182,50 +186,9 @@ impl BitfieldStruct {
                         config.skip(SkipWhich::All, path.span())?;
                     }
                     syn::Meta::List(meta_list) => {
-                        let mut which = HashMap::new();
-                        meta_list.parse_nested_meta(|meta| {
-                            let path = &meta.path;
-                            if path.is_ident("getters") {
-                                if let Some(previous) =
-                                    which.insert(SkipWhich::Getters, path.span())
-                                {
-                                    return Err(meta
-                                        .error("encountered duplicate #[skip(getters)]")
-                                        .into_combine(format_err!(
-                                            previous,
-                                            "previous found here"
-                                        )));
-                                }
-                            } else if path.is_ident("setters") {
-                                if let Some(previous) =
-                                    which.insert(SkipWhich::Setters, path.span())
-                                {
-                                    return Err(meta
-                                        .error("encountered duplicate #[skip(setters)]")
-                                        .into_combine(format_err!(
-                                            previous,
-                                            "previous found here"
-                                        )));
-                                }
-                            } else {
-                                return Err(meta.error(
-                                    "encountered unknown or unsupported #[skip(..)] specifier",
-                                ));
-                            }
-                            Ok(())
-                        })?;
-                        if which.is_empty()
-                            || which.contains_key(&SkipWhich::Getters)
-                                && which.contains_key(&SkipWhich::Setters)
-                        {
-                            config.skip(SkipWhich::All, meta_list.path.span())?;
-                        } else if which.contains_key(&SkipWhich::Getters) {
-                            config.skip(SkipWhich::Getters, meta_list.path.span())?;
-                        } else if which.contains_key(&SkipWhich::Setters) {
-                            config.skip(SkipWhich::Setters, meta_list.path.span())?;
-                        }
+                        extract_field_skip_list(&mut config, meta_list)?;
                     }
-                    meta => {
+                    meta @ syn::Meta::NameValue(..) => {
                         return Err(format_err!(
                             meta.span(),
                             "encountered invalid format for #[skip] field attribute"
@@ -236,6 +199,52 @@ impl BitfieldStruct {
                 config.retain_attr(attr.clone());
             }
         }
+
+        implicit_field_skip(&mut config, field.ident.as_ref())?;
+
         Ok(config)
     }
+}
+
+fn implicit_field_skip(config: &mut FieldConfig, ident: Option<&syn::Ident>) -> Result<()> {
+    fn skip_span(ident: Option<&syn::Ident>) -> Option<proc_macro2::Span> {
+        ident.and_then(|ident| ident.to_string().starts_with('_').then(|| ident.span()))
+    }
+
+    if !config.skip_getters() && !config.skip_setters() {
+        if let Some(span) = skip_span(ident) {
+            config.skip(SkipWhich::All, span)?;
+        }
+    }
+
+    Ok(())
+}
+
+fn extract_field_skip_list(config: &mut FieldConfig, meta_list: &syn::MetaList) -> Result<()> {
+    let (mut getters, mut setters) = (None, None);
+    meta_list.parse_nested_meta(|meta| {
+        let path = &meta.path;
+        if path.is_ident("getters") {
+            if let Some(previous) = getters.replace(path.span()) {
+                return raise_skip_error("(getters)", path.span(), previous);
+            }
+        } else if path.is_ident("setters") {
+            if let Some(previous) = setters.replace(path.span()) {
+                return raise_skip_error("(setters)", path.span(), previous);
+            }
+        } else {
+            return Err(meta.error("encountered unknown or unsupported #[skip(..)] specifier"));
+        }
+        Ok(())
+    })?;
+
+    let which = if getters.is_none() == setters.is_none() {
+        SkipWhich::All
+    } else if getters.is_some() {
+        SkipWhich::Getters
+    } else {
+        SkipWhich::Setters
+    };
+
+    config.skip(which, meta_list.path.span())
 }

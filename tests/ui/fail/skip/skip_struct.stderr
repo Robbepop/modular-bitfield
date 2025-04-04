@@ -1,0 +1,101 @@
+error: encountered duplicate `#[skip(new)]`
+ --> tests/ui/fail/skip/skip_struct.rs:3:22
+  |
+3 | #[bitfield(skip(new, new))]
+  |                      ^^^
+
+error: duplicate `#[skip(new)]` here
+ --> tests/ui/fail/skip/skip_struct.rs:3:17
+  |
+3 | #[bitfield(skip(new, new))]
+  |                 ^^^
+
+error: encountered duplicate `#[skip(from_bytes)]`
+ --> tests/ui/fail/skip/skip_struct.rs:8:34
+  |
+8 | #[bitfield(skip(from_bytes, new, from_bytes))]
+  |                                  ^^^^^^^^^^
+
+error: duplicate `#[skip(from_bytes)]` here
+ --> tests/ui/fail/skip/skip_struct.rs:8:17
+  |
+8 | #[bitfield(skip(from_bytes, new, from_bytes))]
+  |                 ^^^^^^^^^^
+
+error: encountered duplicate `#[skip(into_bytes)]`
+  --> tests/ui/fail/skip/skip_struct.rs:13:34
+   |
+13 | #[bitfield(skip(new, into_bytes, into_bytes))]
+   |                                  ^^^^^^^^^^
+
+error: duplicate `#[skip(into_bytes)]` here
+  --> tests/ui/fail/skip/skip_struct.rs:13:22
+   |
+13 | #[bitfield(skip(new, into_bytes, into_bytes))]
+   |                      ^^^^^^^^^^
+
+error: encountered unknown or unsupported #[skip(..)] specifier
+  --> tests/ui/fail/skip/skip_struct.rs:18:17
+   |
+18 | #[bitfield(skip(invalid))]
+   |                 ^^^^^^^
+
+error: expected attribute arguments in parentheses: `skip(...)`
+  --> tests/ui/fail/skip/skip_struct.rs:23:12
+   |
+23 | #[bitfield(skip)]
+   |            ^^^^
+
+error: encountered duplicate `#[skip(from_bytes)]`
+  --> tests/ui/fail/skip/skip_struct.rs:33:22
+   |
+33 | #[bitfield(skip(all, convert))]
+   |                      ^^^^^^^
+
+error: duplicate `#[skip(from_bytes)]` here
+  --> tests/ui/fail/skip/skip_struct.rs:33:17
+   |
+33 | #[bitfield(skip(all, convert))]
+   |                 ^^^
+
+error: encountered duplicate `#[skip(new)]`
+  --> tests/ui/fail/skip/skip_struct.rs:38:22
+   |
+38 | #[bitfield(skip(all, new))]
+   |                      ^^^
+
+error: duplicate `#[skip(new)]` here
+  --> tests/ui/fail/skip/skip_struct.rs:38:17
+   |
+38 | #[bitfield(skip(all, new))]
+   |                 ^^^
+
+error: encountered duplicate `#[skip(from_bytes)]`
+  --> tests/ui/fail/skip/skip_struct.rs:43:26
+   |
+43 | #[bitfield(skip(convert, from_bytes, into_bytes))]
+   |                          ^^^^^^^^^^
+
+error: duplicate `#[skip(from_bytes)]` here
+  --> tests/ui/fail/skip/skip_struct.rs:43:17
+   |
+43 | #[bitfield(skip(convert, from_bytes, into_bytes))]
+   |                 ^^^^^^^
+
+error[E0599]: no method named `implicit_skip` found for struct `F` in the current scope
+  --> tests/ui/fail/skip/skip_struct.rs:50:7
+   |
+29 | struct F {
+   | ------ method `implicit_skip` not found for this struct
+...
+50 |     f.implicit_skip();
+   |       ^^^^^^^^^^^^^ method not found in `F`
+
+error[E0599]: no method named `_implicit_skip` found for struct `F` in the current scope
+  --> tests/ui/fail/skip/skip_struct.rs:51:7
+   |
+29 | struct F {
+   | ------ method `_implicit_skip` not found for this struct
+...
+51 |     f._implicit_skip();
+   |       ^^^^^^^^^^^^^^ method not found in `F`

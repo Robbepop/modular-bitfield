@@ -1,4 +1,4 @@
-use super::config::ConfigValue;
+use super::{config::ConfigValue, raise_skip_error};
 use crate::errors::CombineError;
 use proc_macro2::Span;
 
@@ -71,7 +71,7 @@ impl FieldConfig {
                 self.bits = Some(ConfigValue {
                     value: amount,
                     span,
-                })
+                });
             }
         }
         Ok(())
@@ -93,36 +93,20 @@ impl FieldConfig {
     /// E.g. when skipping getters or setters twice. Note that skipping getters followed
     /// by skipping setters is fine.
     pub fn skip(&mut self, which: SkipWhich, span: Span) -> Result<(), syn::Error> {
-        fn raise_skip_error(
-            skip_params: &str,
-            span: Span,
-            previous: &ConfigValue<SkipWhich>,
-        ) -> syn::Error {
-            format_err!(
-                span,
-                "encountered duplicate `#[skip{}]` attribute for field",
-                skip_params
-            )
-            .into_combine(format_err!(
-                previous.span,
-                "duplicate `#[skip{}]` here",
-                skip_params
-            ))
-        }
         match self.skip {
             Some(ref previous) => {
                 match which {
-                    SkipWhich::All => return Err(raise_skip_error("", span, previous)),
+                    SkipWhich::All => return raise_skip_error("", span, previous.span),
                     SkipWhich::Getters => {
                         if previous.value == SkipWhich::Getters || previous.value == SkipWhich::All
                         {
-                            return Err(raise_skip_error("(getters)", span, previous));
+                            return raise_skip_error("(getters)", span, previous.span);
                         }
                     }
                     SkipWhich::Setters => {
                         if previous.value == SkipWhich::Setters || previous.value == SkipWhich::All
                         {
-                            return Err(raise_skip_error("(setters)", span, previous));
+                            return raise_skip_error("(setters)", span, previous.span);
                         }
                     }
                 }
@@ -140,17 +124,13 @@ impl FieldConfig {
     pub fn skip_setters(&self) -> bool {
         self.skip
             .as_ref()
-            .map(|config| config.value)
-            .map(SkipWhich::skip_setters)
-            .unwrap_or(false)
+            .is_some_and(|config| SkipWhich::skip_setters(config.value))
     }
 
     /// Returns `true` if the config demands that code generation for getters should be skipped.
     pub fn skip_getters(&self) -> bool {
         self.skip
             .as_ref()
-            .map(|config| config.value)
-            .map(SkipWhich::skip_getters)
-            .unwrap_or(false)
+            .is_some_and(|config| SkipWhich::skip_getters(config.value))
     }
 }
